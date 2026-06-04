@@ -21,7 +21,7 @@ interface Project {
 }
 
 interface ProjectMarqueeProps {
-  heading: string
+  heading?: string
   projects: Project[]
   accentColor?: string
 }
@@ -41,36 +41,53 @@ export default function ProjectMarquee({
 
   return (
     <section ref={ref} className="overflow-hidden py-[var(--space-2xl)]">
-      <div className="px-[var(--gutter)]">
-        <motion.h2
-          className="mb-10 text-center font-display text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold leading-[1.1] tracking-[-0.02em]"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {heading}
-        </motion.h2>
-      </div>
+      {heading && (
+        <div className="px-[var(--gutter)]">
+          <motion.h2
+            className="mb-10 text-center font-display text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold leading-[1.1] tracking-[-0.02em]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {heading}
+          </motion.h2>
+        </div>
+      )}
 
-      {/* Scrolling project thumbnails */}
+      {/* Scrolling project thumbnails — sized to match /work grid cards */}
       <div className="relative">
-        <div className="flex animate-[marquee_40s_linear_infinite] gap-5">
-          {repeated.map((project, i) => (
+        <div className="flex animate-[marquee_60s_linear_infinite] gap-6 md:gap-8">
+          {repeated.map((project, i) => {
+            const vimeoId =
+              project.thumbnailType === 'video' && project.thumbnailVideo
+                ? project.thumbnailVideo.match(/vimeo\.com\/(\d+)/)?.[1]
+                : null
+
+            return (
             <Link
               key={`${project._id}-${i}`}
               href={`/work/${project.slug.current}`}
               className="group shrink-0"
-              style={{ width: '280px' }}
+              style={{ width: 'clamp(320px, 32vw, 580px)' }}
             >
               {/* Card container */}
               <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-bg-card">
-                {/* Image — translates UP on hover (desktop only) */}
-                {project.thumbnail?.asset?._ref ? (
+                {/* Image / Video — translates UP on hover (desktop only) */}
+                {vimeoId ? (
+                  <iframe
+                    src={`https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&muted=1`}
+                    className="pointer-events-none absolute top-1/2 left-1/2 h-[200%] w-[200%] -translate-x-1/2 -translate-y-1/2 md:transition-transform md:duration-[250ms] md:ease-[cubic-bezier(0.4,0,0.2,1)] md:group-hover:-translate-y-[calc(50%+48px)]"
+                    style={{ border: 'none' }}
+                    allow="autoplay; fullscreen"
+                    loading="lazy"
+                  />
+                ) : project.thumbnail?.asset?._ref ? (
                   <Image
                     loader={sanityImageLoader}
-                    src={urlFor(project.thumbnail).width(800).height(600).quality(80).url()}
+                    src={urlFor(project.thumbnail).width(1400).height(1050).quality(85).url()}
                     alt={project.name}
                     fill
+                    sizes="(max-width: 768px) 80vw, 32vw"
                     className="object-cover md:transition-transform md:duration-[250ms] md:ease-[cubic-bezier(0.4,0,0.2,1)] md:will-change-transform md:group-hover:-translate-y-12"
                   />
                 ) : (
@@ -139,7 +156,8 @@ export default function ProjectMarquee({
                 </div>
               </div>
             </Link>
-          ))}
+            )
+          })}
         </div>
       </div>
     </section>

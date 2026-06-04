@@ -71,7 +71,7 @@ export default function StillMotionClient({ faqItems, projects }: { faqItems: FA
         subtitle="Photography, videography, animation, and post-production, handled by a full in-house team that plans, shoots, edits, and delivers production-ready content. Every frame intentional. Every second earned."
         ctaLabel="Start a Production Project"
       />
-      <ProjectMarquee heading="Production for 22+ Active Brands" projects={projects} accentColor="#f9b311" />
+      <ProjectMarquee projects={projects} accentColor="#f9b311" />
       <OutcomesSection heading="What Professional Production Delivers" outcomes={OUTCOMES} />
       <ServicesList heading="Our Still & Motion Capabilities" services={SERVICES} ctaLabel="Plan Your Next Production" />
       <ProcessTable heading="How We Run Production" steps={PROCESS} />

@@ -71,7 +71,7 @@ export default function BrandDevelopmentClient({ faqItems, projects }: { faqItem
         subtitle="Your brand is the promise you make before you say a word. We build identity systems, logos, visual languages, packaging, guidelines, and campaigns, that earn trust on sight and hold up everywhere your name appears."
         ctaLabel="Start Your Brand Project"
       />
-      <ProjectMarquee heading="Identity Systems Trusted by 30+ Brands" projects={projects} accentColor="#DA291C" />
+      <ProjectMarquee projects={projects} accentColor="#DA291C" />
       <OutcomesSection heading="What Strong Brand Development Does for Your Business" outcomes={OUTCOMES} />
       <ServicesList heading="Our Brand Development Capabilities" services={SERVICES} ctaLabel="Get a Brand Proposal" />
       <ProcessTable heading="How We Build Brand Identity Systems" steps={PROCESS} />
