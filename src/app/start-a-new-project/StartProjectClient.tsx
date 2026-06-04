@@ -97,10 +97,10 @@ function AgencyTurn({ children }: { children: React.ReactNode }) {
       <div className="max-w-[560px]">
         <header className="mb-4 flex items-baseline gap-3">
           <h3 className="font-display text-[1.05rem] font-bold tracking-[-0.01em] text-text-primary">
-            Aldo
+            Megi
           </h3>
           <span className="text-[0.8rem] text-text-tertiary">
-            Founder, BoldCrest
+            Account Manager
           </span>
         </header>
         <div className="flex flex-col items-start gap-2">{children}</div>
@@ -108,7 +108,7 @@ function AgencyTurn({ children }: { children: React.ReactNode }) {
           className="mt-4 flex h-10 w-10 items-center justify-center rounded-full text-[0.85rem] font-bold text-white"
           style={{ background: '#DA291C' }}
         >
-          A
+          M
         </div>
       </div>
     </motion.div>
@@ -484,17 +484,17 @@ export default function StartProjectClient() {
         </motion.p>
 
         {/* ═══════════════════════════════════════════
-            Turn 1 — Aldo's greeting
+            Turn 1 — Megi's greeting
         ═══════════════════════════════════════════ */}
         <AgencyTurn>
           <Bubble>Hi there 👋</Bubble>
-          <Bubble>I&rsquo;m Aldo.</Bubble>
+          <Bubble>I&rsquo;m Megi.</Bubble>
         </AgencyTurn>
 
         {/* Turn 1 — User identity */}
         <UserTurn heading={userHeading} initial={userInitial}>
           <Bubble side="right">👋</Bubble>
-          <Bubble side="right">Nice to meet you, Aldo!</Bubble>
+          <Bubble side="right">Nice to meet you, Megi!</Bubble>
 
           <FormShell active={showIdentity && !identitySubmitted}>
             <InlineInput
