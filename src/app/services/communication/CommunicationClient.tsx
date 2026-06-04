@@ -1,11 +1,8 @@
 'use client'
 
-import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
 import ServiceHero from '@/components/services/ServiceHero'
 import ProjectMarquee from '@/components/services/ProjectMarquee'
-import OutcomesSection from '@/components/services/OutcomesSection'
-import ServicesList from '@/components/services/ServicesList'
+import OutcomesServices from '@/components/services/OutcomesServices'
 import ProcessTable from '@/components/services/ProcessTable'
 import WhyUsSection from '@/components/services/WhyUsSection'
 import FAQSection from '@/components/services/FAQSection'
@@ -50,13 +47,6 @@ const PROCESS = [
   { number: '06', title: 'Reporting & Optimization', description: "Monthly performance reports: what worked, what to improve, what to try next. Strategy adjusts based on real data, not gut feeling." },
 ]
 
-const TIERS = [
-  { name: 'Scout', posts: '9 posts/month', description: 'Content calendar, copywriting, scheduling, monthly report. Perfect for brands just starting their social presence.' },
-  { name: 'Hiker', posts: '12 posts/month', description: 'Everything in Scout plus 1 strategy session. For brands building consistent momentum.' },
-  { name: 'Climber', posts: '16 posts/month', description: 'For brands with active audiences that demand more frequent, varied content.' },
-  { name: 'Alpinist', posts: '20 posts/month', description: 'Full-volume management with 2 strategy sessions and priority support. For national brands and high-output accounts.' },
-]
-
 const WHY_US = [
   { title: 'Production + Distribution Under One Roof', description: "Most agencies either create content or manage channels. We do both. The people planning your calendar are the same people shooting your content." },
   { title: '22+ Brands in Active Management', description: "Not a side service, our most active discipline. From boutique fashion accounts to national FMCG campaigns." },
@@ -71,70 +61,6 @@ const OTHER_SERVICES = [
   { title: 'Still & Motion', href: '/services/still-motion', description: 'Frames and footage that hold attention.', color: '#f9b311' },
 ]
 
-function RetainerTiers() {
-  const ref = useRef<HTMLElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-
-  return (
-    <section ref={ref} className="px-[var(--gutter)] py-[var(--space-3xl)]">
-      <div className="mx-auto max-w-[var(--max-width)]">
-        <motion.p
-          className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6 }}
-        >
-          How It&apos;s Structured
-        </motion.p>
-        <motion.h2
-          className="mb-4 max-w-[600px] font-display text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold leading-[1.1] tracking-[-0.02em]"
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        >
-          Monthly Retainer Tiers
-        </motion.h2>
-        <motion.p
-          className="mb-[var(--space-xl)] max-w-[600px] text-[0.95rem] leading-[1.7] text-text-secondary"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        >
-          We build custom content bundles per client. The tier is a content
-          planning baseline, not a service level. Every client gets the same
-          quality.
-        </motion.p>
-
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {TIERS.map((tier, i) => (
-            <motion.div
-              key={tier.name}
-              className="rounded-2xl border border-border/40 p-6"
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{
-                duration: 0.6,
-                delay: 0.2 + i * 0.1,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-            >
-              <h3 className="mb-1 font-display text-[1.2rem] font-bold text-text-primary">
-                {tier.name}
-              </h3>
-              <p className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
-                {tier.posts}
-              </p>
-              <p className="text-[0.8rem] leading-[1.6] text-text-secondary">
-                {tier.description}
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 export default function CommunicationClient({ faqItems, projects }: { faqItems: FAQItem[]; projects: Project[] }) {
   return (
     <main className="relative">
@@ -145,12 +71,16 @@ export default function CommunicationClient({ faqItems, projects }: { faqItems: 
         ctaLabel="Start a Communication Project"
       />
       <ProjectMarquee projects={projects} accentColor="#004c95" />
-      <OutcomesSection heading="What Strategic Communication Delivers" outcomes={OUTCOMES} />
-      <ServicesList heading="Our Communication Capabilities" services={SERVICES} ctaLabel="Build Your Communication Plan" />
-      <ProcessTable heading="How We Run Communication" steps={PROCESS} />
-      <RetainerTiers />
+      <OutcomesServices
+        outcomesHeading="What Strategic Communication Delivers?"
+        outcomes={OUTCOMES}
+        servicesHeading="Our Communication Capabilities"
+        services={SERVICES}
+        accentColor="#004c95"
+      />
+      <ProcessTable heading="How We Run Communication" steps={PROCESS} accentColor="#004c95" />
       <WhyUsSection heading="Why Brands Choose BoldCrest for Communication" items={WHY_US} />
-      <FAQSection heading="Communication Questions Answered" items={faqItems} ctaLabel="Get Your Strategy Started" />
+      <FAQSection heading="Communication Questions Answered" items={faqItems} noTopBorder grayBg />
       <OtherServices services={OTHER_SERVICES} />
     </main>
   )

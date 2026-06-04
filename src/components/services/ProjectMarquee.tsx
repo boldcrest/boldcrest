@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -34,6 +34,70 @@ export default function ProjectMarquee({
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
+  // Auto-scroll + drag-to-scroll on a real scroll container
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const drag = useRef({ active: false, startX: 0, startScroll: 0, moved: false })
+  const SPEED = 125 // px per second (a touch faster than the old 60s marquee)
+
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    let raf = 0
+    let last = 0
+    const wrap = () => {
+      const oneSet = el.scrollWidth / 4
+      if (oneSet <= 0) return
+      if (el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+      else if (el.scrollLeft < 0) el.scrollLeft += oneSet
+    }
+    const tick = (now: number) => {
+      if (!last) last = now
+      const dt = (now - last) / 1000
+      last = now
+      if (!drag.current.active) {
+        el.scrollLeft += SPEED * dt
+        wrap()
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse') return
+    const el = scrollerRef.current
+    if (!el) return
+    drag.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false }
+    el.setPointerCapture(e.pointerId)
+  }
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return
+    const el = scrollerRef.current
+    if (!el) return
+    const delta = e.clientX - drag.current.startX
+    if (Math.abs(delta) > 5) drag.current.moved = true
+    el.scrollLeft = drag.current.startScroll - delta
+    const oneSet = el.scrollWidth / 4
+    if (oneSet > 0) {
+      if (el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+      else if (el.scrollLeft < 0) el.scrollLeft += oneSet
+    }
+  }
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return
+    drag.current.active = false
+    scrollerRef.current?.releasePointerCapture?.(e.pointerId)
+  }
+  // Swallow the click that follows a real drag so cards don't navigate
+  const onClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (drag.current.moved) {
+      e.preventDefault()
+      e.stopPropagation()
+      drag.current.moved = false
+    }
+  }
+
   const items = projects.length > 0 ? projects : []
   const repeated = [...items, ...items, ...items, ...items]
 
@@ -54,9 +118,19 @@ export default function ProjectMarquee({
         </div>
       )}
 
-      {/* Scrolling project thumbnails — sized to match /work grid cards */}
-      <div className="relative">
-        <div className="flex animate-[marquee_60s_linear_infinite] gap-6 md:gap-8">
+      {/* Scrolling project thumbnails — auto-scroll + drag, sized to match /work grid cards */}
+      <div
+        ref={scrollerRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onPointerLeave={endDrag}
+        onClickCapture={onClickCapture}
+        onDragStart={(e) => e.preventDefault()}
+        className="relative cursor-grab touch-pan-y overflow-x-auto select-none [scrollbar-width:none] active:cursor-grabbing [&_a]:select-none [&_img]:pointer-events-none [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="flex w-max gap-6 md:gap-8">
           {repeated.map((project, i) => {
             const vimeoId =
               project.thumbnailType === 'video' && project.thumbnailVideo
@@ -67,6 +141,7 @@ export default function ProjectMarquee({
             <Link
               key={`${project._id}-${i}`}
               href={`/work/${project.slug.current}`}
+              draggable={false}
               className="group shrink-0"
               style={{ width: 'clamp(320px, 32vw, 580px)' }}
             >
@@ -87,8 +162,9 @@ export default function ProjectMarquee({
                     src={urlFor(project.thumbnail).width(1400).height(1050).quality(85).url()}
                     alt={project.name}
                     fill
+                    draggable={false}
                     sizes="(max-width: 768px) 80vw, 32vw"
-                    className="object-cover md:transition-transform md:duration-[250ms] md:ease-[cubic-bezier(0.4,0,0.2,1)] md:will-change-transform md:group-hover:-translate-y-12"
+                    className="pointer-events-none object-cover md:transition-transform md:duration-[250ms] md:ease-[cubic-bezier(0.4,0,0.2,1)] md:will-change-transform md:group-hover:-translate-y-12"
                   />
                 ) : (
                   <div

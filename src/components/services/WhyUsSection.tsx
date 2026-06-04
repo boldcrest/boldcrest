@@ -12,6 +12,7 @@ interface WhyUsSectionProps {
   label?: string
   heading: string
   items: WhyUsItem[]
+  accentColor?: string
 }
 
 export default function WhyUsSection({
@@ -23,7 +24,7 @@ export default function WhyUsSection({
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section ref={ref} className="px-[var(--gutter)] py-[var(--space-3xl)]">
+    <section ref={ref} className="px-[var(--gutter)] pt-[var(--space-xl)] pb-[var(--space-2xl)]">
       <div className="mx-auto max-w-[var(--max-width)]">
         <motion.p
           className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
@@ -43,22 +44,23 @@ export default function WhyUsSection({
           {heading}
         </motion.h2>
 
-        <div className="grid gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item, i) => (
             <motion.div
               key={item.title}
+              className="flex flex-col border-t border-border pt-6"
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{
                 duration: 0.6,
-                delay: 0.2 + i * 0.08,
+                delay: 0.15 + i * 0.07,
                 ease: [0.16, 1, 0.3, 1],
               }}
             >
-              <h3 className="mb-3 text-[0.9rem] font-semibold text-text-primary">
+              <h3 className="mb-3 font-display text-[clamp(1.05rem,1.5vw,1.3rem)] font-bold leading-[1.15] tracking-[-0.01em] text-text-primary">
                 {item.title}
               </h3>
-              <p className="text-[0.82rem] leading-[1.7] text-text-secondary">
+              <p className="text-[0.85rem] leading-[1.7] text-text-secondary">
                 {item.description}
               </p>
             </motion.div>

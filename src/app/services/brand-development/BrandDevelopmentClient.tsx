@@ -2,8 +2,7 @@
 
 import ServiceHero from '@/components/services/ServiceHero'
 import ProjectMarquee from '@/components/services/ProjectMarquee'
-import OutcomesSection from '@/components/services/OutcomesSection'
-import ServicesList from '@/components/services/ServicesList'
+import OutcomesServices from '@/components/services/OutcomesServices'
 import ProcessTable from '@/components/services/ProcessTable'
 import WhyUsSection from '@/components/services/WhyUsSection'
 import FAQSection from '@/components/services/FAQSection'
@@ -32,7 +31,7 @@ const OUTCOMES = [
 
 const SERVICES = [
   { name: 'Visual Identity', href: '/work?service=Visual%20Identity', description: "The complete system that defines how the world sees your business. We build logo, color palette, typography hierarchy, graphic patterns, iconography, and photographic style direction into a cohesive language that works across every medium." },
-  { name: 'Logo Design', href: '/work?service=Logo%20Design', description: "Your logo is the single most visible element of your brand. We develop 2-3 unique concepts grounded in strategic thinking, refined through collaborative rounds until every curve and letterform feels inevitable." },
+  { name: 'Logo Design', href: '/work?service=Logo%20Design', description: "Your logo is the single most visible element of your brand. We develop one strategically-grounded concept, refined through collaborative rounds until every curve and letterform feels inevitable." },
   { name: 'Brand Guidelines', href: '/work?service=Brand%20Guidelines', description: "The rulebook that keeps your brand consistent when you're not in the room. Our brandbooks document every element with do's and don'ts and real application examples. From 30-page essentials to 80-page comprehensive manuals." },
   { name: 'Brand Strategy', href: '/work?service=Brand%20Strategy', description: "Before any visual work begins, we define who you are, who you're for, and where you stand in the market. Audience mapping, competitive analysis, positioning territory, and brand architecture." },
   { name: 'Packaging Design', href: '/work?service=Packaging%20Design', description: "The shelf is your stage. We design packaging that tells your story at the point of decision, from single products to full line systems with variant logic, 3D mockups, and print-ready dielines." },
@@ -42,7 +41,7 @@ const SERVICES = [
 const PROCESS = [
   { number: '01', title: 'Discovery & Research', description: "A deep-dive workshop into your business goals, audience, competitive landscape, and brand aspirations. Not a questionnaire, a strategic conversation that shapes everything." },
   { number: '02', title: 'Moodboard & Direction', description: "We present curated visual territories exploring different directions for your brand's look and feel. You choose the territory, and we align before any design begins." },
-  { number: '03', title: 'Concept Development', description: "2-3 distinct concepts, each grounded in strategy. We present with rationale, so you understand why each choice works, not just how it looks." },
+  { number: '03', title: 'Concept Development', description: "One concept, fully resolved. We don't hedge with variations, we commit to a single direction grounded in strategy and present it with the rationale behind every choice, so you understand why it works, not just how it looks." },
   { number: '04', title: 'Refinement & Feedback', description: "Structured revision rounds refine the chosen direction until every detail is right. We welcome honest feedback and push back when we believe a different path serves you better." },
   { number: '05', title: 'Brand System Delivery', description: "Comprehensive brandbook, final files in all formats, and a brand toolkit ready for implementation. Logo, identity, packaging, guidelines. Everything documented and production-ready." },
   { number: '06', title: 'Implementation & Support', description: "We roll out the brand across your touchpoints: stationery, social templates, signage, packaging production files. And we stay available for ongoing brand evolution as you grow." },
@@ -72,11 +71,16 @@ export default function BrandDevelopmentClient({ faqItems, projects }: { faqItem
         ctaLabel="Start Your Brand Project"
       />
       <ProjectMarquee projects={projects} accentColor="#DA291C" />
-      <OutcomesSection heading="What Strong Brand Development Does for Your Business" outcomes={OUTCOMES} />
-      <ServicesList heading="Our Brand Development Capabilities" services={SERVICES} ctaLabel="Get a Brand Proposal" />
-      <ProcessTable heading="How We Build Brand Identity Systems" steps={PROCESS} />
-      <WhyUsSection heading="What Sets Our Brand Development Apart" items={WHY_US} />
-      <FAQSection heading="Brand Development Questions Answered" items={faqItems} ctaLabel="Book a Free Consultation" />
+      <OutcomesServices
+        outcomesHeading="What Strong Brand Development Does for Your Business?"
+        outcomes={OUTCOMES}
+        servicesHeading="Our Brand Development Capabilities"
+        services={SERVICES}
+        accentColor="#DA291C"
+      />
+      <ProcessTable heading="How We Build Brand Identity Systems" steps={PROCESS} accentColor="#DA291C" />
+      <WhyUsSection heading="What Sets Our Brand Development Apart" items={WHY_US} accentColor="#DA291C" />
+      <FAQSection heading="Brand Development Questions Answered" items={faqItems} noTopBorder grayBg />
       <OtherServices services={OTHER_SERVICES} />
     </main>
   )

@@ -17,6 +17,7 @@ interface FAQSectionProps {
   ctaHref?: string
   noTopBorder?: boolean
   tightTop?: boolean
+  grayBg?: boolean
 }
 
 export default function FAQSection({
@@ -27,15 +28,20 @@ export default function FAQSection({
   ctaHref = '/start-a-new-project',
   noTopBorder = false,
   tightTop = false,
+  grayBg = false,
 }: FAQSectionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   const topPad = tightTop ? 'pt-[var(--space-lg)]' : 'pt-[var(--space-3xl)]'
+  // Gray band gets symmetric padding so the FAQ sits centered within it
+  const padding = grayBg
+    ? 'py-[var(--space-2xl)]'
+    : `${topPad} pb-[var(--space-3xl)]`
 
   return (
-    <section ref={ref} className={`${noTopBorder ? '' : 'border-t border-border'} px-[var(--gutter)] ${topPad} pb-[var(--space-3xl)]`}>
+    <section ref={ref} className={`${noTopBorder ? '' : 'border-t border-border'} ${grayBg ? 'bg-[#1e1e1e]' : ''} px-[var(--gutter)] ${padding}`}>
       <div className="mx-auto max-w-[var(--max-width)]">
         <motion.p
           className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
@@ -47,7 +53,7 @@ export default function FAQSection({
         </motion.p>
 
         <motion.h2
-          className="mb-[var(--space-xl)] font-display text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold leading-[1.1] tracking-[-0.02em]"
+          className="mb-[var(--space-lg)] font-display text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold leading-[1.1] tracking-[-0.02em]"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}

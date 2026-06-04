@@ -39,17 +39,17 @@ function DiaryCard({ post }: { post: DiaryPost }) {
 
   return (
     <Link href={`/diary/${post.slug?.current}`} className="group block">
-      {/* Image container */}
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#1a1a1a]">
+      {/* Image container — 4:3 to match the /work grid */}
+      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#1a1a1a]">
         {post.coverImage?.asset ? (
           <Image
             loader={sanityImageLoader}
-            src={urlFor(post.coverImage).width(800).height(800).url()}
+            src={urlFor(post.coverImage).width(1400).height(1050).url()}
             alt={post.title}
             fill
             loading="lazy"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 20vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -193,7 +193,7 @@ export default function DiaryPageClient({ posts }: DiaryPageClientProps) {
           ) : (
             <motion.div
               key={activeFilter}
-              className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+              className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}

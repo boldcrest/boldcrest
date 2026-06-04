@@ -2,8 +2,7 @@
 
 import ServiceHero from '@/components/services/ServiceHero'
 import ProjectMarquee from '@/components/services/ProjectMarquee'
-import OutcomesSection from '@/components/services/OutcomesSection'
-import ServicesList from '@/components/services/ServicesList'
+import OutcomesServices from '@/components/services/OutcomesServices'
 import ProcessTable from '@/components/services/ProcessTable'
 import WhyUsSection from '@/components/services/WhyUsSection'
 import FAQSection from '@/components/services/FAQSection'
@@ -72,11 +71,16 @@ export default function StillMotionClient({ faqItems, projects }: { faqItems: FA
         ctaLabel="Start a Production Project"
       />
       <ProjectMarquee projects={projects} accentColor="#f9b311" />
-      <OutcomesSection heading="What Professional Production Delivers" outcomes={OUTCOMES} />
-      <ServicesList heading="Our Still & Motion Capabilities" services={SERVICES} ctaLabel="Plan Your Next Production" />
-      <ProcessTable heading="How We Run Production" steps={PROCESS} />
+      <OutcomesServices
+        outcomesHeading="What Professional Production Delivers?"
+        outcomes={OUTCOMES}
+        servicesHeading="Our Still & Motion Capabilities"
+        services={SERVICES}
+        accentColor="#f9b311"
+      />
+      <ProcessTable heading="How We Run Production" steps={PROCESS} accentColor="#f9b311" />
       <WhyUsSection heading="Why Brands Choose BoldCrest for Production" items={WHY_US} />
-      <FAQSection heading="Production Questions Answered" items={faqItems} ctaLabel="Book a Production Call" />
+      <FAQSection heading="Production Questions Answered" items={faqItems} noTopBorder grayBg />
       <OtherServices services={OTHER_SERVICES} />
     </main>
   )

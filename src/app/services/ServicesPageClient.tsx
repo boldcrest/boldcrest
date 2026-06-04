@@ -609,7 +609,7 @@ export default function ServicesPageClient({
           heading="Questions We Hear Most"
           items={faqItems}
           noTopBorder
-          tightTop
+          grayBg
         />
       )}
     </main>
