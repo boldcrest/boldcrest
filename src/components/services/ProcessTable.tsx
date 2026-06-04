@@ -51,9 +51,8 @@ export default function ProcessTable({
   }
 
   return (
-    <section ref={ref} className="pt-[var(--space-lg)] pb-[var(--space-xl)]">
-      {/* Heading block — respects max-width / gutter */}
-      <div className="mx-auto max-w-[var(--max-width)] px-[var(--gutter)]">
+    <section ref={ref} className="px-[var(--gutter)] pt-[var(--space-lg)] pb-[var(--space-xl)]">
+      <div className="mx-auto max-w-[var(--max-width)]">
         <motion.p
           className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
           initial={{ opacity: 0 }}
@@ -82,27 +81,18 @@ export default function ProcessTable({
             {intro}
           </motion.p>
         )}
-      </div>
 
-      {/* Steps — single horizontal drag-scroll row, hidden scrollbar, big faded numbers */}
-      <div
-        ref={scrollerRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onPointerLeave={endDrag}
-        className="mt-[var(--space-xl)] cursor-grab overflow-x-auto pb-4 select-none [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
-      >
+        {/* Steps — single horizontal drag-scroll row, hidden scrollbar, big faded numbers */}
         <div
-          className="flex gap-8 md:gap-12"
-          style={{
-            width: 'max-content',
-            paddingLeft:
-              'max(var(--gutter), calc((100vw - var(--max-width)) / 2 + var(--gutter)))',
-            paddingRight: 'var(--gutter)',
-          }}
+          ref={scrollerRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onPointerLeave={endDrag}
+          className="mt-[var(--space-xl)] cursor-grab overflow-x-auto pb-4 select-none [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
         >
+          <div className="flex gap-8 md:gap-12" style={{ width: 'max-content' }}>
           {steps.map((step, i) => (
             <motion.div
               key={step.number}
@@ -127,6 +117,7 @@ export default function ProcessTable({
               </p>
             </motion.div>
           ))}
+          </div>
         </div>
       </div>
     </section>
