@@ -19,6 +19,8 @@ interface MagneticBaseProps {
   children: ReactNode
   className?: string
   style?: React.CSSProperties
+  target?: string
+  rel?: string
 }
 
 function MagneticBase({
@@ -27,6 +29,8 @@ function MagneticBase({
   children,
   className = '',
   style,
+  target,
+  rel,
 }: MagneticBaseProps) {
   const containerRef = useRef<HTMLElement>(null)
   const layerRefs = useRef<(HTMLSpanElement | null)[]>([])
@@ -104,6 +108,8 @@ function MagneticBase({
     <Link
       ref={containerRef as React.Ref<HTMLAnchorElement>}
       href={href ?? '#'}
+      target={target}
+      rel={rel}
       className={`group relative ${className}`}
       style={style}
       onMouseMove={handleMouseMove}
@@ -125,17 +131,23 @@ export function CTAButton({
   label,
   showArrow = false,
   className = '',
+  target,
+  rel,
 }: {
   href?: string
   onClick?: () => void
   label: string
   showArrow?: boolean
   className?: string
+  target?: string
+  rel?: string
 }) {
   return (
     <MagneticBase
       href={href}
       onClick={onClick}
+      target={target}
+      rel={rel}
       className={`inline-flex items-center gap-3 rounded-[var(--radius-pill)] border border-white/25 px-5 py-[0.55rem] text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-text-secondary transition-all duration-[0.5s] hover:border-white/60 hover:text-white ${className}`}
       style={{ transitionTimingFunction: CUBIC }}
     >

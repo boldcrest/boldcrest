@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
 import { useLenis } from '@/components/LenisProvider'
+import { CTAButton } from '@/components/MagneticButton'
 
 interface TeamMember {
   _id: string
@@ -464,6 +465,14 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
     }
   }, [current, isMobile])
 
+  // Footer "back to top" resets the deck to the first slide. Setting current to
+  // 0 also triggers the body-lock effect above, which scrolls the document up.
+  useEffect(() => {
+    const handler = () => setCurrent(0)
+    window.addEventListener('boldcrest:back-to-top', handler)
+    return () => window.removeEventListener('boldcrest:back-to-top', handler)
+  }, [])
+
   const active = (i: number) => isMobile || current === i
 
   // Faces grid — local preview photos for now; Sanity members take over
@@ -486,6 +495,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         }))
 
   return (
+    <>
     <div
       ref={containerRef}
       className={isMobile ? 'relative bg-bg' : 'relative h-[100dvh] overflow-hidden bg-bg'}
@@ -534,7 +544,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                   >
-                    Est. 2020 — Tirana, Albania
+                    Est. 2019, Tirana, Albania
                   </motion.p>
                 </div>
 
@@ -547,9 +557,6 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
                 >
                   <p className="text-[1.05rem] leading-[1.8] text-text-secondary">
                     The ground shook twice. The world shut down. And somewhere in the middle of all of that, two 22-year-olds decided it was a good time to build an agency.
-                  </p>
-                  <p className="mt-[var(--space-md)] text-[0.95rem] leading-[1.8] text-text-tertiary">
-                    Looking back, it might have been the perfect time. Because from day one, we learned that things fall apart — and that you build anyway.
                   </p>
                 </motion.div>
               </div>
@@ -564,16 +571,16 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
             1. THE MOTTO
         ═══════════════════════════════════════════ */}
         <section className="flex min-h-[100dvh] md:h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
-          <div className="mx-auto w-full max-w-[var(--max-width)]">
+          <div className="mx-auto w-full max-w-[var(--max-width)] text-center">
             <FadeUp active={active(1)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
                 Our motto
               </p>
             </FadeUp>
 
-            <BigStatement text="Climbing Mountains Together." active={active(1)} />
+            <BigStatement text="Climbing Mountains Together." active={active(1)} className="text-center" />
 
-            <div className="mt-[var(--space-xl)] flex max-w-[640px] flex-col gap-[var(--space-md)]">
+            <div className="mx-auto mt-[var(--space-xl)] flex max-w-[640px] flex-col gap-[var(--space-md)]">
               <FadeUp delay={0.1} active={active(1)}>
                 <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                   It means we don&apos;t hand you a deliverable and disappear. We sit in your meetings. We learn your operations. We understand your problems before we try to solve them.
@@ -582,14 +589,15 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
 
               <FadeUp delay={0.15} active={active(1)}>
                 <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
-                  We push back when we think you&apos;re wrong — not to be difficult, but because that&apos;s what real partners do. And when we&apos;re wrong, we listen.
+                  We push back when we think you&apos;re wrong, not to be difficult, but because that&apos;s what real partners do. And when we&apos;re wrong, we listen.
                 </p>
               </FadeUp>
             </div>
 
             <FadeUp delay={0.25} active={active(1)}>
-              <p className="mt-[var(--space-2xl)] max-w-[900px] font-display text-[clamp(1.4rem,2.8vw,2.4rem)] font-bold leading-[1.25] tracking-[-0.01em] text-text-primary">
-                &ldquo;We&apos;ve been told we&apos;re too involved.&rdquo;{' '}
+              <p className="mx-auto mt-[var(--space-2xl)] max-w-[900px] font-display text-[clamp(1.4rem,2.8vw,2.4rem)] font-bold leading-[1.25] tracking-[-0.01em] text-text-primary">
+                &ldquo;We&apos;ve been told we&apos;re too involved.&rdquo;
+                <br />
                 <span className="text-text-tertiary">We consider that a compliment.</span>
               </p>
             </FadeUp>
@@ -603,18 +611,20 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <div className="grid gap-[var(--space-md)] md:grid-cols-[1fr_1fr] md:items-center md:gap-[var(--space-xl)]">
               <FadeUp active={active(2)}>
-                <div className="group relative mx-auto aspect-[4/5] w-[64%] max-w-[240px] rotate-[-10deg] overflow-hidden rounded-[var(--radius-lg)] bg-bg-elevated md:mx-0 md:w-full md:max-h-[60dvh] md:max-w-none">
+                <div className="group relative mx-auto w-[52vw] max-w-[210px] rotate-[-10deg] md:mx-0 md:w-[85%] md:max-w-none">
                   {FOUNDERS_PHOTO ? (
                     <Image
                       src={FOUNDERS_PHOTO}
                       alt="Xhulio and Aldo, founders of BoldCrest"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 45vw"
-                      className="object-cover transition-transform duration-[0.8s] group-hover:scale-105"
+                      width={1228}
+                      height={1500}
+                      unoptimized
+                      sizes="(max-width: 768px) 58vw, 42vw"
+                      className="h-auto w-full object-contain transition-transform duration-[0.8s] group-hover:scale-[1.03] md:max-h-[62dvh]"
                       style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
                     />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex aspect-[4/5] w-full items-center justify-center rounded-[var(--radius-lg)] bg-bg-elevated">
                       <p className="font-display text-[4rem] font-bold leading-none text-text-tertiary" style={{ opacity: 0.15 }}>
                         X + A
                       </p>
@@ -623,16 +633,16 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
                 </div>
               </FadeUp>
 
-              <div className="flex flex-col gap-[var(--space-sm)] md:gap-[var(--space-lg)]">
+              <div className="flex flex-col gap-[var(--space-sm)] md:gap-[var(--space-md)]">
                 <FadeUp active={active(2)}>
-                  <p className="mb-[var(--space-sm)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
+                  <p className="text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
                     The equation
                   </p>
                 </FadeUp>
 
                 <FadeUp delay={0.1} active={active(2)}>
                   <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
-                    Xhulio is a superstar in everything visual. Aldo builds relationships that last. When the two of us became friends, the equation was simple: his eye, his instinct, his creativity — matched with the trust, the conversations, the partnerships that turn a single project into a decade-long journey.
+                    Xhulio is a superstar in everything visual. Aldo builds relationships that last. When the two of us became friends, the equation was simple: his eye, his instinct, his creativity, matched with the trust, the conversations, the partnerships that turn a single project into a decade-long journey.
                   </p>
                 </FadeUp>
 
@@ -644,7 +654,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
 
                 <FadeUp delay={0.2} active={active(2)}>
                   <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
-                    We took our first team from the same university halls we were still sitting in. We were 22. We were probably not ready. We did it anyway. And what we brought to the market — at a time when no one else was bringing it — was real creative thinking to social media. Not content. Ideas.
+                    We took our first team from the same university halls we were still sitting in. We were 22. We were probably not ready. We did it anyway. And what we brought to the market, at a time when no one else was bringing it, was real creative thinking to social media. Not content. Ideas.
                   </p>
                 </FadeUp>
               </div>
@@ -711,7 +721,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
 
               <FadeUp delay={0.15} active={active(4)}>
                 <p className="mt-[var(--space-lg)] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
-                  That&apos;s not false modesty. That&apos;s the goal. When a brand becomes so real, so lived-in, so theirs — when people carry it, wear it, post it, and believe in it without a second thought — the agency behind it disappears. And it should.
+                  That&apos;s not false modesty. That&apos;s the goal. When a brand becomes so real, so lived-in, so theirs; when people carry it, wear it, post it, and believe in it without a second thought; the agency behind it disappears. And it should.
                 </p>
               </FadeUp>
 
@@ -755,5 +765,31 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         </section>
       </motion.div>
     </div>
+
+    {/* Careers gray band — flows in after the last slide, above the global footer */}
+    <section className="bg-[#1e1e1e] px-[var(--gutter)] py-[var(--space-2xl)]">
+      <div className="mx-auto flex max-w-[var(--max-width)] flex-col items-start gap-[var(--space-lg)] md:flex-row md:items-center md:justify-between">
+        <motion.h2
+          className="font-display text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold leading-[1.1] tracking-[-0.02em] text-text-primary"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          Want to join our team?
+        </motion.h2>
+
+        <motion.div
+          className="shrink-0"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <CTAButton href="/careers" label="Visit Careers" showArrow />
+        </motion.div>
+      </div>
+    </section>
+    </>
   )
 }

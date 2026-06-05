@@ -31,6 +31,9 @@ const socialLinks = [
 const linkClass = 'block py-1.5 text-[0.85rem] transition-colors duration-300 text-black/50 hover:text-black'
 
 function scrollToTop() {
+  // Let slide-deck pages (e.g. /people) reset to their first slide. Pages that
+  // listen will jump their deck to slide 0; everything else just scrolls up.
+  window.dispatchEvent(new CustomEvent('boldcrest:back-to-top'))
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
