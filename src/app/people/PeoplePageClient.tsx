@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
-import { InlineButton } from '@/components/MagneticButton'
 
 interface TeamMember {
   _id: string
@@ -63,21 +62,106 @@ function FadeUp({ children, delay = 0, active, className = '' }: {
 
 
 /* ══════════════════════════════════════════════════════
-   TOTAL SECTIONS = 9
+   TOTAL SECTIONS = 7
 ══════════════════════════════════════════════════════ */
-const TOTAL_SECTIONS = 9
+const TOTAL_SECTIONS = 7
 const TRANSITION_DURATION = 700
 
-const galleryImages = [
-  { width: 330, color: '#DA291C' },
-  { width: 500, color: '#f9b311' },
-  { width: 350, color: '#004c95' },
-  { width: 420, color: '#DA291C' },
-  { width: 460, color: '#f9b311' },
-  { width: 380, color: '#004c95' },
-  { width: 440, color: '#DA291C' },
-  { width: 360, color: '#f9b311' },
-]
+/* Local team photos (preview only). Empty for now so the Faces grid uses
+   Sanity members. To preview local headshots in /public/Team Photos/<name>.jpg,
+   re-populate this array, e.g.:
+   ['Megi Milo','Inxhi Fili','Brenton Ravolli','Briken Myzeqari','Darjana Haklaj',
+    'Ermonela Ishmakaj','Ilda Hoxha','Isli Muça','Jursi Temali','Kostandin Feshti',
+    'Rei Çollaku','Romina Uka'].map((name) => ({ name, localSrc: `/Team Photos/${name}.jpg` })) */
+const LOCAL_TEAM: { name: string; localSrc: string }[] = []
+
+// Set to '/Team Photos/Founders.png' once an optimized founders photo is uploaded.
+const FOUNDERS_PHOTO: string = ''
+
+/* ── Auto-scrolling + draggable team-photo strip (b&w → color on hover) ── */
+function PhotoMarquee() {
+  // Re-add [1, 2, 3, 4, 5, 6, 7] once optimized photos are in /public/People - Photos/
+  const photos: number[] = []
+  const repeated = [...photos, ...photos, ...photos, ...photos]
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const drag = useRef({ active: false, startX: 0, startScroll: 0 })
+  const SPEED = 70 // px per second
+
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    let raf = 0
+    let last = 0
+    const tick = (now: number) => {
+      if (!last) last = now
+      const dt = (now - last) / 1000
+      last = now
+      if (!drag.current.active) {
+        el.scrollLeft += SPEED * dt
+        const oneSet = el.scrollWidth / 4
+        if (oneSet > 0 && el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse') return
+    const el = scrollerRef.current
+    if (!el) return
+    drag.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft }
+    el.setPointerCapture(e.pointerId)
+  }
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return
+    const el = scrollerRef.current
+    if (!el) return
+    el.scrollLeft = drag.current.startScroll - (e.clientX - drag.current.startX)
+    const oneSet = el.scrollWidth / 4
+    if (oneSet > 0) {
+      if (el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+      else if (el.scrollLeft < 0) el.scrollLeft += oneSet
+    }
+  }
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return
+    drag.current.active = false
+    scrollerRef.current?.releasePointerCapture?.(e.pointerId)
+  }
+
+  if (photos.length === 0) return null
+
+  return (
+    <div
+      ref={scrollerRef}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onPointerLeave={endDrag}
+      onDragStart={(e) => e.preventDefault()}
+      className="flex h-[42dvh] w-full shrink-0 cursor-grab touch-pan-y select-none overflow-x-auto [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+    >
+      <div className="flex w-max">
+        {repeated.map((n, i) => (
+          <div key={i} className="group relative h-full aspect-[1286/1500] shrink-0">
+            <Image
+              src={`/People - Photos/${n}.jpg`}
+              alt={`BoldCrest team ${n}`}
+              fill
+              sizes="(max-width: 768px) 60vw, 24vw"
+              draggable={false}
+              priority={i < 5}
+              className="pointer-events-none object-cover grayscale transition-[filter] duration-500 group-hover:grayscale-0"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function PeoplePageClient({ members }: PeoplePageClientProps) {
   const [current, setCurrent] = useState(0)
@@ -153,6 +237,25 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
 
   const active = (i: number) => current === i
 
+  // Faces grid — local preview photos for now; Sanity members take over
+  // once optimized images are uploaded (empty LOCAL_TEAM to switch back).
+  const team =
+    LOCAL_TEAM.length > 0
+      ? LOCAL_TEAM.map((m) => ({
+          id: m.name,
+          name: m.name,
+          role: undefined as string | undefined,
+          image: undefined as TeamMember['image'],
+          localSrc: m.localSrc,
+        }))
+      : members.map((m) => ({
+          id: m._id,
+          name: m.name,
+          role: m.role as string | undefined,
+          image: m.image,
+          localSrc: undefined as string | undefined,
+        }))
+
   return (
     <div ref={containerRef} className="fixed inset-0 overflow-hidden bg-bg" style={{ zIndex: 10 }}>
       {/* Sliding wrapper */}
@@ -164,93 +267,100 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             0. HERO
         ═══════════════════════════════════════════ */}
-        <section className="relative flex h-[100dvh] items-center px-[var(--gutter)]">
-          <div className="mx-auto max-w-[var(--max-width)]">
-            <motion.p
-              className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-accent"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              Est. 2020 — Tirana, Albania
-            </motion.p>
+        <section className="relative flex h-[100dvh] flex-col bg-bg">
+          {/* Hero copy — full-width stretch, same as the Work page */}
+          <div className="flex flex-1 items-center px-[var(--gutter)] pt-[100px]">
+            <div className="w-full">
+              <motion.p
+                className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                People
+              </motion.p>
 
-            <motion.h1
-              className="max-w-[900px] font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.08]"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            >
-              Two earthquakes,{' '}
-              <br className="hidden md:block" />
-              a pandemic, and{' '}
-              <br className="hidden md:block" />
-              a decision<span className="text-accent">.</span>
-            </motion.h1>
+              <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                {/* Left — headline + established */}
+                <div>
+                  <motion.h1
+                    className="font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.08]"
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    Two earthquakes,{' '}
+                    <br className="hidden md:block" />
+                    a pandemic, and{' '}
+                    <br className="hidden md:block" />
+                    a decision<span className="text-text-tertiary">.</span>
+                  </motion.h1>
 
-            <motion.p
-              className="mt-[var(--space-lg)] max-w-[520px] text-[1.05rem] leading-[1.8] text-text-secondary"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            >
-              The ground shook twice. The world shut down. And somewhere in the middle of all of that, two 22-year-olds decided it was a good time to build an agency.
-            </motion.p>
+                  <motion.p
+                    className="mt-[var(--space-lg)] text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                  >
+                    Est. 2020 — Tirana, Albania
+                  </motion.p>
+                </div>
 
-            <motion.p
-              className="mt-[var(--space-sm)] max-w-[520px] text-[0.95rem] leading-[1.8] text-text-tertiary"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-            >
-              Looking back, it might have been the perfect time. Because from day one, we learned that things fall apart — and that you build anyway.
-            </motion.p>
-
-            {/* Scroll indicator */}
-            <motion.div
-              className="absolute bottom-10 left-1/2 -translate-x-1/2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: current === 0 ? 0.4 : 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <motion.div
-                className="h-12 w-px bg-text-secondary"
-                animate={{ scaleY: [0.3, 1, 0.3] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ transformOrigin: 'top' }}
-              />
-            </motion.div>
+                {/* Right — story copy, right-aligned */}
+                <motion.div
+                  className="max-w-[440px] md:text-right"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <p className="text-[1.05rem] leading-[1.8] text-text-secondary">
+                    The ground shook twice. The world shut down. And somewhere in the middle of all of that, two 22-year-olds decided it was a good time to build an agency.
+                  </p>
+                  <p className="mt-[var(--space-md)] text-[0.95rem] leading-[1.8] text-text-tertiary">
+                    Looking back, it might have been the perfect time. Because from day one, we learned that things fall apart — and that you build anyway.
+                  </p>
+                </motion.div>
+              </div>
+            </div>
           </div>
+
+          {/* Photo band — auto-scrolling, draggable, b&w → color on hover (5 shown) */}
+          <PhotoMarquee />
         </section>
 
         {/* ═══════════════════════════════════════════
-            1. WHAT WE SAW
+            1. THE MOTTO
         ═══════════════════════════════════════════ */}
         <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <div className="grid gap-[var(--space-xl)] md:grid-cols-2 md:items-start">
-              <div>
-                <FadeUp active={active(1)}>
-                  <p className="mb-[var(--space-sm)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                    What we saw
-                  </p>
-                </FadeUp>
-                <BigStatement text="A copy of a copy of a copy." active={active(1)} />
-              </div>
+            <FadeUp active={active(1)}>
+              <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
+                Our motto
+              </p>
+            </FadeUp>
 
-              <div className="md:pt-10">
-                <FadeUp delay={0.15} active={active(1)}>
-                  <p className="text-[1rem] leading-[1.85] text-text-secondary">
-                    Albania&apos;s creative landscape was — and in many ways still is — a copy of a copy of a copy. Brands without identity. Campaigns that belonged to no one. Work that could have been made anywhere, for anyone, meaning nothing to nobody.
-                  </p>
-                </FadeUp>
-                <FadeUp delay={0.3} active={active(1)}>
-                  <p className="mt-[var(--space-md)] text-[1.15rem] font-semibold leading-[1.6] text-text-primary">
-                    We knew it could be different.
-                  </p>
-                </FadeUp>
-              </div>
+            <BigStatement text="Climbing Mountains Together." active={active(1)} />
+
+            <div className="mt-[var(--space-xl)] flex max-w-[640px] flex-col gap-[var(--space-md)]">
+              <FadeUp delay={0.1} active={active(1)}>
+                <p className="text-[1rem] leading-[1.85] text-text-secondary">
+                  It means we don&apos;t hand you a deliverable and disappear. We sit in your meetings. We learn your operations. We understand your problems before we try to solve them.
+                </p>
+              </FadeUp>
+
+              <FadeUp delay={0.15} active={active(1)}>
+                <p className="text-[1rem] leading-[1.85] text-text-secondary">
+                  We push back when we think you&apos;re wrong — not to be difficult, but because that&apos;s what real partners do. And when we&apos;re wrong, we listen.
+                </p>
+              </FadeUp>
             </div>
+
+            <FadeUp delay={0.25} active={active(1)}>
+              <p className="mt-[var(--space-2xl)] max-w-[900px] font-display text-[clamp(1.4rem,2.8vw,2.4rem)] font-bold leading-[1.25] tracking-[-0.01em] text-text-primary">
+                &ldquo;We&apos;ve been told we&apos;re too involved.&rdquo;{' '}
+                <span className="text-text-tertiary">We consider that a compliment.</span>
+              </p>
+            </FadeUp>
           </div>
         </section>
 
@@ -259,18 +369,25 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         ═══════════════════════════════════════════ */}
         <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <div className="grid gap-[var(--space-xl)] md:grid-cols-[1fr_1fr] md:items-start">
+            <div className="grid gap-[var(--space-xl)] md:grid-cols-[1fr_1fr] md:items-center">
               <FadeUp active={active(2)}>
-                <div className="relative aspect-[4/5] max-h-[60dvh] overflow-hidden rounded-[var(--radius-lg)] bg-bg-elevated">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <p className="font-display text-[4rem] font-bold leading-none text-text-tertiary" style={{ opacity: 0.15 }}>
-                      X + A
-                    </p>
-                  </div>
-                  <div className="absolute top-0 right-0 h-20 w-20">
-                    <div className="absolute top-4 right-4 h-px w-10 bg-accent" />
-                    <div className="absolute top-4 right-4 h-10 w-px bg-accent" />
-                  </div>
+                <div className="group relative aspect-[4/5] max-h-[60dvh] rotate-[-10deg] overflow-hidden rounded-[var(--radius-lg)] bg-bg-elevated">
+                  {FOUNDERS_PHOTO ? (
+                    <Image
+                      src={FOUNDERS_PHOTO}
+                      alt="Xhulio and Aldo, founders of BoldCrest"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 45vw"
+                      className="object-cover transition-transform duration-[0.8s] group-hover:scale-105"
+                      style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <p className="font-display text-[4rem] font-bold leading-none text-text-tertiary" style={{ opacity: 0.15 }}>
+                        X + A
+                      </p>
+                    </div>
+                  )}
                 </div>
               </FadeUp>
 
@@ -295,7 +412,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
 
                 <FadeUp delay={0.2} active={active(2)}>
                   <p className="text-[1rem] leading-[1.85] text-text-secondary">
-                    We took our first team from the same university halls we were still sitting in. We were 22. We were probably not ready. We did it anyway. And what we brought to the market — at a time when no one else was bringing it — was real creative thinking to social media. Not content. <em className="not-italic font-semibold text-text-primary">Ideas.</em>
+                    We took our first team from the same university halls we were still sitting in. We were 22. We were probably not ready. We did it anyway. And what we brought to the market — at a time when no one else was bringing it — was real creative thinking to social media. Not content. Ideas.
                   </p>
                 </FadeUp>
               </div>
@@ -304,67 +421,32 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         </section>
 
         {/* ═══════════════════════════════════════════
-            3. THE MOTTO (was 4)
+            3. THE TEAM CULTURE
         ═══════════════════════════════════════════ */}
         <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <FadeUp active={active(3)}>
-              <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                Our motto
-              </p>
-            </FadeUp>
-
-            <BigStatement text="Climbing mountains together." active={active(3)} />
-
-            <div className="mt-[var(--space-xl)] grid gap-[var(--space-lg)] md:grid-cols-2">
-              <FadeUp delay={0.1} active={active(3)}>
-                <p className="text-[1rem] leading-[1.85] text-text-secondary">
-                  It means we don&apos;t hand you a deliverable and disappear. We sit in your meetings. We learn your operations. We understand your problems before we try to solve them.
-                </p>
-              </FadeUp>
-
-              <FadeUp delay={0.15} active={active(3)}>
-                <p className="text-[1rem] leading-[1.85] text-text-secondary">
-                  We push back when we think you&apos;re wrong — not to be difficult, but because that&apos;s what real partners do. And when we&apos;re wrong, we listen.
-                </p>
-              </FadeUp>
-            </div>
-
-            <FadeUp delay={0.25} active={active(3)}>
-              <p className="mt-[var(--space-lg)] border-l-2 border-accent pl-[var(--space-md)] text-[1.05rem] leading-[1.8] text-text-primary italic">
-                We&apos;ve been told we&apos;re too involved. We consider that a compliment.
-              </p>
-            </FadeUp>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════
-            5. THE TEAM CULTURE
-        ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
-          <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <FadeUp active={active(4)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
                 The team
               </p>
             </FadeUp>
 
             <div className="max-w-[700px]">
-              <BigStatement text="Every person has a glitch in their system." active={active(4)} />
+              <BigStatement text="Every person has a glitch in their system." active={active(3)} />
 
-              <FadeUp delay={0.1} active={active(4)}>
+              <FadeUp delay={0.1} active={active(3)}>
                 <p className="mt-[var(--space-lg)] text-[1rem] leading-[1.85] text-text-secondary">
                   Something slightly off, slightly unusual, slightly theirs. And that&apos;s exactly what makes them belong here. We are different people who are somehow made of the same thing.
                 </p>
               </FadeUp>
 
-              <FadeUp delay={0.15} active={active(4)}>
+              <FadeUp delay={0.15} active={active(3)}>
                 <p className="mt-[var(--space-md)] text-[1rem] leading-[1.85] text-text-secondary">
                   We bully each other. We cook together. We have traditions that make no sense to anyone outside this room. And when someone is sick, we show up.
                 </p>
               </FadeUp>
 
-              <FadeUp delay={0.2} active={active(4)}>
+              <FadeUp delay={0.2} active={active(3)}>
                 <p className="mt-[var(--space-md)] text-[1.05rem] font-semibold leading-[1.7] text-text-primary">
                   It is, honestly, harder to find someone who won&apos;t disturb our peace than someone who has a great portfolio.
                 </p>
@@ -376,27 +458,37 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             6. TEAM GRID
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
-          <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <FadeUp active={active(5)}>
-              <div className="mb-[var(--space-lg)] flex items-end justify-between border-b border-border pb-[var(--space-md)]">
+        <section className="flex h-[100dvh] items-center px-[var(--gutter)] pt-[80px]">
+          <div className="mx-auto w-full max-w-[1180px]">
+            <FadeUp active={active(4)}>
+              <div className="mb-[var(--space-md)] flex items-end justify-between border-b border-border pb-[var(--space-sm)]">
                 <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-secondary">
                   The Faces
                 </h2>
                 <span className="text-[0.75rem] tracking-[0.1em] text-text-tertiary">
-                  {members.length > 0 ? `${members.length} people` : ''}
+                  {team.length > 0 ? `${team.length} people` : ''}
                 </span>
               </div>
             </FadeUp>
 
-            <div className="grid grid-cols-2 gap-[var(--space-md)] sm:grid-cols-3 lg:grid-cols-4">
-              {members.map((member, idx) => (
-                <FadeUp key={member._id} delay={idx * 0.06} active={active(5)}>
-                  <div className="group relative aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)] bg-bg-card">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+              {team.map((member, idx) => (
+                <FadeUp key={member.id} delay={idx * 0.03} active={active(4)}>
+                  <div className="group relative aspect-square overflow-hidden rounded-[var(--radius-md)] bg-bg-card">
                     {member.image?.asset ? (
                       <Image
                         loader={sanityImageLoader}
                         src={urlFor(member.image).width(500).height(667).url()}
+                        alt={member.name}
+                        fill
+                        loading="lazy"
+                        className="object-cover transition-transform duration-[0.8s] group-hover:scale-105"
+                        style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
+                    ) : member.localSrc ? (
+                      <Image
+                        src={member.localSrc}
                         alt={member.name}
                         fill
                         loading="lazy"
@@ -436,7 +528,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
               ))}
             </div>
 
-            {members.length === 0 && (
+            {team.length === 0 && (
               <p className="py-20 text-center text-text-tertiary">Team members coming soon.</p>
             )}
           </div>
@@ -448,27 +540,27 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <div className="mx-auto max-w-[700px] text-center">
-              <FadeUp active={active(6)}>
+              <FadeUp active={active(5)}>
                 <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
                   The work
                 </p>
               </FadeUp>
 
-              <BigStatement text="The work we're most proud of, most people will never know we made." active={active(6)} className="text-center" />
+              <BigStatement text="The work we're most proud of, most people will never know we made." active={active(5)} className="text-center" />
 
-              <FadeUp delay={0.15} active={active(6)}>
+              <FadeUp delay={0.15} active={active(5)}>
                 <p className="mt-[var(--space-lg)] text-[1rem] leading-[1.85] text-text-secondary">
                   That&apos;s not false modesty. That&apos;s the goal. When a brand becomes so real, so lived-in, so theirs — when people carry it, wear it, post it, and believe in it without a second thought — the agency behind it disappears. And it should.
                 </p>
               </FadeUp>
 
-              <FadeUp delay={0.2} active={active(6)}>
+              <FadeUp delay={0.2} active={active(5)}>
                 <p className="mt-[var(--space-md)] text-[1.1rem] font-semibold leading-[1.7] text-text-primary">
                   The best thing we can do is make something bigger than ourselves, then step back and watch it belong to the world.
                 </p>
               </FadeUp>
 
-              <FadeUp delay={0.25} active={active(6)}>
+              <FadeUp delay={0.25} active={active(5)}>
                 <p className="mt-[var(--space-sm)] text-[0.95rem] text-text-tertiary italic">
                   That&apos;s why we exist.
                 </p>
@@ -478,66 +570,23 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         </section>
 
         {/* ═══════════════════════════════════════════
-            8. CLOSING TEXT — First part
+            6. CLOSING
         ═══════════════════════════════════════════ */}
         <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <div className="mx-auto max-w-[650px]">
-              <FadeUp active={active(7)}>
-                <p className="text-[1rem] leading-[1.85] text-text-secondary">
-                  If you&apos;ve read this far, we hope you felt something. A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
-                </p>
-              </FadeUp>
-            </div>
-
-            {/* Sliding Gallery */}
-            <FadeUp delay={0.2} active={active(7)}>
-              <div className="relative mt-[var(--space-xl)] overflow-hidden">
-                <div className="flex animate-[marquee_40s_linear_infinite] gap-3">
-                  {[...galleryImages, ...galleryImages].map((img, i) => (
-                    <div
-                      key={i}
-                      className="relative shrink-0 overflow-hidden rounded-xl"
-                      style={{ width: `${img.width}px`, height: '320px' }}
-                    >
-                      <div
-                        className="absolute inset-0"
-                        style={{ background: `linear-gradient(135deg, ${img.color}15 0%, ${img.color}08 100%)` }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-white/8">
-                          <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1" />
-                          <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
-                          <path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-                        </svg>
-                      </div>
-                      <div className="absolute right-0 bottom-0 left-0 h-[1px] opacity-20" style={{ backgroundColor: img.color }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <FadeUp active={active(6)}>
+              <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
+                Before you go
+              </p>
             </FadeUp>
-          </div>
-        </section>
 
-        {/* ═══════════════════════════════════════════
-            8. CLOSING — CTA
-        ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
-          <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <div className="mx-auto max-w-[700px] text-center">
-              <BigStatement text="Ready to climb?" active={active(8)} className="text-center" />
+            <div className="max-w-[820px]">
+              <BigStatement text="If you've read this far, we hope you felt something." active={active(6)} />
 
-              <FadeUp delay={0.15} active={active(8)}>
-                <p className="mt-[var(--space-lg)] text-[1rem] leading-[1.85] text-text-secondary">
-                  Your brand, your idea, your mountain — we&apos;ll meet you there with everything we have.
+              <FadeUp delay={0.2} active={active(6)}>
+                <p className="mt-[var(--space-lg)] max-w-[600px] text-[1rem] leading-[1.85] text-text-secondary">
+                  A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
                 </p>
-              </FadeUp>
-
-              <FadeUp delay={0.25} active={active(8)}>
-                <div className="mt-[var(--space-xl)]" style={{ fontSize: 'clamp(3rem,8vw,6rem)' }}>
-                  <InlineButton href="/start-a-new-project" label="Let's climb" showArrow />
-                </div>
               </FadeUp>
             </div>
           </div>
