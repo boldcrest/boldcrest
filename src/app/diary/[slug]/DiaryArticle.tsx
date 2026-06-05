@@ -94,14 +94,22 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
       {/* ── Title hero — same treatment as the People page ── */}
       <section className="px-[var(--gutter)] pt-[120px] pb-[var(--space-lg)]">
         <div className="w-full">
-          <motion.p
-            className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+          <motion.nav
+            className="mb-[var(--space-md)] flex items-center gap-2 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-text-tertiary"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            {post.category || 'Diary'}
-          </motion.p>
+            <Link href="/diary" className="transition-colors duration-200 hover:text-white">
+              Diary
+            </Link>
+            {post.category && (
+              <>
+                <span>/</span>
+                <span className="text-text-secondary">{post.category}</span>
+              </>
+            )}
+          </motion.nav>
 
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <motion.h1
@@ -135,7 +143,7 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
       {/* ── Featured image — full-bleed band (same dimensions as the People photo strip) ── */}
       {hasCover && (
         <motion.div
-          className="relative mt-[var(--space-md)] h-[clamp(340px,58vh,720px)] w-full overflow-hidden"
+          className="relative mt-[var(--space-md)] h-[42dvh] w-full overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
