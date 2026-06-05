@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { PortableText, type PortableTextComponents } from '@portabletext/react'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
+import { useLenis } from '@/components/LenisProvider'
 
 interface DiaryPost {
   _id: string
@@ -93,6 +94,7 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const articleRef = useRef<HTMLDivElement>(null) // scrollable second slide
   const touchStartY = useRef(0)
+  const lenis = useLenis()
 
   const hasBody = post.body && post.body.length > 0
   const hasCover = !!post.coverImage?.asset
@@ -180,6 +182,14 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [])
+
+  // Pause Lenis so the article slide scrolls natively (fires once the
+  // Lenis instance is available via context — survives full page loads).
+  useEffect(() => {
+    if (!lenis) return
+    lenis.stop()
+    return () => lenis.start()
+  }, [lenis])
 
   return (
     <div ref={containerRef} className="fixed inset-0 overflow-hidden bg-bg" style={{ zIndex: 10 }}>
@@ -271,6 +281,7 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
         {/* ── Slide 1 — article: all text + images, internally scrollable ── */}
         <section
           ref={articleRef}
+          data-lenis-prevent
           className="h-[100dvh] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           <div className="px-[var(--gutter)] pt-[120px] pb-[var(--space-2xl)]">
