@@ -7,6 +7,8 @@ import LenisProvider from '@/components/LenisProvider'
 import PageTransitionProvider from '@/components/PageTransition'
 import StartProjectProvider from '@/components/start-project/StartProjectProvider'
 import { SanityLive } from '@/sanity/lib/live'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const metropolis = localFont({
   src: [
@@ -106,6 +108,8 @@ export default function RootLayout({
           </PageTransitionProvider>
         </LenisProvider>
         <SanityLive />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
