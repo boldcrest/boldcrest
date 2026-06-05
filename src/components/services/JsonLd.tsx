@@ -14,7 +14,7 @@ interface ServiceSchemaProps {
   url: string
 }
 
-const SITE_URL = 'https://boldcrest.com'
+const SITE_URL = 'https://www.boldcrest.com'
 
 export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
   const schema = {

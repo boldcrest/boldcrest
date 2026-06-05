@@ -23,7 +23,7 @@ const metropolis = localFont({
   display: 'swap',
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://boldcrest.com'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.boldcrest.com'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -82,9 +82,9 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'LocalBusiness',
-              '@id': 'https://boldcrest.com/#organization',
+              '@id': 'https://www.boldcrest.com/#organization',
               name: 'BoldCrest',
-              url: 'https://boldcrest.com',
+              url: 'https://www.boldcrest.com',
               email: 'info@boldcrest.com',
               description: 'Creative agency offering brand development, photography, video, animation, and communication. 300+ projects, 30+ brands, 7+ years.',
               address: { '@type': 'PostalAddress', addressLocality: 'Tirana', addressCountry: 'AL' },

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { client } from '@/sanity/lib/client'
 import { allProjectsQuery } from '@/sanity/lib/queries'
 
-const BASE_URL = 'https://boldcrest.com'
+const BASE_URL = 'https://www.boldcrest.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const projects = await client.fetch(allProjectsQuery)
