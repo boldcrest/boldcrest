@@ -39,6 +39,15 @@ yarn-error.log*
 # local design previews / mockups
 /previews
 
+# Claude local working dir (launch configs, worktrees) — never commit
+/.claude
+
+# Team headshots live in Sanity, not the repo
+/public/Team Photos
+
+# Sample/in-progress pages kept local until ready to ship
+/src/app/services-sample
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
