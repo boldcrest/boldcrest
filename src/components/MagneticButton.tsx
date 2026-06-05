@@ -3,12 +3,15 @@
 import { useRef, useCallback, ReactNode } from 'react'
 import Link from 'next/link'
 
-/* Three brand-coloured pill outlines that trail the cursor with staggered
+/* Three monochrome pill outlines that trail the cursor with staggered
    spring-like easing — inspired by Reform Collective.
-   Lines are invisible by default and fade in on hover. */
+   Lines are invisible by default and fade in on hover. The line colour matches
+   the button (black button → black lines, white button → white lines), and the
+   three lines step DOWN in opacity from inner (75%) to outer (25%). */
 
-const TRAIL_COLORS = ['#DA291C', '#f9b311', '#004c95']
 const TRAIL_STRENGTHS = [0.4, 0.65, 0.9]
+// Inner → outer opacity for the three trailing outlines.
+const LINE_OPACITIES = [0.75, 0.5, 0.25]
 const MAX_OFFSET = 14
 
 /* ── Shared base ─────────────────────────────────────────────── */
@@ -21,6 +24,8 @@ interface MagneticBaseProps {
   style?: React.CSSProperties
   target?: string
   rel?: string
+  /** Colour of the trailing hover outlines (match the button: black/white). */
+  lineColor?: string
 }
 
 function MagneticBase({
@@ -31,6 +36,7 @@ function MagneticBase({
   style,
   target,
   rel,
+  lineColor = '#ffffff',
 }: MagneticBaseProps) {
   const containerRef = useRef<HTMLElement>(null)
   const layerRefs = useRef<(HTMLSpanElement | null)[]>([])
@@ -48,7 +54,7 @@ function MagneticBase({
         const strength = TRAIL_STRENGTHS[i]
         const dx = nx * MAX_OFFSET * strength
         const dy = ny * MAX_OFFSET * strength
-        layer.style.opacity = '1'
+        layer.style.opacity = String(LINE_OPACITIES[i])
         layer.style.transform = `translate(${dx}px, ${dy}px)`
       })
     },
@@ -65,16 +71,16 @@ function MagneticBase({
 
   const trail = (
     <>
-      {/* Trailing coloured outlines — hidden by default, revealed on hover */}
-      {TRAIL_COLORS.map((color, i) => (
+      {/* Trailing monochrome outlines — hidden by default, revealed on hover */}
+      {LINE_OPACITIES.map((_, i) => (
         <span
-          key={color}
+          key={i}
           ref={(el) => {
             layerRefs.current[i] = el
           }}
           className="pointer-events-none absolute inset-0 rounded-[inherit]"
           style={{
-            border: `1.5px solid ${color}`,
+            border: `1.5px solid ${lineColor}`,
             opacity: 0,
             transform: 'translate(0px, 0px)',
             transition: `transform ${0.35 + i * 0.2}s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease`,
@@ -133,6 +139,7 @@ export function CTAButton({
   className = '',
   target,
   rel,
+  lineColor,
 }: {
   href?: string
   onClick?: () => void
@@ -141,6 +148,7 @@ export function CTAButton({
   className?: string
   target?: string
   rel?: string
+  lineColor?: string
 }) {
   return (
     <MagneticBase
@@ -148,6 +156,7 @@ export function CTAButton({
       onClick={onClick}
       target={target}
       rel={rel}
+      lineColor={lineColor}
       className={`inline-flex items-center gap-3 rounded-[var(--radius-pill)] border border-white/25 px-5 py-[0.55rem] text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-text-secondary transition-all duration-[0.5s] hover:border-white/60 hover:text-white ${className}`}
       style={{ transitionTimingFunction: CUBIC }}
     >
@@ -181,15 +190,18 @@ export function InlineButton({
   label,
   showArrow = true,
   className = '',
+  lineColor,
 }: {
   href: string
   label: string
   showArrow?: boolean
   className?: string
+  lineColor?: string
 }) {
   return (
     <MagneticBase
       href={href}
+      lineColor={lineColor}
       className={`inline-flex items-center gap-3 rounded-[var(--radius-pill)] border border-white/25 px-[1em] py-[0.42em] align-middle text-[0.35em] font-semibold uppercase tracking-[0.15em] text-text-secondary transition-all duration-[0.5s] hover:border-white/60 hover:text-white ${className}`}
       style={{ transitionTimingFunction: CUBIC, backgroundColor: '#000' }}
     >
@@ -256,7 +268,7 @@ export function SubmitButton({
         const strength = TRAIL_STRENGTHS[i]
         const dx = nx * MAX_OFFSET * strength
         const dy = ny * MAX_OFFSET * strength
-        layer.style.opacity = '1'
+        layer.style.opacity = String(LINE_OPACITIES[i])
         layer.style.transform = `translate(${dx}px, ${dy}px)`
       })
     },
@@ -281,15 +293,15 @@ export function SubmitButton({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {TRAIL_COLORS.map((color, i) => (
+      {LINE_OPACITIES.map((_, i) => (
         <span
-          key={color}
+          key={i}
           ref={(el) => {
             layerRefs.current[i] = el
           }}
           className="pointer-events-none absolute inset-0 rounded-[inherit]"
           style={{
-            border: `1.5px solid ${color}`,
+            border: '1.5px solid #ffffff',
             opacity: 0,
             transform: 'translate(0px, 0px)',
             transition: `transform ${0.35 + i * 0.2}s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease`,
