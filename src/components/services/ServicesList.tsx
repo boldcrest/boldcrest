@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
 import { CTAButton } from '@/components/MagneticButton'
+import { useStartProject } from '@/components/start-project/StartProjectProvider'
 
 interface ServiceItem {
   name: string
@@ -16,7 +17,6 @@ interface ServicesListProps {
   heading: string
   services: ServiceItem[]
   ctaLabel?: string
-  ctaHref?: string
 }
 
 export default function ServicesList({
@@ -24,8 +24,8 @@ export default function ServicesList({
   heading,
   services,
   ctaLabel,
-  ctaHref = '/start-a-new-project',
 }: ServicesListProps) {
+  const { open: openStartProject } = useStartProject()
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -90,7 +90,7 @@ export default function ServicesList({
 
         {ctaLabel && (
           <div className="mt-[var(--space-xl)]">
-            <CTAButton href={ctaHref} label={ctaLabel} showArrow />
+            <CTAButton onClick={openStartProject} label={ctaLabel} showArrow />
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import { useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { CTAButton } from '@/components/MagneticButton'
+import { useStartProject } from '@/components/start-project/StartProjectProvider'
 
 const capabilities = [
   {
@@ -84,6 +85,7 @@ export default function ServiceCards() {
   const containerRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const maxScroll = useRef(0)
+  const { open: openStartProject } = useStartProject()
 
   useEffect(() => {
     const measure = () => {
@@ -199,7 +201,7 @@ export default function ServiceCards() {
                 timing. If you&apos;re building something real, we&apos;ll
                 meet you there.
               </p>
-              <CTAButton href="/start-a-new-project" label="Let's Chat" showArrow />
+              <CTAButton onClick={openStartProject} label="Let's Chat" showArrow />
             </div>
           </div>
         </motion.div>

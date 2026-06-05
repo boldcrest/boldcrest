@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { CTAButton } from '@/components/MagneticButton'
+import { useStartProject } from '@/components/start-project/StartProjectProvider'
 
 interface FAQItem {
   question: string
@@ -14,7 +15,6 @@ interface FAQSectionProps {
   heading: string
   items: FAQItem[]
   ctaLabel?: string
-  ctaHref?: string
   noTopBorder?: boolean
   tightTop?: boolean
   grayBg?: boolean
@@ -25,11 +25,11 @@ export default function FAQSection({
   heading,
   items,
   ctaLabel,
-  ctaHref = '/start-a-new-project',
   noTopBorder = false,
   tightTop = false,
   grayBg = false,
 }: FAQSectionProps) {
+  const { open: openStartProject } = useStartProject()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
@@ -112,7 +112,7 @@ export default function FAQSection({
 
         {ctaLabel && (
           <div className="mt-[var(--space-xl)]">
-            <CTAButton href={ctaHref} label={ctaLabel} showArrow />
+            <CTAButton onClick={openStartProject} label={ctaLabel} showArrow />
           </div>
         )}
       </div>

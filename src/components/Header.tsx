@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import MobileMenu from './MobileMenu'
+import { useStartProject } from './start-project/StartProjectProvider'
 
 const navLinks = [
   { href: '/work', label: 'Work' },
@@ -18,6 +19,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
   const isStudio = pathname?.startsWith('/studio')
+  const { open: openStartProject } = useStartProject()
 
   useEffect(() => {
     if (isStudio) return
@@ -115,9 +117,10 @@ export default function Header() {
             </nav>
 
             {/* CTA — full text when not scrolled, circle + when scrolled */}
-            <Link
-              href="/start-a-new-project"
-              className="group relative z-10 hidden items-center justify-center overflow-hidden border transition-all md:inline-flex"
+            <button
+              type="button"
+              onClick={openStartProject}
+              className="group relative z-10 hidden cursor-pointer items-center justify-center overflow-hidden border transition-all md:inline-flex"
               style={{
                 width: scrolled ? '2.2rem' : 'auto',
                 height: scrolled ? '2.2rem' : 'auto',
@@ -158,7 +161,7 @@ export default function Header() {
                   <span className="leading-[1.2]">Start a Project</span>
                 </span>
               </span>
-            </Link>
+            </button>
 
             {/* Mobile Hamburger */}
             <button

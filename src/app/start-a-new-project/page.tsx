@@ -1,18 +1,20 @@
-import type { Metadata } from 'next'
-import StartProjectClient from './StartProjectClient'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Start a New Project',
-  description:
-    "Let's work together. Tell us about your project and we'll get back to you shortly.",
-  openGraph: {
-    title: 'Start a New Project — BoldCrest',
-    description:
-      "Let's work together. Tell us about your project and we'll get back to you shortly.",
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
-  },
-}
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useStartProject } from '@/components/start-project/StartProjectProvider'
 
+/* The "Start a Project" experience is now a global slide-in chat panel rather
+   than a standalone page. If someone lands on the old URL directly, open the
+   panel and send them to the home page underneath it. */
 export default function StartProjectPage() {
-  return <StartProjectClient />
+  const router = useRouter()
+  const { open } = useStartProject()
+
+  useEffect(() => {
+    open()
+    router.replace('/')
+  }, [open, router])
+
+  return null
 }

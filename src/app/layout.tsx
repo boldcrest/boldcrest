@@ -5,6 +5,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import LenisProvider from '@/components/LenisProvider'
 import PageTransitionProvider from '@/components/PageTransition'
+import StartProjectProvider from '@/components/start-project/StartProjectProvider'
 import { SanityLive } from '@/sanity/lib/live'
 
 const metropolis = localFont({
@@ -95,11 +96,13 @@ export default function RootLayout({
       <body className={metropolis.variable}>
         <LenisProvider>
           <PageTransitionProvider>
-            <div className="relative z-[1] bg-bg">
-              <Header />
-              {children}
-            </div>
-            <Footer />
+            <StartProjectProvider>
+              <div className="relative z-[1] bg-bg">
+                <Header />
+                {children}
+              </div>
+              <Footer />
+            </StartProjectProvider>
           </PageTransitionProvider>
         </LenisProvider>
         <SanityLive />

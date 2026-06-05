@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useStartProject } from './start-project/StartProjectProvider'
 
 const navLinks = [
   { href: '/work', label: 'Work' },
@@ -9,7 +10,6 @@ const navLinks = [
   { href: '/people', label: 'People' },
   { href: '/diary', label: 'Diary' },
   { href: '/contact', label: 'Contact' },
-  { href: '/start-a-new-project', label: 'Start a Project' },
 ]
 
 interface MobileMenuProps {
@@ -18,6 +18,7 @@ interface MobileMenuProps {
 }
 
 export default function MobileMenu({ open, onClose }: MobileMenuProps) {
+  const { open: openStartProject } = useStartProject()
   return (
     <AnimatePresence>
       {open && (
@@ -93,6 +94,21 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
                   </Link>
                 </motion.li>
               ))}
+
+              {/* Start a Project — opens the chat panel */}
+              <motion.li
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 + navLinks.length * 0.04, ease: [0, 0, 0.2, 1] }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { onClose(); openStartProject() }}
+                  className="block py-0.5 text-left font-display text-[2rem] font-normal leading-[1.2] text-white transition-colors duration-200 hover:text-accent"
+                >
+                  Start a Project
+                </button>
+              </motion.li>
             </ul>
           </motion.nav>
         </>

@@ -2,9 +2,9 @@
 
 import { useState, useActionState } from 'react'
 import { motion } from 'framer-motion'
-import Link from 'next/link'
 import { submitContactForm } from './actions'
 import { SubmitButton } from '@/components/MagneticButton'
+import { useStartProject } from '@/components/start-project/StartProjectProvider'
 
 interface SocialLink {
   platform: string
@@ -28,6 +28,7 @@ export default function ContactPageClient({
   contactEmail,
   socialLinks,
 }: ContactPageClientProps) {
+  const { open: openStartProject } = useStartProject()
   const [submitted, setSubmitted] = useState(false)
 
   const [, formAction, isPending] = useActionState(
@@ -145,9 +146,10 @@ export default function ContactPageClient({
                 <p className="mb-3 text-[0.85rem] text-text-tertiary">
                   Have a project in mind?
                 </p>
-                <Link
-                  href="/start-a-new-project"
-                  className="group inline-flex items-center gap-2 text-[1rem] font-semibold text-accent transition-colors duration-300 hover:text-white"
+                <button
+                  type="button"
+                  onClick={openStartProject}
+                  className="group inline-flex cursor-pointer items-center gap-2 text-[1rem] font-semibold text-accent transition-colors duration-300 hover:text-white"
                 >
                   Start a New Project
                   <svg
@@ -165,7 +167,7 @@ export default function ContactPageClient({
                       strokeLinejoin="round"
                     />
                   </svg>
-                </Link>
+                </button>
               </div>
             </motion.div>
 

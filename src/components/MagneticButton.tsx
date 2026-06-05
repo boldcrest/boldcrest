@@ -14,7 +14,8 @@ const MAX_OFFSET = 14
 /* ── Shared base ─────────────────────────────────────────────── */
 
 interface MagneticBaseProps {
-  href: string
+  href?: string
+  onClick?: () => void
   children: ReactNode
   className?: string
   style?: React.CSSProperties
@@ -22,15 +23,16 @@ interface MagneticBaseProps {
 
 function MagneticBase({
   href,
+  onClick,
   children,
   className = '',
   style,
 }: MagneticBaseProps) {
-  const containerRef = useRef<HTMLAnchorElement>(null)
+  const containerRef = useRef<HTMLElement>(null)
   const layerRefs = useRef<(HTMLSpanElement | null)[]>([])
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       const el = containerRef.current
       if (!el) return
       const rect = el.getBoundingClientRect()
@@ -57,15 +59,8 @@ function MagneticBase({
     })
   }, [])
 
-  return (
-    <Link
-      ref={containerRef}
-      href={href}
-      className={`group relative ${className}`}
-      style={style}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
+  const trail = (
+    <>
       {/* Trailing coloured outlines — hidden by default, revealed on hover */}
       {TRAIL_COLORS.map((color, i) => (
         <span
@@ -84,8 +79,37 @@ function MagneticBase({
           aria-hidden
         />
       ))}
-
       {children}
+    </>
+  )
+
+  // Render a real button when there's an action instead of navigation
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        ref={containerRef as React.Ref<HTMLButtonElement>}
+        onClick={onClick}
+        className={`group relative cursor-pointer ${className}`}
+        style={style}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
+        {trail}
+      </button>
+    )
+  }
+
+  return (
+    <Link
+      ref={containerRef as React.Ref<HTMLAnchorElement>}
+      href={href ?? '#'}
+      className={`group relative ${className}`}
+      style={style}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      {trail}
     </Link>
   )
 }
@@ -97,11 +121,13 @@ const CUBIC = 'cubic-bezier(0.645, 0.045, 0.355, 1)'
 
 export function CTAButton({
   href,
+  onClick,
   label,
   showArrow = false,
   className = '',
 }: {
-  href: string
+  href?: string
+  onClick?: () => void
   label: string
   showArrow?: boolean
   className?: string
@@ -109,6 +135,7 @@ export function CTAButton({
   return (
     <MagneticBase
       href={href}
+      onClick={onClick}
       className={`inline-flex items-center gap-3 rounded-[var(--radius-pill)] border border-white/25 px-5 py-[0.55rem] text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-text-secondary transition-all duration-[0.5s] hover:border-white/60 hover:text-white ${className}`}
       style={{ transitionTimingFunction: CUBIC }}
     >

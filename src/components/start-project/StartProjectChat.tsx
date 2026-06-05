@@ -415,7 +415,7 @@ const ORDER: Step[] = [
   'sent',
 ]
 
-export default function StartProjectClient() {
+export default function StartProjectChat() {
   const [step, setStep] = useState<Step>('name')
   const [a, setA] = useState<Answers>(EMPTY)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -469,20 +469,7 @@ export default function StartProjectClient() {
   const identitySubmitted = isReached('services')
 
   return (
-    <main className="relative min-h-screen px-[var(--gutter)] pt-32 pb-32">
-      <div className="mx-auto flex max-w-[1100px] flex-col gap-14">
-        {/* ═══════════════════════════════════════════
-            Eyebrow
-        ═══════════════════════════════════════════ */}
-        <motion.p
-          className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-        >
-          Start a new project
-        </motion.p>
-
+    <div className="flex flex-col gap-12">
         {/* ═══════════════════════════════════════════
             Turn 1 — Megi's greeting
         ═══════════════════════════════════════════ */}
@@ -825,7 +812,6 @@ export default function StartProjectClient() {
         </AnimatePresence>
 
         <div ref={bottomRef} aria-hidden="true" />
-      </div>
-    </main>
+    </div>
   )
 }
