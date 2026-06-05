@@ -149,7 +149,7 @@ function PhotoMarquee() {
       onPointerCancel={endDrag}
       onPointerLeave={endDrag}
       onDragStart={(e) => e.preventDefault()}
-      className="flex h-[50dvh] w-full shrink-0 cursor-grab touch-pan-y select-none overflow-x-auto [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+      className="flex h-[50dvh] w-full shrink-0 cursor-grab touch-pan-y select-none overflow-x-auto [scrollbar-width:none] [@media(max-height:820px)]:h-[42dvh] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
     >
       <div className="flex h-full w-max">
         {repeated.map((n, i) => (
@@ -482,9 +482,9 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             0. HERO
         ═══════════════════════════════════════════ */}
-        <section className="relative flex h-[100dvh] flex-col bg-bg">
+        <section className="relative flex h-[100dvh] flex-col overflow-hidden bg-bg">
           {/* Hero copy — full-width stretch, top-aligned to match Work/Services/Diary */}
-          <div className="flex flex-1 items-start px-[var(--gutter)] pt-[120px]">
+          <div className="flex min-h-0 flex-1 items-start px-[var(--gutter)] pt-[120px] [@media(max-height:780px)]:pt-[92px]">
             <div className="w-full">
               <motion.p
                 className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary"
@@ -499,7 +499,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
                 {/* Left — headline + established */}
                 <div>
                   <motion.h1
-                    className="font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.08]"
+                    className="font-display text-[clamp(2.25rem,min(6vw,8.5vh),5rem)] font-bold leading-[1.06]"
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -546,7 +546,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             1. THE MOTTO
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
+        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <FadeUp active={active(1)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
@@ -582,7 +582,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             2. THE FOUNDERS
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
+        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <div className="grid gap-[var(--space-xl)] md:grid-cols-[1fr_1fr] md:items-center">
               <FadeUp active={active(2)}>
@@ -638,7 +638,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             3. TEAM CULTURE + FACES (combined)
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)] pt-[80px]">
+        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)] pt-[80px]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <div className="grid items-center gap-[var(--space-2xl)] md:grid-cols-2">
               {/* Left — culture copy */}
@@ -681,7 +681,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             7. THE WORK PHILOSOPHY
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
+        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <div className="mx-auto max-w-[700px] text-center">
               <FadeUp active={active(4)}>
@@ -717,7 +717,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
             5. CLOSING (last slide — releases the scroll lock so the
             global footer can flow in below via normal scroll)
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
+        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <FadeUp active={active(5)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
