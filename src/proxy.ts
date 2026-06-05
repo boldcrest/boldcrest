@@ -22,12 +22,30 @@ const SUBDOMAIN_REDIRECTS: Record<string, string> = {
   'archive.boldcrest.com': 'http://quickconnect.to/BoldArchive',
 }
 
+/**
+ * Alternate brand domains → the canonical site (308 PERMANENT, so search engines
+ * consolidate them onto boldcrest.com). Both the apex and the www host of each
+ * domain are covered. We send them straight to the canonical www host to avoid a
+ * double hop through the apex→www redirect.
+ */
+const CANONICAL_SITE = 'https://www.boldcrest.com'
+const DOMAIN_REDIRECTS = new Set([
+  'boldreactor.com',
+  'www.boldreactor.com',
+  'boldworkshops.com',
+  'www.boldworkshops.com',
+])
+
 export function proxy(req: NextRequest) {
   const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0]
-  const destination = SUBDOMAIN_REDIRECTS[host]
 
+  const destination = SUBDOMAIN_REDIRECTS[host]
   if (destination) {
     return NextResponse.redirect(destination, 307)
+  }
+
+  if (DOMAIN_REDIRECTS.has(host)) {
+    return NextResponse.redirect(CANONICAL_SITE, 308)
   }
 
   return NextResponse.next()
