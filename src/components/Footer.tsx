@@ -34,13 +34,10 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-export default function Footer({ embedded = false }: { embedded?: boolean }) {
+export default function Footer() {
   const pathname = usePathname()
 
   if (pathname?.startsWith('/studio')) return null
-  // The People page is a full-screen slide deck that renders its own footer
-  // inside the last slide (embedded), so suppress the GLOBAL one here.
-  if (!embedded && pathname === '/people') return null
 
   return (
     <footer

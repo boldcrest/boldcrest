@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
-import Footer from '@/components/Footer'
+import { useLenis } from '@/components/LenisProvider'
 
 interface TeamMember {
   _id: string
@@ -318,6 +318,15 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
   const [isLocked, setIsLocked] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
+  const lenis = useLenis()
+
+  // Pause Lenis on this page — the deck wheel-jacks its own navigation, and the
+  // last slide uses native scroll to reach the footer (Lenis would fight it).
+  useEffect(() => {
+    if (!lenis) return
+    lenis.stop()
+    return () => { lenis.start() }
+  }, [lenis])
 
   const goTo = useCallback((index: number) => {
     if (isLocked) return
@@ -334,6 +343,16 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
     if (!el) return
 
     const onWheel = (e: WheelEvent) => {
+      const last = TOTAL_SECTIONS - 1
+      // On the final slide, let the page scroll normally so the footer shows.
+      // Only re-capture the wheel to step back up when the deck is at the top.
+      if (current === last) {
+        if (e.deltaY < 0 && window.scrollY <= 0) {
+          e.preventDefault()
+          if (!isLocked) goTo(current - 1)
+        }
+        return
+      }
       e.preventDefault()
       if (isLocked) return
       if (Math.abs(e.deltaY) < 15) return // ignore tiny scroll
@@ -354,8 +373,17 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
       touchStartY.current = e.touches[0].clientY
     }
     const onTouchEnd = (e: TouchEvent) => {
-      if (isLocked) return
+      const last = TOTAL_SECTIONS - 1
       const diff = touchStartY.current - e.changedTouches[0].clientY
+      // On the final slide, allow native scroll to the footer; only step back
+      // into the deck on a downward swipe when the page is at the top.
+      if (current === last) {
+        if (diff < 0 && window.scrollY <= 0 && !isLocked && Math.abs(diff) > 50) {
+          goTo(current - 1)
+        }
+        return
+      }
+      if (isLocked) return
       if (Math.abs(diff) < 50) return
       if (diff > 0) goTo(current + 1)
       else goTo(current - 1)
@@ -372,6 +400,13 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
   // Keyboard handler
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const last = TOTAL_SECTIONS - 1
+      // On the final slide, leave the keys to native scrolling (footer) — except
+      // ArrowUp at the very top, which steps back into the deck.
+      if (current === last) {
+        if (e.key === 'ArrowUp' && window.scrollY <= 0) { e.preventDefault(); goTo(current - 1) }
+        return
+      }
       if (e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goTo(current + 1) }
       if (e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1) }
     }
@@ -379,11 +414,26 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
     return () => window.removeEventListener('keydown', onKey)
   }, [current, goTo])
 
-  // Lock body scroll
+  // Lock page scroll while navigating slides; release on the last slide so the
+  // footer below the deck can be reached with a normal scroll. Lock the <html>
+  // element too — body-only is not enough now that the document is taller than
+  // the viewport (the footer sits below the in-flow deck).
   useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
+    const last = TOTAL_SECTIONS - 1
+    const html = document.documentElement
+    if (current === last) {
+      html.style.overflow = ''
+      document.body.style.overflow = ''
+    } else {
+      html.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden'
+      window.scrollTo(0, 0)
+    }
+    return () => {
+      html.style.overflow = ''
+      document.body.style.overflow = ''
+    }
+  }, [current])
 
   const active = (i: number) => current === i
 
@@ -407,7 +457,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         }))
 
   return (
-    <div ref={containerRef} className="fixed inset-0 overflow-hidden bg-bg" style={{ zIndex: 10 }}>
+    <div ref={containerRef} className="relative h-[100dvh] overflow-hidden bg-bg">
       {/* Sliding wrapper */}
       <motion.div
         className="relative will-change-transform"
@@ -649,30 +699,27 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         </section>
 
         {/* ═══════════════════════════════════════════
-            5. CLOSING (+ footer at the bottom of the last slide)
+            5. CLOSING (last slide — releases the scroll lock so the
+            global footer can flow in below via normal scroll)
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] flex-col">
-          <div className="flex flex-1 items-center px-[var(--gutter)]">
-            <div className="mx-auto w-full max-w-[var(--max-width)]">
-              <FadeUp active={active(5)}>
-                <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                  Before you go
+        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
+          <div className="mx-auto w-full max-w-[var(--max-width)]">
+            <FadeUp active={active(5)}>
+              <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
+                Before you go
+              </p>
+            </FadeUp>
+
+            <div className="max-w-[820px]">
+              <BigStatement text="If you've read this far, we hope you felt something." active={active(5)} />
+
+              <FadeUp delay={0.2} active={active(5)}>
+                <p className="mt-[var(--space-lg)] max-w-[600px] text-[1rem] leading-[1.85] text-text-secondary">
+                  A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
                 </p>
               </FadeUp>
-
-              <div className="max-w-[820px]">
-                <BigStatement text="If you've read this far, we hope you felt something." active={active(5)} />
-
-                <FadeUp delay={0.2} active={active(5)}>
-                  <p className="mt-[var(--space-lg)] max-w-[600px] text-[1rem] leading-[1.85] text-text-secondary">
-                    A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
-                  </p>
-                </FadeUp>
-              </div>
             </div>
           </div>
-
-          <Footer embedded />
         </section>
       </motion.div>
     </div>
