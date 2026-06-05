@@ -457,7 +457,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
             6. TEAM GRID
         ═══════════════════════════════════════════ */}
         <section className="flex h-[100dvh] items-center px-[var(--gutter)] pt-[80px]">
-          <div className="mx-auto w-full max-w-[1180px]">
+          <div className="mx-auto w-full max-w-[920px]">
             <FadeUp active={active(4)}>
               <div className="mb-[var(--space-md)] flex items-end justify-between border-b border-border pb-[var(--space-sm)]">
                 <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-secondary">
@@ -472,16 +472,15 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
               {team.map((member, idx) => (
                 <FadeUp key={member.id} delay={idx * 0.03} active={active(4)}>
-                  <div className="group relative aspect-square overflow-hidden rounded-[var(--radius-md)] bg-bg-card">
+                  <div className="group relative aspect-[5/7] overflow-hidden rounded-[var(--radius-md)] bg-bg-card">
                     {member.image?.asset ? (
                       <Image
                         loader={sanityImageLoader}
-                        src={urlFor(member.image).width(500).height(667).url()}
+                        src={urlFor(member.image).width(800).url()}
                         alt={member.name}
                         fill
                         loading="lazy"
-                        className="object-cover transition-transform duration-[0.8s] group-hover:scale-105"
-                        style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
+                        className="object-cover"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                     ) : member.localSrc ? (
@@ -490,8 +489,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
                         alt={member.name}
                         fill
                         loading="lazy"
-                        className="object-cover transition-transform duration-[0.8s] group-hover:scale-105"
-                        style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
+                        className="object-cover"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                     ) : (
