@@ -22,8 +22,15 @@ export default function Header() {
   useEffect(() => {
     if (isStudio) return
     const onScroll = () => setScrolled(window.scrollY > 80)
+    // Pages that lock body scroll (full-screen decks) emit a virtual scroll
+    const onVirtual = (e: Event) =>
+      setScrolled(((e as CustomEvent).detail?.scrollY ?? 0) > 80)
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('bc-scroll', onVirtual)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('bc-scroll', onVirtual)
+    }
   }, [isStudio])
 
   useEffect(() => {

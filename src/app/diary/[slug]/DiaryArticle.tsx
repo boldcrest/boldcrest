@@ -116,6 +116,17 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
     if (current === 0 && articleRef.current) articleRef.current.scrollTop = 0
   }, [current])
 
+  // Drive the (window-scroll-based) Header collapse from the active slide,
+  // since body scroll is locked here. Cover = expanded, article = collapsed.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('bc-scroll', { detail: { scrollY: current === 1 ? 200 : 0 } }))
+  }, [current])
+  useEffect(() => {
+    return () => {
+      window.dispatchEvent(new CustomEvent('bc-scroll', { detail: { scrollY: 0 } }))
+    }
+  }, [])
+
   // Wheel: cover snaps to article; on article, only snap back when scrolled to its top
   useEffect(() => {
     const el = containerRef.current
