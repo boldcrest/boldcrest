@@ -169,126 +169,128 @@ type FaceItem = {
   localSrc?: string
 }
 
-/* ── Faces gallery — two rows, arrow-paged (matches the services Client Logos) ── */
+/* ── Faces gallery — two rows, looping auto-scroll + drag ── */
 function FacesGallery({ team }: { team: FaceItem[] }) {
-  const [colOffset, setColOffset] = useState(0)
-  const ROWS = 2
-  const COLS_VISIBLE = 3
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const drag = useRef({ active: false, startX: 0, startScroll: 0 })
+  const SPEED = 40 // px per second
+  const repeated = team.length ? [...team, ...team, ...team, ...team] : []
 
-  // Group members into vertical columns of ROWS each
-  const columns: FaceItem[][] = []
-  for (let i = 0; i < team.length; i += ROWS) {
-    columns.push(team.slice(i, i + ROWS))
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el || !team.length) return
+    let raf = 0
+    let last = 0
+    const tick = (now: number) => {
+      if (!last) last = now
+      const dt = (now - last) / 1000
+      last = now
+      if (!drag.current.active) {
+        el.scrollLeft += SPEED * dt
+        const oneSet = el.scrollWidth / 4
+        if (oneSet > 0 && el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [team.length])
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse') return
+    const el = scrollerRef.current
+    if (!el) return
+    drag.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft }
+    el.setPointerCapture(e.pointerId)
   }
-  const maxOffset = Math.max(0, columns.length - COLS_VISIBLE)
-  const canPrev = colOffset > 0
-  const canNext = colOffset < maxOffset
-  const next = () => setColOffset((o) => Math.min(o + 1, maxOffset))
-  const prev = () => setColOffset((o) => Math.max(o - 1, 0))
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return
+    const el = scrollerRef.current
+    if (!el) return
+    el.scrollLeft = drag.current.startScroll - (e.clientX - drag.current.startX)
+    const oneSet = el.scrollWidth / 4
+    if (oneSet > 0) {
+      if (el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+      else if (el.scrollLeft < 0) el.scrollLeft += oneSet
+    }
+  }
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return
+    drag.current.active = false
+    scrollerRef.current?.releasePointerCapture?.(e.pointerId)
+  }
 
   if (!team.length) {
     return <p className="py-20 text-center text-text-tertiary">Team members coming soon.</p>
   }
 
   return (
-    <div className="w-full">
-      {/* Slidable column track — viewport shows COLS_VISIBLE columns; arrows shift one column */}
-      <div className="overflow-hidden [--faces-gap:0.625rem] md:[--faces-gap:0.75rem]">
-        <div
-          className="flex transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
-          style={{
-            gap: 'var(--faces-gap)',
-            transform: `translateX(calc(-1 * ${colOffset} * ((100% - 2 * var(--faces-gap)) / 3 + var(--faces-gap))))`,
-          }}
-        >
-          {columns.map((col, i) => (
+    <div
+      ref={scrollerRef}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onPointerLeave={endDrag}
+      onDragStart={(e) => e.preventDefault()}
+      className="w-full cursor-grab touch-pan-y select-none overflow-x-auto [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+    >
+      <div className="grid w-max grid-flow-col grid-rows-2 gap-[0.625rem] md:gap-3">
+        {repeated.map((member, i) => (
+          <div
+            key={i}
+            className="group relative aspect-[5/7] w-[clamp(150px,16vw,220px)] shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-bg-card"
+          >
+            {member.image?.asset ? (
+              <Image
+                loader={sanityImageLoader}
+                src={urlFor(member.image).width(600).url()}
+                alt={member.name}
+                fill
+                draggable={false}
+                loading="lazy"
+                className="pointer-events-none object-cover"
+                sizes="(max-width: 768px) 30vw, 16vw"
+              />
+            ) : member.localSrc ? (
+              <Image
+                src={member.localSrc}
+                alt={member.name}
+                fill
+                draggable={false}
+                loading="lazy"
+                className="pointer-events-none object-cover"
+                sizes="(max-width: 768px) 30vw, 16vw"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <div className="h-12 w-12 rounded-full border-2 border-text-tertiary" />
+              </div>
+            )}
             <div
-              key={i}
-              className="flex shrink-0 flex-col gap-[var(--faces-gap)]"
-              style={{ width: 'calc((100% - 2 * var(--faces-gap)) / 3)' }}
+              className="pointer-events-none absolute inset-0 flex flex-col justify-end p-[var(--space-sm)] opacity-0 transition-opacity duration-[0.4s] group-hover:opacity-100"
+              style={{
+                background: 'linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.8) 100%)',
+                transitionTimingFunction: 'var(--ease-out-expo)',
+              }}
             >
-              {col.map((member) => (
-                <div
-                  key={member.id}
-                  className="group relative aspect-[5/7] w-full overflow-hidden rounded-[var(--radius-md)] bg-bg-card"
+              <h3
+                className="translate-y-2 font-display text-[0.95rem] font-semibold leading-tight transition-transform duration-[0.4s] group-hover:translate-y-0"
+                style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
+              >
+                {member.name}
+              </h3>
+              {member.role && (
+                <span
+                  className="mt-0.5 translate-y-2 text-[0.65rem] uppercase tracking-[0.1em] text-text-secondary transition-transform duration-[0.4s] group-hover:translate-y-0"
+                  style={{ transitionTimingFunction: 'var(--ease-out-expo)', transitionDelay: '0.04s' }}
                 >
-                  {member.image?.asset ? (
-                    <Image
-                      loader={sanityImageLoader}
-                      src={urlFor(member.image).width(600).url()}
-                      alt={member.name}
-                      fill
-                      loading="lazy"
-                      className="object-cover"
-                      sizes="(max-width: 768px) 30vw, 16vw"
-                    />
-                  ) : member.localSrc ? (
-                    <Image
-                      src={member.localSrc}
-                      alt={member.name}
-                      fill
-                      loading="lazy"
-                      className="object-cover"
-                      sizes="(max-width: 768px) 30vw, 16vw"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <div className="h-12 w-12 rounded-full border-2 border-text-tertiary" />
-                    </div>
-                  )}
-                  <div
-                    className="absolute inset-0 flex flex-col justify-end p-[var(--space-sm)] opacity-0 transition-opacity duration-[0.4s] group-hover:opacity-100"
-                    style={{
-                      background: 'linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.8) 100%)',
-                      transitionTimingFunction: 'var(--ease-out-expo)',
-                    }}
-                  >
-                    <h3
-                      className="translate-y-2 font-display text-[0.95rem] font-semibold leading-tight transition-transform duration-[0.4s] group-hover:translate-y-0"
-                      style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
-                    >
-                      {member.name}
-                    </h3>
-                    {member.role && (
-                      <span
-                        className="mt-0.5 translate-y-2 text-[0.65rem] uppercase tracking-[0.1em] text-text-secondary transition-transform duration-[0.4s] group-hover:translate-y-0"
-                        style={{ transitionTimingFunction: 'var(--ease-out-expo)', transitionDelay: '0.04s' }}
-                      >
-                        {member.role}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                  {member.role}
+                </span>
+              )}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Arrow controls — same style/position as the services Client Logos */}
-      <div className="mt-8 flex items-center justify-end gap-3">
-        <button
-          onClick={prev}
-          aria-label="Previous faces"
-          disabled={!canPrev}
-          className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors duration-300 hover:border-white/40 disabled:cursor-default disabled:opacity-40 disabled:hover:border-[var(--border)]"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M13 8H3M7 4 3 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <button
-          onClick={next}
-          aria-label="Next faces"
-          disabled={!canNext}
-          className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors duration-300 hover:border-white/40 disabled:cursor-default disabled:opacity-40 disabled:hover:border-[var(--border)]"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+          </div>
+        ))}
       </div>
     </div>
   )
