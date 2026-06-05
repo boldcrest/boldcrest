@@ -70,7 +70,7 @@ export default function Header() {
 
           {/* Inner content */}
           <div
-            className="flex w-full items-center justify-between transition-[padding] duration-[650ms]"
+            className="relative flex w-full items-center justify-between transition-[padding] duration-[650ms]"
             style={{
               padding: scrolled ? '0 1.25rem' : '0',
               transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
@@ -90,8 +90,9 @@ export default function Header() {
               </svg>
             </Link>
 
-            {/* Desktop Nav */}
-            <nav className="hidden items-center gap-6 md:flex">
+            {/* Desktop Nav — absolutely centered so the logo/CTA widths can't
+                pull it off-center */}
+            <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 md:flex">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}

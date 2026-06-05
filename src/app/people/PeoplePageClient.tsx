@@ -320,6 +320,9 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
   const [isMobile, setIsMobile] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
+  // False right after we land on the last slide; true once the snap settles and
+  // page-scroll to the footer is allowed (absorbs hard-scroll momentum).
+  const lastSlideReady = useRef(false)
   const lenis = useLenis()
 
   // On mobile the full-screen slide deck can't hold tall content, so we fall
@@ -344,12 +347,34 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
     if (!lenis) return
     const last = TOTAL_SECTIONS - 1
     if (current === last) {
-      lenis.resize()
-      lenis.start()
-    } else {
-      lenis.stop()
+      // Snap onto the last slide first: keep Lenis STOPPED for a beat after we
+      // arrive so the wheel momentum from a hard scroll (which is what brought
+      // us here) gets absorbed instead of flinging straight past the slide into
+      // the footer. A stopped Lenis keeps preventing the wheel, so the deck
+      // holds on this slide; once the burst settles we start Lenis and the user
+      // can smoothly scroll down to the footer.
+      const t = setTimeout(() => {
+        lenis.resize()
+        lenis.start()
+      }, TRANSITION_DURATION + 250)
+      return () => clearTimeout(t)
     }
+    lenis.stop()
   }, [lenis, current])
+
+  // Gate page-scroll on the last slide independently of Lenis: hold for a beat
+  // after arriving so leftover hard-scroll momentum is absorbed (the deck snaps
+  // onto the slide), then allow the smooth scroll down to the footer.
+  useEffect(() => {
+    const last = TOTAL_SECTIONS - 1
+    if (current !== last) {
+      lastSlideReady.current = false
+      return
+    }
+    lastSlideReady.current = false
+    const t = setTimeout(() => { lastSlideReady.current = true }, TRANSITION_DURATION + 250)
+    return () => clearTimeout(t)
+  }, [current])
 
   // Restore Lenis when leaving the page (in case we exit on a paused slide).
   useEffect(() => {
@@ -375,9 +400,17 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
       // On the final slide, let the page scroll normally so the footer shows.
       // Only re-capture the wheel to step back up when the deck is at the top.
       if (current === last) {
+        // Scroll up while the deck is at the top steps back into the deck.
         if (e.deltaY < 0 && window.scrollY <= 0) {
           e.preventDefault()
           if (!isLocked) goTo(current - 1)
+          return
+        }
+        // Snap onto the slide first: until the snap settles, absorb downward
+        // wheel so a hard scroll's leftover momentum can't fling past this slide
+        // into the footer. Once settled, let Lenis scroll down to the footer.
+        if (e.deltaY > 0 && !lastSlideReady.current) {
+          e.preventDefault()
         }
         return
       }
