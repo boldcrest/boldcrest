@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
+import Footer from '@/components/Footer'
 
 interface TeamMember {
   _id: string
@@ -417,8 +418,8 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
             0. HERO
         ═══════════════════════════════════════════ */}
         <section className="relative flex h-[100dvh] flex-col bg-bg">
-          {/* Hero copy — full-width stretch, same as the Work page */}
-          <div className="flex flex-1 items-center px-[var(--gutter)] pt-[100px]">
+          {/* Hero copy — full-width stretch, top-aligned to match Work/Services/Diary */}
+          <div className="flex flex-1 items-start px-[var(--gutter)] pt-[120px]">
             <div className="w-full">
               <motion.p
                 className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary"
@@ -648,26 +649,30 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         </section>
 
         {/* ═══════════════════════════════════════════
-            6. CLOSING
+            5. CLOSING (+ footer at the bottom of the last slide)
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
-          <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <FadeUp active={active(5)}>
-              <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                Before you go
-              </p>
-            </FadeUp>
-
-            <div className="max-w-[820px]">
-              <BigStatement text="If you've read this far, we hope you felt something." active={active(5)} />
-
-              <FadeUp delay={0.2} active={active(5)}>
-                <p className="mt-[var(--space-lg)] max-w-[600px] text-[1rem] leading-[1.85] text-text-secondary">
-                  A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
+        <section className="flex h-[100dvh] flex-col">
+          <div className="flex flex-1 items-center px-[var(--gutter)]">
+            <div className="mx-auto w-full max-w-[var(--max-width)]">
+              <FadeUp active={active(5)}>
+                <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
+                  Before you go
                 </p>
               </FadeUp>
+
+              <div className="max-w-[820px]">
+                <BigStatement text="If you've read this far, we hope you felt something." active={active(5)} />
+
+                <FadeUp delay={0.2} active={active(5)}>
+                  <p className="mt-[var(--space-lg)] max-w-[600px] text-[1rem] leading-[1.85] text-text-secondary">
+                    A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
+                  </p>
+                </FadeUp>
+              </div>
             </div>
           </div>
+
+          <Footer embedded />
         </section>
       </motion.div>
     </div>
