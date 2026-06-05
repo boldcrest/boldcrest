@@ -83,6 +83,7 @@ function PhotoMarquee() {
   const repeated = [...photos, ...photos, ...photos, ...photos]
   const scrollerRef = useRef<HTMLDivElement>(null)
   const drag = useRef({ active: false, startX: 0, startScroll: 0 })
+  const frac = useRef(0)
   const SPEED = 70 // px per second
 
   useEffect(() => {
@@ -95,9 +96,16 @@ function PhotoMarquee() {
       const dt = (now - last) / 1000
       last = now
       if (!drag.current.active) {
-        el.scrollLeft += SPEED * dt
-        const oneSet = el.scrollWidth / 4
-        if (oneSet > 0 && el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+        // Accumulate fractional pixels and only add whole-pixel steps — Safari/
+        // Firefox round scrollLeft to integers, so sub-pixel increments are lost.
+        frac.current += SPEED * dt
+        const step = Math.floor(frac.current)
+        if (step > 0) {
+          frac.current -= step
+          el.scrollLeft += step
+          const oneSet = el.scrollWidth / 4
+          if (oneSet > 0 && el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+        }
       }
       raf = requestAnimationFrame(tick)
     }
@@ -173,6 +181,7 @@ type FaceItem = {
 function FacesGallery({ team }: { team: FaceItem[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const drag = useRef({ active: false, startX: 0, startScroll: 0 })
+  const frac = useRef(0)
   const SPEED = 40 // px per second
   const repeated = team.length ? [...team, ...team, ...team, ...team] : []
 
@@ -186,9 +195,16 @@ function FacesGallery({ team }: { team: FaceItem[] }) {
       const dt = (now - last) / 1000
       last = now
       if (!drag.current.active) {
-        el.scrollLeft += SPEED * dt
-        const oneSet = el.scrollWidth / 4
-        if (oneSet > 0 && el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+        // Accumulate fractional pixels and only add whole-pixel steps — Safari/
+        // Firefox round scrollLeft to integers, so sub-pixel increments are lost.
+        frac.current += SPEED * dt
+        const step = Math.floor(frac.current)
+        if (step > 0) {
+          frac.current -= step
+          el.scrollLeft += step
+          const oneSet = el.scrollWidth / 4
+          if (oneSet > 0 && el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+        }
       }
       raf = requestAnimationFrame(tick)
     }

@@ -37,6 +37,7 @@ export default function ProjectMarquee({
   // Auto-scroll + drag-to-scroll on a real scroll container
   const scrollerRef = useRef<HTMLDivElement>(null)
   const drag = useRef({ active: false, startX: 0, startScroll: 0, moved: false })
+  const frac = useRef(0)
   const SPEED = 125 // px per second (a touch faster than the old 60s marquee)
 
   useEffect(() => {
@@ -55,8 +56,15 @@ export default function ProjectMarquee({
       const dt = (now - last) / 1000
       last = now
       if (!drag.current.active) {
-        el.scrollLeft += SPEED * dt
-        wrap()
+        // Add only whole-pixel steps — Safari/Firefox round scrollLeft to
+        // integers, dropping sub-pixel increments (strip would never move).
+        frac.current += SPEED * dt
+        const stepPx = Math.floor(frac.current)
+        if (stepPx > 0) {
+          frac.current -= stepPx
+          el.scrollLeft += stepPx
+          wrap()
+        }
       }
       raf = requestAnimationFrame(tick)
     }
