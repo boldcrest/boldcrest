@@ -320,12 +320,27 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
   const touchStartY = useRef(0)
   const lenis = useLenis()
 
-  // Pause Lenis on this page — the deck wheel-jacks its own navigation, and the
-  // last slide uses native scroll to reach the footer (Lenis would fight it).
+  // Drive Lenis per slide. While navigating the deck it must be PAUSED (its
+  // wheel handler would otherwise scroll the page out from under the slides).
+  // On the LAST slide it must be ACTIVE so it can smooth-scroll down to the
+  // footer — note a *stopped* Lenis still preventDefaults wheel, which would
+  // block native scroll, so we genuinely re-start it here (and resize() so its
+  // scroll limit includes the footer). Mobile has no Lenis and uses the
+  // html/body overflow lock below instead.
   useEffect(() => {
     if (!lenis) return
-    lenis.stop()
-    return () => { lenis.start() }
+    const last = TOTAL_SECTIONS - 1
+    if (current === last) {
+      lenis.resize()
+      lenis.start()
+    } else {
+      lenis.stop()
+    }
+  }, [lenis, current])
+
+  // Restore Lenis when leaving the page (in case we exit on a paused slide).
+  useEffect(() => {
+    return () => { lenis?.start() }
   }, [lenis])
 
   const goTo = useCallback((index: number) => {
