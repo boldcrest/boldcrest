@@ -140,16 +140,16 @@ function PhotoMarquee() {
       onPointerCancel={endDrag}
       onPointerLeave={endDrag}
       onDragStart={(e) => e.preventDefault()}
-      className="flex h-[42dvh] w-full shrink-0 cursor-grab touch-pan-y select-none overflow-x-auto [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+      className="flex w-full shrink-0 cursor-grab touch-pan-y select-none overflow-x-auto [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
     >
       <div className="flex w-max">
         {repeated.map((n, i) => (
-          <div key={i} className="group relative h-full aspect-[1286/1500] shrink-0">
+          <div key={i} className="group relative aspect-[1286/1500] w-[42vw] shrink-0 sm:w-[28vw] lg:w-[20vw]">
             <Image
               src={`/People - Photos/${n}.jpg`}
               alt={`BoldCrest team ${n}`}
               fill
-              sizes="(max-width: 768px) 60vw, 24vw"
+              sizes="(max-width: 640px) 42vw, (max-width: 1024px) 28vw, 20vw"
               draggable={false}
               priority={i < 5}
               className="pointer-events-none object-cover grayscale transition-[filter] duration-500 group-hover:grayscale-0"
