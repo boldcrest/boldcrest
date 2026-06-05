@@ -36,6 +36,22 @@ const DOMAIN_REDIRECTS = new Set([
   'www.boldworkshops.com',
 ])
 
+/**
+ * Coming-soon holding page.
+ *
+ * While the site is still being finished we don't want the live domain to show
+ * the real website. When COMING_SOON is true, any request to the canonical host
+ * is rewritten to /coming-soon (URL stays the same, holding page is served).
+ *
+ * This ONLY affects the real domain — the boldcrest-puce.vercel.app preview URL
+ * is not in CANONICAL_HOSTS, so the full site stays visible there for ongoing
+ * work. Studio and API routes are let through so the CMS keeps working.
+ *
+ * TO GO LIVE: flip COMING_SOON to false and redeploy. That's the only change.
+ */
+const COMING_SOON = true
+const CANONICAL_HOSTS = new Set(['boldcrest.com', 'www.boldcrest.com'])
+
 export function proxy(req: NextRequest) {
   const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0]
 
@@ -46,6 +62,19 @@ export function proxy(req: NextRequest) {
 
   if (DOMAIN_REDIRECTS.has(host)) {
     return NextResponse.redirect(CANONICAL_SITE, 308)
+  }
+
+  if (COMING_SOON && CANONICAL_HOSTS.has(host)) {
+    const { pathname } = req.nextUrl
+    const isAllowed =
+      pathname === '/coming-soon' ||
+      pathname.startsWith('/studio') ||
+      pathname.startsWith('/api')
+    if (!isAllowed) {
+      const url = req.nextUrl.clone()
+      url.pathname = '/coming-soon'
+      return NextResponse.rewrite(url)
+    }
   }
 
   return NextResponse.next()
