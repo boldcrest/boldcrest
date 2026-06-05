@@ -52,7 +52,12 @@ export const diaryPost = defineType({
         { type: 'block' },
         {
           type: 'image',
+          title: 'Image',
           options: { hotspot: true },
+          fields: [
+            { name: 'alt', title: 'Alt text', type: 'string' },
+            { name: 'caption', title: 'Caption', type: 'string' },
+          ],
         },
       ],
     }),
