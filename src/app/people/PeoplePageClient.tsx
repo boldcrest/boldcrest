@@ -62,9 +62,9 @@ function FadeUp({ children, delay = 0, active, className = '' }: {
 
 
 /* ══════════════════════════════════════════════════════
-   TOTAL SECTIONS = 7
+   TOTAL SECTIONS = 6
 ══════════════════════════════════════════════════════ */
-const TOTAL_SECTIONS = 7
+const TOTAL_SECTIONS = 6
 const TRANSITION_DURATION = 700
 
 /* Local team photos (preview only). Empty for now so the Faces grid uses
@@ -154,6 +154,141 @@ function PhotoMarquee() {
               priority={i < 5}
               className="pointer-events-none object-cover grayscale transition-[filter] duration-500 group-hover:grayscale-0"
             />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+type FaceItem = {
+  id: string
+  name: string
+  role?: string
+  image?: TeamMember['image']
+  localSrc?: string
+}
+
+/* ── Sliding faces gallery (auto-scroll + drag, hover name/role) ── */
+function FacesGallery({ team }: { team: FaceItem[] }) {
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const drag = useRef({ active: false, startX: 0, startScroll: 0 })
+  const SPEED = 45 // px per second
+  const repeated = team.length ? [...team, ...team, ...team, ...team] : []
+
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el || !team.length) return
+    let raf = 0
+    let last = 0
+    const tick = (now: number) => {
+      if (!last) last = now
+      const dt = (now - last) / 1000
+      last = now
+      if (!drag.current.active) {
+        el.scrollLeft += SPEED * dt
+        const oneSet = el.scrollWidth / 4
+        if (oneSet > 0 && el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [team.length])
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse') return
+    const el = scrollerRef.current
+    if (!el) return
+    drag.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft }
+    el.setPointerCapture(e.pointerId)
+  }
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return
+    const el = scrollerRef.current
+    if (!el) return
+    el.scrollLeft = drag.current.startScroll - (e.clientX - drag.current.startX)
+    const oneSet = el.scrollWidth / 4
+    if (oneSet > 0) {
+      if (el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
+      else if (el.scrollLeft < 0) el.scrollLeft += oneSet
+    }
+  }
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return
+    drag.current.active = false
+    scrollerRef.current?.releasePointerCapture?.(e.pointerId)
+  }
+
+  if (!team.length) {
+    return <p className="py-20 text-center text-text-tertiary">Team members coming soon.</p>
+  }
+
+  return (
+    <div
+      ref={scrollerRef}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onPointerLeave={endDrag}
+      onDragStart={(e) => e.preventDefault()}
+      className="flex w-full cursor-grab touch-pan-y select-none overflow-x-auto [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+    >
+      <div className="flex w-max gap-3">
+        {repeated.map((member, i) => (
+          <div
+            key={i}
+            className="group relative aspect-[5/7] w-[clamp(150px,16vw,220px)] shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-bg-card"
+          >
+            {member.image?.asset ? (
+              <Image
+                loader={sanityImageLoader}
+                src={urlFor(member.image).width(600).url()}
+                alt={member.name}
+                fill
+                draggable={false}
+                loading="lazy"
+                className="pointer-events-none object-cover"
+                sizes="220px"
+              />
+            ) : member.localSrc ? (
+              <Image
+                src={member.localSrc}
+                alt={member.name}
+                fill
+                draggable={false}
+                loading="lazy"
+                className="pointer-events-none object-cover"
+                sizes="220px"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <div className="h-16 w-16 rounded-full border-2 border-text-tertiary" />
+              </div>
+            )}
+            <div
+              className="pointer-events-none absolute inset-0 flex flex-col justify-end p-[var(--space-md)] opacity-0 transition-opacity duration-[0.4s] group-hover:opacity-100"
+              style={{
+                background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.78) 100%)',
+                transitionTimingFunction: 'var(--ease-out-expo)',
+              }}
+            >
+              <h3
+                className="translate-y-3 font-display text-[1rem] font-semibold transition-transform duration-[0.4s] group-hover:translate-y-0"
+                style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
+              >
+                {member.name}
+              </h3>
+              {member.role && (
+                <span
+                  className="mt-1 translate-y-3 text-[0.7rem] uppercase tracking-[0.1em] text-text-secondary transition-transform duration-[0.4s] group-hover:translate-y-0"
+                  style={{ transitionTimingFunction: 'var(--ease-out-expo)', transitionDelay: '0.04s' }}
+                >
+                  {member.role}
+                </span>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -419,114 +554,45 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         </section>
 
         {/* ═══════════════════════════════════════════
-            3. THE TEAM CULTURE
-        ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
-          <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <FadeUp active={active(3)}>
-              <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                The team
-              </p>
-            </FadeUp>
-
-            <div className="max-w-[700px]">
-              <BigStatement text="Every person has a glitch in their system." active={active(3)} />
-
-              <FadeUp delay={0.1} active={active(3)}>
-                <p className="mt-[var(--space-lg)] text-[1rem] leading-[1.85] text-text-secondary">
-                  Something slightly off, slightly unusual, slightly theirs. And that&apos;s exactly what makes them belong here. We are different people who are somehow made of the same thing.
-                </p>
-              </FadeUp>
-
-              <FadeUp delay={0.15} active={active(3)}>
-                <p className="mt-[var(--space-md)] text-[1rem] leading-[1.85] text-text-secondary">
-                  We bully each other. We cook together. We have traditions that make no sense to anyone outside this room. And when someone is sick, we show up.
-                </p>
-              </FadeUp>
-
-              <FadeUp delay={0.2} active={active(3)}>
-                <p className="mt-[var(--space-md)] text-[1.05rem] font-semibold leading-[1.7] text-text-primary">
-                  It is, honestly, harder to find someone who won&apos;t disturb our peace than someone who has a great portfolio.
-                </p>
-              </FadeUp>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════
-            6. TEAM GRID
+            3. TEAM CULTURE + FACES (combined)
         ═══════════════════════════════════════════ */}
         <section className="flex h-[100dvh] items-center px-[var(--gutter)] pt-[80px]">
-          <div className="mx-auto w-full max-w-[920px]">
-            <FadeUp active={active(4)}>
-              <div className="mb-[var(--space-md)] flex items-end justify-between border-b border-border pb-[var(--space-sm)]">
-                <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-secondary">
-                  The Faces
-                </h2>
-                <span className="text-[0.75rem] tracking-[0.1em] text-text-tertiary">
-                  {team.length > 0 ? `${team.length} people` : ''}
-                </span>
-              </div>
-            </FadeUp>
-
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
-              {team.map((member, idx) => (
-                <FadeUp key={member.id} delay={idx * 0.03} active={active(4)}>
-                  <div className="group relative aspect-[5/7] overflow-hidden rounded-[var(--radius-md)] bg-bg-card">
-                    {member.image?.asset ? (
-                      <Image
-                        loader={sanityImageLoader}
-                        src={urlFor(member.image).width(800).url()}
-                        alt={member.name}
-                        fill
-                        loading="lazy"
-                        className="object-cover"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      />
-                    ) : member.localSrc ? (
-                      <Image
-                        src={member.localSrc}
-                        alt={member.name}
-                        fill
-                        loading="lazy"
-                        className="object-cover"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <div className="h-16 w-16 rounded-full border-2 border-text-tertiary" />
-                      </div>
-                    )}
-                    <div
-                      className="absolute inset-0 flex flex-col justify-end p-[var(--space-md)] opacity-0 transition-opacity duration-[0.4s] group-hover:opacity-100"
-                      style={{
-                        background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.75) 100%)',
-                        transitionTimingFunction: 'var(--ease-out-expo)',
-                      }}
-                    >
-                      <h3
-                        className="translate-y-3 font-display text-[1rem] font-semibold transition-transform duration-[0.4s] group-hover:translate-y-0"
-                        style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
-                      >
-                        {member.name}
-                      </h3>
-                      {member.role && (
-                        <span
-                          className="mt-1 translate-y-3 text-[0.75rem] uppercase tracking-[0.1em] text-text-secondary transition-transform duration-[0.4s] group-hover:translate-y-0"
-                          style={{ transitionTimingFunction: 'var(--ease-out-expo)', transitionDelay: '0.04s' }}
-                        >
-                          {member.role}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+          <div className="mx-auto w-full max-w-[var(--max-width)]">
+            <div className="grid items-center gap-[var(--space-2xl)] md:grid-cols-[minmax(0,460px)_1fr]">
+              {/* Left — culture copy */}
+              <div className="min-w-0">
+                <FadeUp active={active(3)}>
+                  <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
+                    The team
+                  </p>
                 </FadeUp>
-              ))}
-            </div>
 
-            {team.length === 0 && (
-              <p className="py-20 text-center text-text-tertiary">Team members coming soon.</p>
-            )}
+                <BigStatement text="Every person has a glitch in their system." active={active(3)} />
+
+                <FadeUp delay={0.1} active={active(3)}>
+                  <p className="mt-[var(--space-lg)] text-[1rem] leading-[1.85] text-text-secondary">
+                    Something slightly off, slightly unusual, slightly theirs. And that&apos;s exactly what makes them belong here. We are different people who are somehow made of the same thing.
+                  </p>
+                </FadeUp>
+
+                <FadeUp delay={0.15} active={active(3)}>
+                  <p className="mt-[var(--space-md)] text-[1rem] leading-[1.85] text-text-secondary">
+                    We bully each other. We cook together. We have traditions that make no sense to anyone outside this room. And when someone is sick, we show up.
+                  </p>
+                </FadeUp>
+
+                <FadeUp delay={0.2} active={active(3)}>
+                  <p className="mt-[var(--space-md)] text-[1.05rem] font-semibold leading-[1.7] text-text-primary">
+                    It is, honestly, harder to find someone who won&apos;t disturb our peace than someone who has a great portfolio.
+                  </p>
+                </FadeUp>
+              </div>
+
+              {/* Right — sliding faces gallery */}
+              <FadeUp delay={0.2} active={active(3)} className="min-w-0">
+                <FacesGallery team={team} />
+              </FadeUp>
+            </div>
           </div>
         </section>
 
@@ -536,27 +602,27 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <div className="mx-auto max-w-[700px] text-center">
-              <FadeUp active={active(5)}>
+              <FadeUp active={active(4)}>
                 <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
                   The work
                 </p>
               </FadeUp>
 
-              <BigStatement text="The work we're most proud of, most people will never know we made." active={active(5)} className="text-center" />
+              <BigStatement text="The work we're most proud of, most people will never know we made." active={active(4)} className="text-center" />
 
-              <FadeUp delay={0.15} active={active(5)}>
+              <FadeUp delay={0.15} active={active(4)}>
                 <p className="mt-[var(--space-lg)] text-[1rem] leading-[1.85] text-text-secondary">
                   That&apos;s not false modesty. That&apos;s the goal. When a brand becomes so real, so lived-in, so theirs — when people carry it, wear it, post it, and believe in it without a second thought — the agency behind it disappears. And it should.
                 </p>
               </FadeUp>
 
-              <FadeUp delay={0.2} active={active(5)}>
+              <FadeUp delay={0.2} active={active(4)}>
                 <p className="mt-[var(--space-md)] text-[1.1rem] font-semibold leading-[1.7] text-text-primary">
                   The best thing we can do is make something bigger than ourselves, then step back and watch it belong to the world.
                 </p>
               </FadeUp>
 
-              <FadeUp delay={0.25} active={active(5)}>
+              <FadeUp delay={0.25} active={active(4)}>
                 <p className="mt-[var(--space-sm)] text-[0.95rem] text-text-tertiary italic">
                   That&apos;s why we exist.
                 </p>
@@ -570,16 +636,16 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         ═══════════════════════════════════════════ */}
         <section className="flex h-[100dvh] items-center px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <FadeUp active={active(6)}>
+            <FadeUp active={active(5)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
                 Before you go
               </p>
             </FadeUp>
 
             <div className="max-w-[820px]">
-              <BigStatement text="If you've read this far, we hope you felt something." active={active(6)} />
+              <BigStatement text="If you've read this far, we hope you felt something." active={active(5)} />
 
-              <FadeUp delay={0.2} active={active(6)}>
+              <FadeUp delay={0.2} active={active(5)}>
                 <p className="mt-[var(--space-lg)] max-w-[600px] text-[1rem] leading-[1.85] text-text-secondary">
                   A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
                 </p>
