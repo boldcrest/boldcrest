@@ -37,10 +37,18 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-export default function Footer() {
+export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
   const pathname = usePathname()
 
-  if (pathname?.startsWith('/studio')) return null
+  // forceShow lets a page render the footer itself (e.g. the diary single page,
+  // whose fixed-overlay deck would otherwise hide the global one behind it).
+  if (!forceShow) {
+    if (pathname?.startsWith('/studio')) return null
+    // Careers is a full-screen embedded form — no footer.
+    if (pathname === '/careers') return null
+    // Diary single pages render their own footer inside the article slide.
+    if (pathname?.startsWith('/diary/')) return null
+  }
 
   return (
     <footer

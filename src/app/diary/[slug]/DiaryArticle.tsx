@@ -8,6 +8,7 @@ import { PortableText, type PortableTextComponents } from '@portabletext/react'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
 import { useLenis } from '@/components/LenisProvider'
+import Footer from '@/components/Footer'
 
 interface DiaryPost {
   _id: string
@@ -194,6 +195,14 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
     return () => { document.body.style.overflow = '' }
   }, [])
 
+  // The embedded footer's "back to top" scrolls the article slide to its top
+  // (body scroll is locked, so the footer's window.scrollTo is a no-op here).
+  useEffect(() => {
+    const handler = () => articleRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    window.addEventListener('boldcrest:back-to-top', handler)
+    return () => window.removeEventListener('boldcrest:back-to-top', handler)
+  }, [])
+
   // Pause Lenis so the article slide scrolls natively (fires once the
   // Lenis instance is available via context — survives full page loads).
   useEffect(() => {
@@ -323,6 +332,10 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
               </div>
             </div>
           </div>
+
+          {/* Footer flows in at the end of the article (the fixed-overlay deck
+              hides the global one, so we render it here). */}
+          <Footer forceShow />
         </section>
       </motion.div>
     </div>
