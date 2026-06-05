@@ -36,7 +36,7 @@ export default function ProjectMarquee({
 
   // Auto-scroll + drag-to-scroll on a real scroll container
   const scrollerRef = useRef<HTMLDivElement>(null)
-  const drag = useRef({ active: false, startX: 0, startScroll: 0, moved: false })
+  const drag = useRef({ active: false, startX: 0, startScroll: 0, moved: false, captured: false })
   const frac = useRef(0)
   const SPEED = 125 // px per second (a touch faster than the old 60s marquee)
 
@@ -76,16 +76,24 @@ export default function ProjectMarquee({
     if (e.pointerType !== 'mouse') return
     const el = scrollerRef.current
     if (!el) return
-    drag.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false }
-    el.setPointerCapture(e.pointerId)
+    // Do NOT capture the pointer here. Capturing on a plain click retargets the
+    // click to this container and breaks the card links — capture only once a
+    // real drag begins (see onPointerMove).
+    drag.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false, captured: false }
   }
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!drag.current.active) return
+    const d = drag.current
+    if (!d.active) return
     const el = scrollerRef.current
     if (!el) return
-    const delta = e.clientX - drag.current.startX
-    if (Math.abs(delta) > 5) drag.current.moved = true
-    el.scrollLeft = drag.current.startScroll - delta
+    const delta = e.clientX - d.startX
+    if (Math.abs(delta) > 5 && !d.moved) {
+      d.moved = true
+      el.setPointerCapture(e.pointerId)
+      d.captured = true
+    }
+    if (!d.moved) return
+    el.scrollLeft = d.startScroll - delta
     const oneSet = el.scrollWidth / 4
     if (oneSet > 0) {
       if (el.scrollLeft >= oneSet) el.scrollLeft -= oneSet
@@ -95,7 +103,10 @@ export default function ProjectMarquee({
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!drag.current.active) return
     drag.current.active = false
-    scrollerRef.current?.releasePointerCapture?.(e.pointerId)
+    if (drag.current.captured) {
+      scrollerRef.current?.releasePointerCapture?.(e.pointerId)
+      drag.current.captured = false
+    }
   }
   // Swallow the click that follows a real drag so cards don't navigate
   const onClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -192,7 +203,7 @@ export default function ProjectMarquee({
                       {project.client}
                     </span>
                   )}
-                  <h3 className="mt-1.5 font-display text-[1.05rem] font-semibold text-text-primary">
+                  <h3 className="mt-1.5 font-display text-[1.05rem] font-semibold uppercase text-text-primary">
                     {project.tagline || project.name}
                   </h3>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -220,7 +231,7 @@ export default function ProjectMarquee({
                     {project.client}
                   </span>
                 )}
-                <h3 className="mt-1 font-display text-[1rem] font-semibold text-text-primary">
+                <h3 className="mt-1 font-display text-[1rem] font-semibold uppercase text-text-primary">
                   {project.tagline || project.name}
                 </h3>
                 <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
