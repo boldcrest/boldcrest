@@ -316,9 +316,21 @@ function FacesGallery({ team }: { team: FaceItem[] }) {
 export default function PeoplePageClient({ members }: PeoplePageClientProps) {
   const [current, setCurrent] = useState(0)
   const [isLocked, setIsLocked] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
   const lenis = useLenis()
+
+  // On mobile the full-screen slide deck can't hold tall content, so we fall
+  // back to a normal scrolling page (sections grow + stack). Desktop keeps the
+  // wheel-jacked deck.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   // Drive Lenis per slide. While navigating the deck it must be PAUSED (its
   // wheel handler would otherwise scroll the page out from under the slides).
@@ -355,7 +367,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
   // Wheel handler
   useEffect(() => {
     const el = containerRef.current
-    if (!el) return
+    if (!el || isMobile) return
 
     const onWheel = (e: WheelEvent) => {
       const last = TOTAL_SECTIONS - 1
@@ -377,12 +389,12 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
 
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
-  }, [current, isLocked, goTo])
+  }, [current, isLocked, goTo, isMobile])
 
   // Touch handler
   useEffect(() => {
     const el = containerRef.current
-    if (!el) return
+    if (!el || isMobile) return
 
     const onTouchStart = (e: TouchEvent) => {
       touchStartY.current = e.touches[0].clientY
@@ -410,10 +422,11 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
       el.removeEventListener('touchstart', onTouchStart)
       el.removeEventListener('touchend', onTouchEnd)
     }
-  }, [current, isLocked, goTo])
+  }, [current, isLocked, goTo, isMobile])
 
   // Keyboard handler
   useEffect(() => {
+    if (isMobile) return
     const onKey = (e: KeyboardEvent) => {
       const last = TOTAL_SECTIONS - 1
       // On the final slide, leave the keys to native scrolling (footer) — except
@@ -427,16 +440,17 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [current, goTo])
+  }, [current, goTo, isMobile])
 
   // Lock page scroll while navigating slides; release on the last slide so the
   // footer below the deck can be reached with a normal scroll. Lock the <html>
   // element too — body-only is not enough now that the document is taller than
-  // the viewport (the footer sits below the in-flow deck).
+  // the viewport (the footer sits below the in-flow deck). On mobile the deck is
+  // disabled, so the page must scroll freely — never lock.
   useEffect(() => {
-    const last = TOTAL_SECTIONS - 1
     const html = document.documentElement
-    if (current === last) {
+    const last = TOTAL_SECTIONS - 1
+    if (isMobile || current === last) {
       html.style.overflow = ''
       document.body.style.overflow = ''
     } else {
@@ -448,9 +462,9 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
       html.style.overflow = ''
       document.body.style.overflow = ''
     }
-  }, [current])
+  }, [current, isMobile])
 
-  const active = (i: number) => current === i
+  const active = (i: number) => isMobile || current === i
 
   // Faces grid — local preview photos for now; Sanity members take over
   // once optimized images are uploaded (empty LOCAL_TEAM to switch back).
@@ -472,17 +486,20 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         }))
 
   return (
-    <div ref={containerRef} className="relative h-[100dvh] overflow-hidden bg-bg">
-      {/* Sliding wrapper */}
+    <div
+      ref={containerRef}
+      className={isMobile ? 'relative bg-bg' : 'relative h-[100dvh] overflow-hidden bg-bg'}
+    >
+      {/* Sliding wrapper — deck translates on desktop, static (normal scroll) on mobile */}
       <motion.div
         className="relative will-change-transform"
-        animate={{ y: `${-current * 100}dvh` }}
+        animate={{ y: isMobile ? 0 : `${-current * 100}dvh` }}
         transition={{ duration: TRANSITION_DURATION / 1000, ease: [0.76, 0, 0.24, 1] }}
       >
         {/* ═══════════════════════════════════════════
             0. HERO
         ═══════════════════════════════════════════ */}
-        <section className="relative flex h-[100dvh] flex-col overflow-hidden bg-bg">
+        <section className="relative flex min-h-[100dvh] md:h-[100dvh] flex-col overflow-hidden bg-bg">
           {/* Hero copy — full-width stretch, top-aligned to match Work/Services/Diary */}
           <div className="flex min-h-0 flex-1 items-start px-[var(--gutter)] pt-[120px] [@media(max-height:780px)]:pt-[92px]">
             <div className="w-full">
@@ -546,7 +563,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             1. THE MOTTO
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
+        <section className="flex min-h-[100dvh] md:h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <FadeUp active={active(1)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
@@ -558,13 +575,13 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
 
             <div className="mt-[var(--space-xl)] flex max-w-[640px] flex-col gap-[var(--space-md)]">
               <FadeUp delay={0.1} active={active(1)}>
-                <p className="text-[1rem] leading-[1.85] text-text-secondary">
+                <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                   It means we don&apos;t hand you a deliverable and disappear. We sit in your meetings. We learn your operations. We understand your problems before we try to solve them.
                 </p>
               </FadeUp>
 
               <FadeUp delay={0.15} active={active(1)}>
-                <p className="text-[1rem] leading-[1.85] text-text-secondary">
+                <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                   We push back when we think you&apos;re wrong — not to be difficult, but because that&apos;s what real partners do. And when we&apos;re wrong, we listen.
                 </p>
               </FadeUp>
@@ -582,11 +599,11 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             2. THE FOUNDERS
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
+        <section className="flex min-h-[100dvh] md:h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
-            <div className="grid gap-[var(--space-xl)] md:grid-cols-[1fr_1fr] md:items-center">
+            <div className="grid gap-[var(--space-md)] md:grid-cols-[1fr_1fr] md:items-center md:gap-[var(--space-xl)]">
               <FadeUp active={active(2)}>
-                <div className="group relative aspect-[4/5] max-h-[60dvh] rotate-[-10deg] overflow-hidden rounded-[var(--radius-lg)] bg-bg-elevated">
+                <div className="group relative mx-auto aspect-[4/5] w-[64%] max-w-[240px] rotate-[-10deg] overflow-hidden rounded-[var(--radius-lg)] bg-bg-elevated md:mx-0 md:w-full md:max-h-[60dvh] md:max-w-none">
                   {FOUNDERS_PHOTO ? (
                     <Image
                       src={FOUNDERS_PHOTO}
@@ -606,7 +623,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
                 </div>
               </FadeUp>
 
-              <div className="flex flex-col gap-[var(--space-lg)]">
+              <div className="flex flex-col gap-[var(--space-sm)] md:gap-[var(--space-lg)]">
                 <FadeUp active={active(2)}>
                   <p className="mb-[var(--space-sm)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
                     The equation
@@ -614,19 +631,19 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
                 </FadeUp>
 
                 <FadeUp delay={0.1} active={active(2)}>
-                  <p className="text-[1rem] leading-[1.85] text-text-secondary">
+                  <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                     Xhulio is a superstar in everything visual. Aldo builds relationships that last. When the two of us became friends, the equation was simple: his eye, his instinct, his creativity — matched with the trust, the conversations, the partnerships that turn a single project into a decade-long journey.
                   </p>
                 </FadeUp>
 
                 <FadeUp delay={0.15} active={active(2)}>
-                  <p className="text-[1rem] leading-[1.85] text-text-secondary">
+                  <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                     We didn&apos;t merge dreams. We merged what we were each already best at. And that combination became BoldCrest.
                   </p>
                 </FadeUp>
 
                 <FadeUp delay={0.2} active={active(2)}>
-                  <p className="text-[1rem] leading-[1.85] text-text-secondary">
+                  <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                     We took our first team from the same university halls we were still sitting in. We were 22. We were probably not ready. We did it anyway. And what we brought to the market — at a time when no one else was bringing it — was real creative thinking to social media. Not content. Ideas.
                   </p>
                 </FadeUp>
@@ -638,7 +655,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             3. TEAM CULTURE + FACES (combined)
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)] pt-[80px]">
+        <section className="flex min-h-[100dvh] md:h-[100dvh] items-center overflow-hidden px-[var(--gutter)] pt-[80px]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <div className="grid items-center gap-[var(--space-2xl)] md:grid-cols-2">
               {/* Left — culture copy */}
@@ -652,13 +669,13 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
                 <BigStatement text="Every person has a glitch in their system." active={active(3)} />
 
                 <FadeUp delay={0.1} active={active(3)}>
-                  <p className="mt-[var(--space-lg)] text-[1rem] leading-[1.85] text-text-secondary">
+                  <p className="mt-[var(--space-lg)] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                     Something slightly off, slightly unusual, slightly theirs. And that&apos;s exactly what makes them belong here. We are different people who are somehow made of the same thing.
                   </p>
                 </FadeUp>
 
                 <FadeUp delay={0.15} active={active(3)}>
-                  <p className="mt-[var(--space-md)] text-[1rem] leading-[1.85] text-text-secondary">
+                  <p className="mt-[var(--space-md)] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                     We bully each other. We cook together. We have traditions that make no sense to anyone outside this room. And when someone is sick, we show up.
                   </p>
                 </FadeUp>
@@ -681,7 +698,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
         {/* ═══════════════════════════════════════════
             7. THE WORK PHILOSOPHY
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
+        <section className="flex min-h-[100dvh] md:h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <div className="mx-auto max-w-[700px] text-center">
               <FadeUp active={active(4)}>
@@ -693,7 +710,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
               <BigStatement text="The work we're most proud of, most people will never know we made." active={active(4)} className="text-center" />
 
               <FadeUp delay={0.15} active={active(4)}>
-                <p className="mt-[var(--space-lg)] text-[1rem] leading-[1.85] text-text-secondary">
+                <p className="mt-[var(--space-lg)] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                   That&apos;s not false modesty. That&apos;s the goal. When a brand becomes so real, so lived-in, so theirs — when people carry it, wear it, post it, and believe in it without a second thought — the agency behind it disappears. And it should.
                 </p>
               </FadeUp>
@@ -717,7 +734,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
             5. CLOSING (last slide — releases the scroll lock so the
             global footer can flow in below via normal scroll)
         ═══════════════════════════════════════════ */}
-        <section className="flex h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
+        <section className="flex min-h-[100dvh] md:h-[100dvh] items-center overflow-hidden px-[var(--gutter)]">
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <FadeUp active={active(5)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
@@ -729,7 +746,7 @@ export default function PeoplePageClient({ members }: PeoplePageClientProps) {
               <BigStatement text="If you've read this far, we hope you felt something." active={active(5)} />
 
               <FadeUp delay={0.2} active={active(5)}>
-                <p className="mt-[var(--space-lg)] max-w-[600px] text-[1rem] leading-[1.85] text-text-secondary">
+                <p className="mt-[var(--space-lg)] max-w-[600px] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.85]">
                   A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
                 </p>
               </FadeUp>
