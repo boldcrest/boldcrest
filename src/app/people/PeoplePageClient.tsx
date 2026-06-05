@@ -75,13 +75,11 @@ const TRANSITION_DURATION = 700
     'Rei Çollaku','Romina Uka'].map((name) => ({ name, localSrc: `/Team Photos/${name}.jpg` })) */
 const LOCAL_TEAM: { name: string; localSrc: string }[] = []
 
-// Set to '/Team Photos/Founders.png' once an optimized founders photo is uploaded.
-const FOUNDERS_PHOTO: string = ''
+const FOUNDERS_PHOTO: string = '/People - Photos/Foto Old.png'
 
 /* ── Auto-scrolling + draggable team-photo strip (b&w → color on hover) ── */
 function PhotoMarquee() {
-  // Re-add [1, 2, 3, 4, 5, 6, 7] once optimized photos are in /public/People - Photos/
-  const photos: number[] = []
+  const photos = [1, 2, 3, 4, 5, 6, 7]
   const repeated = [...photos, ...photos, ...photos, ...photos]
   const scrollerRef = useRef<HTMLDivElement>(null)
   const drag = useRef({ active: false, startX: 0, startScroll: 0 })
