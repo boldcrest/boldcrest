@@ -75,7 +75,7 @@ const TRANSITION_DURATION = 700
     'Rei Çollaku','Romina Uka'].map((name) => ({ name, localSrc: `/Team Photos/${name}.jpg` })) */
 const LOCAL_TEAM: { name: string; localSrc: string }[] = []
 
-const FOUNDERS_PHOTO: string = '/People - Photos/Foto Old.png'
+const FOUNDERS_PHOTO: string = '/People - Photos/Old 2.png'
 
 /* ── Auto-scrolling + draggable team-photo strip (b&w → color on hover) ── */
 function PhotoMarquee() {
