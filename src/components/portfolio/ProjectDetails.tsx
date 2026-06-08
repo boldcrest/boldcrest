@@ -36,8 +36,8 @@ export default function ProjectDetails({
   if (cols.length === 0) return null
 
   return (
-    <section className="border-t border-border px-[var(--gutter)] py-[var(--space-2xl)]">
-      <div className="mx-auto grid max-w-[var(--max-width)] gap-[var(--space-xl)] md:grid-cols-3">
+    <section className="px-[var(--gutter)] pb-[var(--space-2xl)] pt-[var(--space-xl)]">
+      <div className="grid w-full gap-[var(--space-xl)] md:grid-cols-3">
         {cols}
       </div>
     </section>

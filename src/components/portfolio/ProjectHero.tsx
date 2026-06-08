@@ -1,7 +1,4 @@
-'use client'
-
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 
 interface ProjectHeroProps {
   name: string
@@ -16,25 +13,15 @@ export default function ProjectHero({
   industry,
   year,
 }: ProjectHeroProps) {
-  // Meta line below the title: Service · Industry · Year
-  const metaLine = [
-    services && services.length > 0 ? services.join(', ') : null,
-    industry || null,
-    year || null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  // "Client | Title" → two lines
+  const titleLines = name.split(' | ')
+  const hasMeta = (services && services.length > 0) || !!industry || !!year
 
   return (
-    <section className="px-[var(--gutter)] pt-40 pb-[var(--space-xl)]">
-      <div className="mx-auto max-w-[var(--max-width)]">
+    <section className="px-[var(--gutter)] pt-40">
+      <div className="w-full">
         {/* Breadcrumb */}
-        <motion.nav
-          className="mb-[var(--space-md)] flex items-center gap-2 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-text-tertiary"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        >
+        <nav className="mb-[var(--space-md)] flex items-center gap-2 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-text-tertiary">
           <Link
             href="/work"
             className="transition-colors duration-200 hover:text-white"
@@ -43,30 +30,57 @@ export default function ProjectHero({
           </Link>
           <span>/</span>
           <span className="text-text-secondary">{name}</span>
-        </motion.nav>
+        </nav>
 
-        {/* Title */}
-        <motion.h1
-          className="font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.08]"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {name}
-          <span className="text-accent">.</span>
-        </motion.h1>
+        {/* Title (left) + meta (right, stacked & right-aligned) */}
+        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <h1 className="font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.0] tracking-[-0.01em]">
+            {titleLines.map((part, i) => (
+              <span key={i} className="block">
+                {part}
+                {i === titleLines.length - 1 && (
+                  <span className="text-accent">.</span>
+                )}
+              </span>
+            ))}
+          </h1>
 
-        {/* Meta — Service · Industry · Year */}
-        {metaLine && (
-          <motion.p
-            className="mt-[var(--space-lg)] text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            {metaLine}
-          </motion.p>
-        )}
+          {hasMeta && (
+            <div className="shrink-0 text-[0.7rem] font-semibold uppercase leading-[2.1] tracking-[0.2em] text-text-tertiary md:text-right">
+              {/* Category (service) — links to the filtered Work page */}
+              {services && services.length > 0 && (
+                <div>
+                  {services.map((s, i) => (
+                    <span key={s}>
+                      {i > 0 && ', '}
+                      <Link
+                        href={`/work?service=${encodeURIComponent(s)}`}
+                        className="transition-colors duration-200 hover:text-white"
+                      >
+                        {s}
+                      </Link>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {/* Industry — links to the filtered Work page */}
+              {industry && (
+                <div>
+                  <Link
+                    href={`/work?industry=${encodeURIComponent(industry)}`}
+                    className="transition-colors duration-200 hover:text-white"
+                  >
+                    {industry}
+                  </Link>
+                </div>
+              )}
+              {year && <div>{year}</div>}
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div className="mt-[var(--space-xl)] border-t border-border" />
       </div>
     </section>
   )

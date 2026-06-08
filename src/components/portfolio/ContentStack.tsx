@@ -257,11 +257,12 @@ export default function ContentStack({
 
   return (
     <div className="flex justify-center gap-[var(--space-2xl)]">
-      {/* Media stack — the centred portfolio */}
-      <div
-        ref={mediaStackRef}
-        className="flex w-full min-w-0 max-w-[900px] flex-col"
-      >
+      {/* Invisible left spacer mirroring the navigator so the media is centred */}
+      {total > 1 && (
+        <div aria-hidden className="hidden w-[42px] shrink-0 min-[960px]:block" />
+      )}
+      {/* Media stack — centred (capped width), the navigator sits to its right */}
+      <div ref={mediaStackRef} className="flex w-full min-w-0 max-w-[1200px] flex-col">
         {items.map((item, i) => (
           <div
             key={item.key}

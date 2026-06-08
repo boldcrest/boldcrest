@@ -195,3 +195,35 @@ export const siteSettingsQuery = defineQuery(
     }
   }`
 )
+
+// Related projects in the same category (service), excluding the current one
+export const relatedProjectsQuery = defineQuery(
+  `*[_type == "project" && slug.current != $slug && count((services[])[@ in $serviceNames]) > 0] | order(year desc, _createdAt desc) [0...5] {
+    _id,
+    name,
+    slug,
+    tagline,
+    client,
+    industry,
+    services,
+    thumbnail,
+    thumbnailType,
+    thumbnailVideo
+  }`
+)
+
+// Fallback pool — other recent projects, excluding the current one
+export const moreProjectsQuery = defineQuery(
+  `*[_type == "project" && slug.current != $slug] | order(year desc, _createdAt desc) [0...5] {
+    _id,
+    name,
+    slug,
+    tagline,
+    client,
+    industry,
+    services,
+    thumbnail,
+    thumbnailType,
+    thumbnailVideo
+  }`
+)
