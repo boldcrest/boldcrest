@@ -5,10 +5,26 @@ import { motion } from 'framer-motion'
 
 interface ProjectHeroProps {
   name: string
-  tagline?: string
+  services?: string[]
+  industry?: string
+  year?: string
 }
 
-export default function ProjectHero({ name, tagline }: ProjectHeroProps) {
+export default function ProjectHero({
+  name,
+  services,
+  industry,
+  year,
+}: ProjectHeroProps) {
+  // Meta line below the title: Service · Industry · Year
+  const metaLine = [
+    services && services.length > 0 ? services.join(', ') : null,
+    industry || null,
+    year || null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   return (
     <section className="px-[var(--gutter)] pt-40 pb-[var(--space-xl)]">
       <div className="mx-auto max-w-[var(--max-width)]">
@@ -31,7 +47,7 @@ export default function ProjectHero({ name, tagline }: ProjectHeroProps) {
 
         {/* Title */}
         <motion.h1
-          className="max-w-[900px] font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.1]"
+          className="font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.08]"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
@@ -40,19 +56,15 @@ export default function ProjectHero({ name, tagline }: ProjectHeroProps) {
           <span className="text-accent">.</span>
         </motion.h1>
 
-        {/* Tagline */}
-        {tagline && (
+        {/* Meta — Service · Industry · Year */}
+        {metaLine && (
           <motion.p
-            className="mt-[var(--space-md)] max-w-[600px] text-[clamp(1rem,1.5vw,1.15rem)] leading-[1.7] text-text-secondary"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.25,
-              ease: [0.16, 1, 0.3, 1],
-            }}
+            className="mt-[var(--space-lg)] text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
-            {tagline}
+            {metaLine}
           </motion.p>
         )}
       </div>
