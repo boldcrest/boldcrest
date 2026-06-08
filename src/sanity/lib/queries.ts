@@ -1,7 +1,9 @@
 import { defineQuery } from 'next-sanity'
 
+// Homepage "Selected Works" — the latest projects (newest year first, then most
+// recently added), excluding any explicitly hidden with featured == false.
 export const featuredProjectsQuery = defineQuery(
-  `*[_type == "project" && (featured == true || !defined(featured))] | order(order asc) [0...6] {
+  `*[_type == "project" && featured != false] | order(year desc, _createdAt desc) [0...6] {
     _id,
     name,
     slug,
