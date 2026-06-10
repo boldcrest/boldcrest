@@ -2,9 +2,9 @@
 
 import { useState, useActionState } from 'react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { submitContactForm } from './actions'
 import { SubmitButton } from '@/components/MagneticButton'
-import { useStartProject } from '@/components/start-project/StartProjectProvider'
 
 interface SocialLink {
   platform: string
@@ -24,11 +24,17 @@ const defaultSocials = [
   { label: 'Vimeo', href: 'https://vimeo.com/boldcrest' },
 ]
 
+const LABEL =
+  'mb-3 text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary'
+const VALUE =
+  'text-[1.15rem] leading-[1.5] text-white transition-colors duration-300 hover:text-text-secondary'
+const FIELD =
+  'w-full border-b border-border bg-transparent pb-3 text-[1rem] text-white outline-none transition-colors duration-300 placeholder:text-text-tertiary focus:border-white/40'
+
 export default function ContactPageClient({
   contactEmail,
   socialLinks,
 }: ContactPageClientProps) {
-  const { open: openStartProject } = useStartProject()
   const [submitted, setSubmitted] = useState(false)
 
   const [, formAction, isPending] = useActionState(
@@ -43,218 +49,169 @@ export default function ContactPageClient({
   const socials =
     socialLinks?.map((s) => ({ label: s.platform, href: s.url })) ??
     defaultSocials
+  const email = contactEmail || 'info@boldcrest.com'
 
   return (
     <main className="relative">
-      {/* ═══════════════════════════════════════════
-          HERO — Contact
-      ═══════════════════════════════════════════ */}
-      <section className="relative px-[var(--gutter)] pt-40 pb-[var(--space-2xl)]">
-        <div className="mx-auto max-w-[var(--max-width)]">
-          <motion.h1
-            className="max-w-[900px] font-display text-[clamp(3rem,8vw,7rem)] font-bold leading-[1.05]"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          >
-            Contact<span className="text-accent">.</span>
-          </motion.h1>
-
+      {/* ── Hero ── */}
+      <section className="flex flex-col px-[var(--gutter)] pt-40 pb-0">
+        <div className="w-full">
           <motion.p
-            className="mt-[var(--space-lg)] max-w-[650px] text-[1.1rem] leading-[1.7] text-text-secondary"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.3,
-              ease: [0.16, 1, 0.3, 1],
-            }}
+            className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            Let&apos;s Talk. It doesn&apos;t matter how big your business is or weird your questions are, they&apos;re worth asking, and we will get back to you shortly.
+            Contact
           </motion.p>
+
+          {/* Headline left, intro right-aligned to its bottom */}
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <motion.h1
+              className="font-display text-[clamp(2.5rem,6.5vw,6rem)] font-bold leading-[1.05] tracking-[-0.02em] text-white"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            >
+              Start with a Hello.
+              <br />
+              We&apos;ll take it from there.
+            </motion.h1>
+
+            <motion.p
+              className="max-w-[440px] text-[0.95rem] leading-[1.7] text-text-secondary md:text-right"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
+              Let&apos;s Talk. It doesn&apos;t matter how big your business is or
+              weird your questions are, they&apos;re worth asking, and we will get
+              back to you shortly.
+            </motion.p>
+          </div>
+
+          {/* Divider */}
+          <div className="mt-10 h-px w-full bg-border md:mt-12 lg:mt-16" />
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          INFO + FORM — Two-column layout
-      ═══════════════════════════════════════════ */}
-      <section className="px-[var(--gutter)] pb-[var(--space-3xl)]">
-        <div className="mx-auto max-w-[var(--max-width)]">
-          <div className="grid gap-[var(--space-2xl)] md:grid-cols-2">
-            {/* ── Left Column: Contact Info ── */}
-            <motion.div
-              className="flex flex-col gap-[var(--space-xl)]"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.8,
-                delay: 0.4,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-            >
-              {/* Social Links */}
-              <div>
-                <p className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
-                  Follow Us
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  {socials.map((s) => (
-                    <a
-                      key={s.label}
-                      href={s.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[0.9rem] text-text-secondary transition-colors duration-300 hover:text-white"
-                    >
-                      {s.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
+      {/* ── Info + Form ── */}
+      <section className="px-[var(--gutter)] pb-[var(--space-3xl)] pt-[var(--space-2xl)]">
+        <div className="grid gap-[var(--space-2xl)] md:grid-cols-2">
+          {/* Left: contact info */}
+          <div className="flex flex-col gap-[var(--space-xl)]">
+            <div>
+              <p className={LABEL}>Email</p>
+              <a href={`mailto:${email}`} className={VALUE}>
+                {email}
+              </a>
+            </div>
 
-              {/* Contact Details */}
-              <div className="flex flex-col gap-5">
-                <div>
-                  <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
-                    Email
-                  </p>
-                  <a
-                    href={`mailto:${contactEmail || 'info@boldcrest.com'}`}
-                    className="text-[1rem] text-text-secondary transition-colors duration-300 hover:text-white"
-                  >
-                    {contactEmail || 'info@boldcrest.com'}
-                  </a>
-                </div>
+            <div>
+              <p className={LABEL}>Location</p>
+              <a
+                href="https://maps.google.com/?q=41.312222,19.807778"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block ${VALUE}`}
+              >
+                Rr. Prokop Mima,
+                <br />
+                Olympic Residences, 37/1, 1019
+                <br />
+                Tirana, Albania
+              </a>
+              <p className="mt-5 text-[1.05rem] text-white">
+                41°18&apos;44&quot;N, 19°48&apos;28&quot;E
+              </p>
+            </div>
 
-                <div>
-                  <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
-                    Location
-                  </p>
+            <div>
+              <p className={LABEL}>Follow Us</p>
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                {socials.map((s) => (
                   <a
-                    href="https://maps.google.com/?q=Olympic+Residence+Tirana+Albania"
+                    key={s.label}
+                    href={s.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[1rem] text-text-secondary transition-colors duration-300 hover:text-white"
+                    className="text-[1.05rem] text-white transition-colors duration-300 hover:text-text-secondary"
                   >
-                    Olympic Residence, Tirana, Albania
+                    {s.label}
                   </a>
-                </div>
+                ))}
               </div>
+            </div>
 
-              {/* Start a Project CTA */}
-              <div>
-                <p className="mb-3 text-[0.85rem] text-text-tertiary">
-                  Have a project in mind?
-                </p>
-                <button
-                  type="button"
-                  onClick={openStartProject}
-                  className="group inline-flex cursor-pointer items-center gap-2 text-[1rem] font-semibold text-accent transition-colors duration-300 hover:text-white"
-                >
-                  Start a New Project
+            <div>
+              <p className={LABEL}>Other</p>
+              <Link href="/careers" className={VALUE}>
+                Careers
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: form */}
+          <div>
+            {submitted ? (
+              <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
                   <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 20 20"
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
                     fill="none"
-                    className="transition-transform duration-300 group-hover:translate-x-1"
+                    stroke="white"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    <path
-                      d="M4 10h12M12 6l4 4-4 4"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <path d="M20 6L9 17l-5-5" />
                   </svg>
-                </button>
-              </div>
-            </motion.div>
-
-            {/* ── Right Column: Simple Contact Form ── */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.8,
-                delay: 0.5,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-            >
-              {submitted ? (
-                <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
-                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
-                    <svg
-                      width="28"
-                      height="28"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
-                  </div>
-                  <h3 className="font-display text-[2rem] font-bold">
-                    Message Sent
-                  </h3>
-                  <p className="mt-3 text-[1rem] text-text-secondary">
-                    We&apos;ll get back to you shortly.
-                  </p>
                 </div>
-              ) : (
-                <form action={formAction} className="flex flex-col gap-[var(--space-md)]">
-                  <div className="border-b border-border pb-4">
-                    <input
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="Full Name*"
-                      className="w-full bg-transparent text-[1rem] text-white placeholder:text-text-tertiary outline-none"
-                    />
-                  </div>
-
-                  <div className="border-b border-border pb-4">
-                    <input
-                      name="email"
-                      type="email"
-                      required
-                      placeholder="Email*"
-                      className="w-full bg-transparent text-[1rem] text-white placeholder:text-text-tertiary outline-none"
-                    />
-                  </div>
-
-                  <div className="border-b border-border pb-4">
-                    <input
-                      name="company"
-                      type="text"
-                      placeholder="Company"
-                      className="w-full bg-transparent text-[1rem] text-white placeholder:text-text-tertiary outline-none"
-                    />
-                  </div>
-
-                  <div className="border-b border-border pb-4">
-                    <textarea
-                      name="message"
-                      required
-                      rows={4}
-                      placeholder="Message*"
-                      className="w-full resize-none bg-transparent text-[1rem] text-white placeholder:text-text-tertiary outline-none"
-                    />
-                  </div>
-
-                  <div className="mt-2">
-                    <SubmitButton
-                      label="Send"
-                      pendingLabel="Sending..."
-                      isPending={isPending}
-                    />
-                  </div>
-                </form>
-              )}
-            </motion.div>
+                <h3 className="font-display text-[2rem] font-bold">Message Sent</h3>
+                <p className="mt-3 text-[1rem] text-text-secondary">
+                  We&apos;ll get back to you shortly.
+                </p>
+              </div>
+            ) : (
+              <form action={formAction} className="flex flex-col gap-[var(--space-lg)]">
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="Full Name*"
+                  className={FIELD}
+                />
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="Email*"
+                  className={FIELD}
+                />
+                <input
+                  name="company"
+                  type="text"
+                  placeholder="Company"
+                  className={FIELD}
+                />
+                <textarea
+                  name="message"
+                  required
+                  rows={4}
+                  placeholder="Message*"
+                  className={`${FIELD} resize-none`}
+                />
+                <div className="mt-2">
+                  <SubmitButton
+                    label="Send"
+                    pendingLabel="Sending..."
+                    isPending={isPending}
+                  />
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </section>

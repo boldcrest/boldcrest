@@ -11,6 +11,13 @@ import ProjectHero from '@/components/portfolio/ProjectHero'
 import ProjectDetails from '@/components/portfolio/ProjectDetails'
 import ContentStack from '@/components/portfolio/ContentStack'
 import RelatedProjects from '@/components/portfolio/RelatedProjects'
+import JsonLd from '@/components/JsonLd'
+import {
+  ogImageFrom,
+  imageUrlFrom,
+  breadcrumbSchema,
+  creativeWorkSchema,
+} from '@/lib/seo'
 
 export async function generateStaticParams() {
   const projects = await client.fetch(allProjectsQuery)
@@ -30,11 +37,35 @@ export async function generateMetadata({
     params: { slug },
   })
 
-  if (!project) return { title: 'Project — BoldCrest' }
+  if (!project) return { title: 'Project' }
+
+  const description =
+    project.tagline ||
+    `${project.name}${project.client ? ` for ${project.client}` : ''} — a ${
+      project.services?.[0] || 'creative'
+    } project by BoldCrest.`
+  const path = `/work/${slug}`
+  const ogImage = ogImageFrom(project.thumbnail)
+  const fullTitle = `${project.name} — BoldCrest`
 
   return {
-    title: `${project.name} — BoldCrest`,
-    description: project.tagline || `${project.name} project by BoldCrest.`,
+    // Bare name; the layout template appends "— BoldCrest" (avoids doubling).
+    title: project.name,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      type: 'article',
+      title: fullTitle,
+      description,
+      url: path,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: project.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: fullTitle,
+      description,
+      images: [ogImage],
+    },
   }
 }
 
@@ -75,6 +106,30 @@ export default async function ProjectPage({
 
   return (
     <main>
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Work', path: '/work' },
+          { name: project.name, path: `/work/${slug}` },
+        ])}
+      />
+      <JsonLd
+        data={creativeWorkSchema({
+          name: project.name,
+          description: project.tagline || undefined,
+          path: `/work/${slug}`,
+          image: imageUrlFrom(project.thumbnail),
+          keywords: [
+            ...(project.services ?? []),
+            project.industry,
+            project.client,
+            'BoldCrest',
+            'creative agency Tirana',
+          ],
+          about: project.industry,
+          datePublished: project.year,
+        })}
+      />
       <ProjectHero
         name={project.name}
         services={project.services}
@@ -99,6 +154,12 @@ export default async function ProjectPage({
             thumbnail={project.thumbnail}
             thumbnailVideo={project.thumbnailVideo}
             thumbnailType={project.thumbnailType}
+            altBase={[project.client, project.name]
+              .filter(Boolean)
+              .join(' — ')}
+            altSuffix={[project.services?.[0], 'BoldCrest']
+              .filter(Boolean)
+              .join(' · ')}
           />
         </div>
       </section>

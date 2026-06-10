@@ -5,6 +5,7 @@ import ContactPageClient from './ContactPageClient'
 
 export const metadata: Metadata = {
   title: 'Contact',
+  alternates: { canonical: '/contact' },
   description:
     "Let's talk. Get in touch with BoldCrest to start your next project.",
   openGraph: {

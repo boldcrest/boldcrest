@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Careers',
+  alternates: { canonical: '/careers' },
   description:
     'Join the BoldCrest team. Tell us about yourself and apply. It goes straight to our team.',
   openGraph: {

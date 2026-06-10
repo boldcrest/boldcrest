@@ -5,6 +5,7 @@ import PeoplePageClient from './PeoplePageClient'
 
 export const metadata: Metadata = {
   title: 'People',
+  alternates: { canonical: '/people' },
   description:
     "It's not about us, it's about you. Meet the team behind BoldCrest.",
   openGraph: {

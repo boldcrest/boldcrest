@@ -24,6 +24,7 @@ interface ImageMedia {
   hotspot?: { x: number; y: number }
   crop?: { top: number; bottom: number; left: number; right: number }
   image?: { asset: { _ref: string } }
+  alt?: string
 }
 
 type MediaBlock = VideoMedia | ImageMedia
@@ -32,6 +33,7 @@ interface ThumbnailImage {
   asset?: { _ref: string }
   hotspot?: { x: number; y: number }
   crop?: { top: number; bottom: number; left: number; right: number }
+  alt?: string
 }
 
 interface ContentStackProps {
@@ -39,6 +41,10 @@ interface ContentStackProps {
   thumbnail?: ThumbnailImage
   thumbnailVideo?: string
   thumbnailType?: string
+  /** Descriptive base for image alt text, e.g. "Client — Project Name". */
+  altBase?: string
+  /** Appended to alt text, e.g. "Branding · BoldCrest". */
+  altSuffix?: string
 }
 
 interface StackItem {
@@ -73,7 +79,11 @@ export default function ContentStack({
   thumbnail,
   thumbnailVideo,
   thumbnailType,
+  altBase,
+  altSuffix,
 }: ContentStackProps) {
+  const baseAlt =
+    [altBase, altSuffix].filter(Boolean).join(' — ') || 'BoldCrest project'
   const items: StackItem[] = []
 
   // Thumbnail as first item
@@ -92,7 +102,7 @@ export default function ContentStack({
         <Image
           loader={sanityImageLoader}
           src={urlFor(thumbnail).width(1800).quality(85).url()}
-          alt=""
+          alt={thumbnail.alt || baseAlt}
           width={1800}
           height={1200}
           priority
@@ -128,7 +138,7 @@ export default function ContentStack({
             <Image
               loader={sanityImageLoader}
               src={urlFor(source).width(1800).quality(85).url()}
-              alt=""
+              alt={img.alt || baseAlt}
               width={1800}
               height={1200}
               loading="lazy"

@@ -5,6 +5,7 @@ import DiaryPageClient from './DiaryPageClient'
 
 export const metadata: Metadata = {
   title: 'Diary',
+  alternates: { canonical: '/diary' },
   description:
     'The latest from our world and beyond. Read deeper into what we do, think, and create.',
   openGraph: {

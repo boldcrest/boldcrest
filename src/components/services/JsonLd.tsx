@@ -97,8 +97,9 @@ export function LocalBusinessJsonLd() {
     },
     sameAs: [
       'https://www.instagram.com/boldcrest/',
-      'https://www.linkedin.com/company/boldcrest/',
       'https://www.behance.net/boldcrest',
+      'https://www.linkedin.com/company/boldcrest/',
+      'https://www.facebook.com/boldcrest',
       'https://vimeo.com/boldcrest',
     ],
   }

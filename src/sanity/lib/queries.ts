@@ -22,6 +22,7 @@ export const featuredProjectsQuery = defineQuery(
 export const allProjectsQuery = defineQuery(
   `*[_type == "project"] | order(year desc, order asc) {
     _id,
+    _updatedAt,
     name,
     slug,
     tagline,
@@ -64,13 +65,15 @@ export const projectBySlugQuery = defineQuery(
         "type": "image",
         asset,
         hotspot,
-        crop
+        crop,
+        alt
       },
       _type == "imageMedia" => {
         "type": "image",
         "asset": coalesce(asset, image.asset),
         "hotspot": coalesce(hotspot, image.hotspot),
-        "crop": coalesce(crop, image.crop)
+        "crop": coalesce(crop, image.crop),
+        "alt": coalesce(alt, image.alt)
       }
     }
   }`
@@ -162,6 +165,7 @@ export const latestDiaryPostsQuery = defineQuery(
 export const allDiaryPostsQuery = defineQuery(
   `*[_type == "diaryPost"] | order(publishedAt desc) {
     _id,
+    _updatedAt,
     title,
     slug,
     excerpt,

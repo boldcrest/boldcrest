@@ -5,6 +5,7 @@ import WorkPageClient from './WorkPageClient'
 
 export const metadata: Metadata = {
   title: 'Work',
+  alternates: { canonical: '/work' },
   description: 'Our creations, skillfully forged through the years.',
   openGraph: {
     title: 'Work — BoldCrest',

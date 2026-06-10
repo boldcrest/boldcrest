@@ -111,6 +111,14 @@ export const project = defineType({
       title: 'Thumbnail Image',
       type: 'image',
       options: { hotspot: true },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt text (SEO)',
+          type: 'string',
+          description: 'Describe the image for search engines & screen readers.',
+        }),
+      ],
       hidden: ({ parent }) => parent?.thumbnailType === 'video',
     }),
     defineField({
@@ -154,6 +162,14 @@ export const project = defineType({
         {
           type: 'image',
           options: { hotspot: true },
+          fields: [
+            defineField({
+              name: 'alt',
+              title: 'Alt text (SEO)',
+              type: 'string',
+              description: 'Describe the image for search engines & screen readers.',
+            }),
+          ],
         },
       ],
     }),
