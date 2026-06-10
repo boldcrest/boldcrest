@@ -3,7 +3,6 @@
 import { useState, useActionState } from 'react'
 import Link from 'next/link'
 import { submitContactForm } from './actions'
-import { SubmitButton } from '@/components/MagneticButton'
 
 interface SocialLink {
   platform: string
@@ -82,8 +81,9 @@ export default function ContactPageClient({
       {/* ── Info + Form ── */}
       <section className="px-[var(--gutter)] pb-[var(--space-3xl)] pt-[var(--space-2xl)]">
         <div className="grid grid-cols-1 gap-y-16 md:grid-cols-12 md:gap-x-8">
-          {/* Left: contact info — indented inward (offset columns) to match the design */}
-          <div className="flex flex-col gap-[var(--space-xl)] md:col-span-4 md:col-start-3">
+          {/* Left: contact info — indented inward; fills the form's height so the
+              last item (Careers) ends level with the SEND button */}
+          <div className="flex flex-col gap-[var(--space-xl)] md:col-span-4 md:col-start-3 md:h-full md:justify-between">
             <div>
               <p className={LABEL}>Email</p>
               <a href={`mailto:${email}`} className={VALUE}>
@@ -135,8 +135,9 @@ export default function ContactPageClient({
             </div>
           </div>
 
-          {/* Right: form */}
-          <div className="md:col-span-6 md:col-start-7">
+          {/* Right: form — field lines end inset from the right edge by the same
+              amount the left column is indented from the left (symmetric margins) */}
+          <div className="md:col-span-4 md:col-start-7">
             {submitted ? (
               <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
                 <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
@@ -188,11 +189,14 @@ export default function ContactPageClient({
                   className={`${FIELD} resize-none`}
                 />
                 <div className="mt-2">
-                  <SubmitButton
-                    label="Send"
-                    pendingLabel="Sending..."
-                    isPending={isPending}
-                  />
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="inline-flex items-center justify-center rounded-[var(--radius-pill)] border px-[1.4rem] py-[0.6rem] text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-text-secondary transition-colors duration-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{ borderColor: 'rgba(255,255,255,0.45)', backgroundColor: '#000' }}
+                  >
+                    {isPending ? 'Sending…' : 'Send'}
+                  </button>
                 </div>
               </form>
             )}

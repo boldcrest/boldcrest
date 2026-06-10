@@ -92,7 +92,7 @@ function MegiAvatar() {
   return (
     <div
       className="mt-4 h-10 w-10 overflow-hidden rounded-full"
-      style={{ background: '#DA291C' }}
+      style={{ background: '#161616' }}
     >
       {imgOk ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -103,7 +103,10 @@ function MegiAvatar() {
           onError={() => setImgOk(false)}
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-[0.85rem] font-bold text-white">
+        <div
+          className="flex h-full w-full items-center justify-center text-[0.85rem] font-bold"
+          style={{ color: '#545454' }}
+        >
           M
         </div>
       )}
@@ -161,8 +164,8 @@ function UserTurn({
         </header>
         <div className="flex w-full flex-col items-end gap-2">{children}</div>
         <div
-          className="mt-4 flex h-10 w-10 items-center justify-center rounded-full text-[0.85rem] font-bold text-white"
-          style={{ background: '#004c95' }}
+          className="mt-4 flex h-10 w-10 items-center justify-center rounded-full text-[0.85rem] font-bold"
+          style={{ background: '#161616', color: '#545454' }}
         >
           {initial || 'You'.slice(0, 1)}
         </div>
@@ -231,7 +234,7 @@ function OkButton({
       disabled={disabled}
       onClick={onClick}
       className="mt-4 inline-flex items-center gap-2 self-end rounded-full px-5 py-2 text-[0.8rem] font-semibold uppercase tracking-[0.18em] transition-all duration-300 enabled:hover:translate-x-0.5 disabled:cursor-not-allowed disabled:opacity-30"
-      style={{ background: '#DA291C', color: '#fff' }}
+      style={{ background: '#545454', color: '#fff' }}
     >
       Ok
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -329,9 +332,9 @@ function CheckboxList({
             />
             <span
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
-                checked ? 'bg-accent text-bg' : 'border-white/25'
+                checked ? '' : 'border-white/25'
               }`}
-              style={checked ? { background: '#DA291C', borderColor: '#DA291C' } : undefined}
+              style={checked ? { background: '#545454', borderColor: '#545454' } : undefined}
               aria-hidden="true"
             >
               {checked && (
@@ -387,13 +390,13 @@ function RadioList({
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
                 checked ? '' : 'border-white/25'
               }`}
-              style={checked ? { borderColor: '#DA291C' } : undefined}
+              style={checked ? { borderColor: '#545454' } : undefined}
               aria-hidden="true"
             >
               {checked && (
                 <span
                   className="h-2.5 w-2.5 rounded-full"
-                  style={{ background: '#DA291C' }}
+                  style={{ background: '#545454' }}
                 />
               )}
             </span>
@@ -822,7 +825,7 @@ export default function StartProjectChat() {
                     </Bubble>
                     <Bubble>
                       We&rsquo;ll get back to you within one business day at
-                      <span className="text-accent"> {a.email}</span>.
+                      <span className="text-white"> {a.email}</span>.
                     </Bubble>
                     <Bubble>Talk soon, {a.name} 🤝</Bubble>
                   </>
