@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useActionState } from 'react'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { submitContactForm } from './actions'
 import { SubmitButton } from '@/components/MagneticButton'
@@ -56,38 +55,23 @@ export default function ContactPageClient({
       {/* ── Hero ── */}
       <section className="flex flex-col px-[var(--gutter)] pt-40 pb-0">
         <div className="w-full">
-          <motion.p
-            className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          >
+          <p className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
             Contact
-          </motion.p>
+          </p>
 
           {/* Headline left, intro right-aligned to its bottom */}
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <motion.h1
-              className="font-display text-[clamp(2.5rem,6.5vw,6rem)] font-bold leading-[1.05] tracking-[-0.02em] text-white"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            >
+            <h1 className="font-display text-[clamp(2.5rem,6.5vw,6rem)] font-bold leading-[1.05] tracking-[-0.02em] text-white">
               Start with a Hello.
               <br />
               We&apos;ll take it from there.
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              className="max-w-[440px] text-[0.95rem] leading-[1.7] text-text-secondary md:text-right"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            >
+            <p className="max-w-[440px] text-[0.95rem] leading-[1.7] text-text-secondary md:text-right">
               Let&apos;s Talk. It doesn&apos;t matter how big your business is or
               weird your questions are, they&apos;re worth asking, and we will get
               back to you shortly.
-            </motion.p>
+            </p>
           </div>
 
           {/* Divider */}
