@@ -121,20 +121,22 @@ export default function Header() {
             <button
               type="button"
               onClick={openStartProject}
-              className="group relative z-10 hidden cursor-pointer items-center justify-center overflow-hidden border transition-all md:inline-flex"
+              className="group relative z-10 hidden cursor-pointer items-center justify-center overflow-hidden transition-all md:inline-flex"
               style={{
                 width: scrolled ? '2.2rem' : 'auto',
                 height: scrolled ? '2.2rem' : 'auto',
                 padding: scrolled ? '0' : '0.6rem 1.4rem',
                 borderRadius: 'var(--radius-pill)',
-                borderColor: scrolled ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.25)',
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: scrolled ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.45)',
                 backgroundColor: scrolled ? 'rgba(255,255,255,0.08)' : '#000',
                 transitionDuration: '500ms',
                 transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
               }}
             >
               <span
-                className="absolute inset-0 flex items-center justify-center text-[1rem] leading-none font-light text-white/80 transition-all group-hover:text-white"
+                className="absolute inset-0 flex items-center justify-center text-white/80 transition-all group-hover:text-white"
                 style={{
                   opacity: scrolled ? 1 : 0,
                   transform: scrolled ? 'scale(1)' : 'scale(0.5)',
@@ -142,7 +144,9 @@ export default function Header() {
                   transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
                 }}
               >
-                +
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
               </span>
 
               <span

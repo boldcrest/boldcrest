@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
+import { withSmallMarks } from '@/lib/marks'
 
 interface Project {
   _id: string
@@ -204,7 +205,7 @@ export default function ProjectMarquee({
                     </span>
                   )}
                   <h3 className="mt-1.5 font-display text-[1.05rem] font-semibold uppercase text-text-primary">
-                    {project.tagline || project.name}
+                    {withSmallMarks(project.tagline || project.name)}
                   </h3>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {project.industry && (
@@ -232,7 +233,7 @@ export default function ProjectMarquee({
                   </span>
                 )}
                 <h3 className="mt-1 font-display text-[1rem] font-semibold uppercase text-text-primary">
-                  {project.tagline || project.name}
+                  {withSmallMarks(project.tagline || project.name)}
                 </h3>
                 <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                   {project.industry && (

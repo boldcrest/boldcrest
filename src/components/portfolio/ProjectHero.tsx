@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { withSmallMarks } from '@/lib/marks'
 
 interface ProjectHeroProps {
   name: string
@@ -37,7 +38,7 @@ export default function ProjectHero({
           <h1 className="font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.0] tracking-[-0.01em]">
             {titleLines.map((part, i) => (
               <span key={i} className="block">
-                {part}
+                {withSmallMarks(part)}
                 {i === titleLines.length - 1 && (
                   <span className="text-accent">.</span>
                 )}

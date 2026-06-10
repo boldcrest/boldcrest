@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
+import { withSmallMarks } from '@/lib/marks'
 
 interface Project {
   _id: string
@@ -109,7 +110,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               </span>
             )}
             <h3 className="mt-1.5 font-display text-[1.15rem] font-semibold uppercase text-text-primary">
-              {project.tagline || project.name}
+              {withSmallMarks(project.tagline || project.name)}
             </h3>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {project.industry && (
@@ -137,7 +138,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             </span>
           )}
           <h3 className="mt-1 font-display text-[1rem] font-semibold uppercase text-text-primary">
-            {project.tagline || project.name}
+            {withSmallMarks(project.tagline || project.name)}
           </h3>
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             {project.industry && (
@@ -214,7 +215,7 @@ function ProjectListRow({ project, index }: { project: Project; index: number })
           </h3>
           {(project.tagline || (project.client && project.name)) && (
             <span className="font-display text-[clamp(1.1rem,2vw,1.5rem)] font-normal text-text-primary">
-              {project.tagline || project.name}
+              {withSmallMarks(project.tagline || project.name)}
             </span>
           )}
         </div>
@@ -329,9 +330,12 @@ function InlineFilter({
             {serviceFilter !== 'All' && (
               <button
                 onClick={(e) => { e.stopPropagation(); setServiceFilter('All') }}
-                className="-ml-1 text-[1rem] leading-none text-[#a3a3a3] transition-colors duration-200 hover:text-white"
+                aria-label="Clear services filter"
+                className="-ml-1 inline-flex items-center justify-center text-[#a3a3a3] transition-colors duration-200 hover:text-white"
               >
-                &times;
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
               </button>
             )}
             <span className="h-3 w-px bg-text-tertiary" />
@@ -347,9 +351,12 @@ function InlineFilter({
             {industryFilter !== 'All' && (
               <button
                 onClick={(e) => { e.stopPropagation(); setIndustryFilter('All') }}
-                className="-ml-1 text-[1rem] leading-none text-[#a3a3a3] transition-colors duration-200 hover:text-white"
+                aria-label="Clear industry filter"
+                className="-ml-1 inline-flex items-center justify-center text-[#a3a3a3] transition-colors duration-200 hover:text-white"
               >
-                &times;
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
               </button>
             )}
           </motion.div>
@@ -389,7 +396,8 @@ function InlineFilter({
               ))}
               <motion.button
                 onClick={() => setOpenFilter(null)}
-                className="ml-1 flex-shrink-0 text-[1rem] leading-none transition-colors duration-200 focus:outline-none"
+                aria-label="Clear filter"
+                className="ml-1 inline-flex flex-shrink-0 items-center justify-center transition-colors duration-200 focus:outline-none"
                 style={{ color: '#a3a3a3' }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff' }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#a3a3a3' }}
@@ -401,7 +409,9 @@ function InlineFilter({
                   ease: [0.16, 1, 0.3, 1],
                 }}
               >
-                &times;
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
               </motion.button>
             </div>
           </motion.div>
@@ -480,9 +490,12 @@ export default function WorkPageClient({ projects, initialService, initialIndust
 
         </div>
 
-        {/* Filters + View Toggle + Divider — grouped so justify-between only splits title vs. this block */}
+        {/* Divider + Filters + View Toggle — divider sits directly below the hero, above the filters */}
         <div className="mt-10 md:mt-12 lg:mt-16">
-          <div className="flex items-center justify-between">
+          {/* Divider — directly below hero, above filters */}
+          <div className="h-px w-full bg-border" />
+
+          <div className="mt-6 flex items-center justify-between">
             <InlineFilter
               openFilter={openFilter}
               setOpenFilter={setOpenFilter}
@@ -522,9 +535,6 @@ export default function WorkPageClient({ projects, initialService, initialIndust
               </button>
             </div>
           </div>
-
-          {/* Divider */}
-          <div className="mt-4 h-px w-full bg-border" />
         </div>
       </section>
 

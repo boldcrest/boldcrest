@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { urlFor } from '@/sanity/lib/image'
 import { sanityImageLoader } from '@/sanity/lib/loader'
+import { withSmallMarks } from '@/lib/marks'
 
 interface RelatedProject {
   _id: string
@@ -35,11 +36,11 @@ export default function RelatedProjects({
         </h2>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-5">
-          {projects.map((project) => (
+          {projects.map((project, index) => (
             <Link
               key={project._id}
               href={`/work/${project.slug.current}`}
-              className="group block"
+              className={`group ${index === 4 ? 'hidden md:block' : 'block'}`}
             >
               {/* Thumbnail */}
               <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-bg-card">
@@ -68,7 +69,7 @@ export default function RelatedProjects({
                 </span>
               )}
               <h3 className="mt-1 font-display text-[0.95rem] font-semibold uppercase leading-[1.2] text-text-primary transition-colors duration-300 group-hover:text-accent">
-                {project.tagline || project.name}
+                {withSmallMarks(project.tagline || project.name)}
               </h3>
             </Link>
           ))}

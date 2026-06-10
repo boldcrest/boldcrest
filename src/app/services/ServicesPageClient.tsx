@@ -289,8 +289,23 @@ function ServiceShowcase({ categories }: { categories: CategoryGroup[] }) {
 /* ── Stats Bar + Editorial Testimonial ── */
 const ACTIVE_SINCE = new Date('2019-01-27T00:00:00')
 
+/* Auto-incrementing counters — anchored at a base date with base values, then
+   grown by real elapsed time: Projects +1 every 10 days, Partners +1 / month. */
+const COUNTER_BASE = new Date('2026-06-10T00:00:00')
+const BASE_PROJECTS = 248
+const BASE_PARTNERS = 92
+
 function daysSince(date: Date): number {
   return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function monthsSince(date: Date): number {
+  const now = new Date()
+  let months =
+    (now.getFullYear() - date.getFullYear()) * 12 +
+    (now.getMonth() - date.getMonth())
+  if (now.getDate() < date.getDate()) months -= 1
+  return Math.max(0, months)
 }
 
 function CountUp({ to, active }: { to: number; active: boolean }) {
@@ -315,19 +330,28 @@ function CountUp({ to, active }: { to: number; active: boolean }) {
 function Stats() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
-  const [days, setDays] = useState(0)
+  const [counts, setCounts] = useState({
+    projects: BASE_PROJECTS,
+    partners: BASE_PARTNERS,
+    days: 0,
+  })
 
   useEffect(() => {
-    const update = () => setDays(daysSince(ACTIVE_SINCE))
+    const update = () =>
+      setCounts({
+        projects: BASE_PROJECTS + Math.floor(daysSince(COUNTER_BASE) / 10),
+        partners: BASE_PARTNERS + monthsSince(COUNTER_BASE),
+        days: daysSince(ACTIVE_SINCE),
+      })
     update()
     const id = setInterval(update, 60_000)
     return () => clearInterval(id)
   }, [])
 
   const stats = [
-    { value: 248, label: 'Projects delivered', bg: '#1f1f1f' },
-    { value: 92, label: 'Partners', bg: '#171717' },
-    { value: days, label: 'Days active', bg: '#0f0f0f' },
+    { value: counts.projects, label: 'Projects delivered', bg: '#1f1f1f' },
+    { value: counts.partners, label: 'Partners', bg: '#171717' },
+    { value: counts.days, label: 'Days active', bg: '#0f0f0f' },
   ]
 
   return (
