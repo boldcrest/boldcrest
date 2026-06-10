@@ -81,9 +81,9 @@ export default function ContactPageClient({
 
       {/* ── Info + Form ── */}
       <section className="px-[var(--gutter)] pb-[var(--space-3xl)] pt-[var(--space-2xl)]">
-        <div className="grid gap-[var(--space-2xl)] md:grid-cols-2">
-          {/* Left: contact info */}
-          <div className="flex flex-col gap-[var(--space-xl)]">
+        <div className="grid grid-cols-1 gap-y-16 md:grid-cols-12 md:gap-x-8">
+          {/* Left: contact info — indented inward (offset columns) to match the design */}
+          <div className="flex flex-col gap-[var(--space-xl)] md:col-span-4 md:col-start-3">
             <div>
               <p className={LABEL}>Email</p>
               <a href={`mailto:${email}`} className={VALUE}>
@@ -136,7 +136,7 @@ export default function ContactPageClient({
           </div>
 
           {/* Right: form */}
-          <div>
+          <div className="md:col-span-6 md:col-start-7">
             {submitted ? (
               <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
                 <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
