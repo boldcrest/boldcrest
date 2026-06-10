@@ -225,11 +225,18 @@ function ServiceShowcase({ categories }: { categories: CategoryGroup[] }) {
 
               {/* Expanded state */}
               <motion.div
-                className="absolute inset-0 flex flex-col"
+                className="absolute inset-0"
                 animate={{ opacity: isActive ? 1 : 0 }}
                 transition={{ duration: 0.4, delay: isActive ? 0.2 : 0 }}
                 style={{ pointerEvents: isActive ? 'auto' : 'none' }}
               >
+                {/* Entire expanded card behaves as the link */}
+                <Link
+                  href={cap.href}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`${cap.category} — ${cap.ctaLabel}`}
+                  className="group flex h-full flex-col"
+                >
                 {/* Top body */}
                 <div className="flex flex-1 flex-col justify-between p-8 md:p-12">
                   <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
@@ -260,10 +267,8 @@ function ServiceShowcase({ categories }: { categories: CategoryGroup[] }) {
                 </div>
 
                 {/* Dark bottom bar — EXPLORE */}
-                <Link
-                  href={cap.href}
-                  onClick={(e) => e.stopPropagation()}
-                  className="group flex h-[110px] items-center px-8 md:h-[130px] md:px-12"
+                <div
+                  className="flex h-[110px] items-center px-8 md:h-[130px] md:px-12"
                   style={{ background: darkShade }}
                 >
                   <span
@@ -275,6 +280,7 @@ function ServiceShowcase({ categories }: { categories: CategoryGroup[] }) {
                       <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
+                </div>
                 </Link>
               </motion.div>
             </motion.div>

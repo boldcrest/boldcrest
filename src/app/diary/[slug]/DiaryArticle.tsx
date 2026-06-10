@@ -21,7 +21,7 @@ interface DiaryPost {
   publishedAt?: string
 }
 
-const TRANSITION_DURATION = 700
+const TRANSITION_DURATION = 600
 
 const LOREM_PARAGRAPHS = [
   `Every brand carries weight — the weight of intention, the weight of perception, the weight of every decision that brought it here. What separates the ones that endure from the ones that fade is simple: clarity of purpose.`,
@@ -107,7 +107,7 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
       if (clamped === current) return
       setIsLocked(true)
       setCurrent(clamped)
-      setTimeout(() => setIsLocked(false), TRANSITION_DURATION + 100)
+      setTimeout(() => setIsLocked(false), TRANSITION_DURATION + 40)
     },
     [current, isLocked]
   )
@@ -216,7 +216,7 @@ export default function DiaryArticle({ post }: { post: DiaryPost }) {
       <motion.div
         className="relative will-change-transform"
         animate={{ y: `${-current * 100}dvh` }}
-        transition={{ duration: TRANSITION_DURATION / 1000, ease: [0.76, 0, 0.24, 1] }}
+        transition={{ duration: TRANSITION_DURATION / 1000, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* ── Slide 0 — cover: title + featured image, full screen ── */}
         <section className="flex h-[100dvh] flex-col overflow-hidden bg-bg">

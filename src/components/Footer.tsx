@@ -21,11 +21,11 @@ const companyLinks = [
 ]
 
 const socialLinks = [
-  { label: 'LinkedIn', href: '#' },
-  { label: 'Instagram', href: '#' },
-  { label: 'Behance', href: '#' },
-  { label: 'Vimeo', href: '#' },
-  { label: 'Facebook', href: '#' },
+  { label: 'Instagram', href: 'https://www.instagram.com/boldcrest/' },
+  { label: 'Behance', href: 'https://www.behance.net/boldcrest' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/boldcrest/' },
+  { label: 'Facebook', href: 'https://www.facebook.com/boldcrest' },
+  { label: 'Vimeo', href: 'https://vimeo.com/boldcrest' },
 ]
 
 const linkClass = 'block py-1.5 text-[0.85rem] transition-colors duration-300 text-black/50 hover:text-black'

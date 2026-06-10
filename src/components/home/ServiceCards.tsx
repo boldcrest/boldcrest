@@ -3,7 +3,6 @@
 import { useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { CTAButton } from '@/components/MagneticButton'
 import { useStartProject } from '@/components/start-project/StartProjectProvider'
 
 const capabilities = [
@@ -201,7 +200,32 @@ export default function ServiceCards() {
                 timing. If you&apos;re building something real, we&apos;ll
                 meet you there.
               </p>
-              <CTAButton onClick={openStartProject} label="Let's Chat" showArrow />
+              <button
+                type="button"
+                onClick={openStartProject}
+                className="group/chat flex items-center gap-2 self-start text-[0.85rem] font-semibold uppercase tracking-[0.15em] text-white transition-all duration-[0.5s] hover:gap-3"
+                style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}
+              >
+                <span className="inline-flex overflow-hidden" style={{ height: '1.2em' }}>
+                  <span
+                    className="flex flex-col transition-transform duration-[0.5s] group-hover/chat:-translate-y-1/2"
+                    style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}
+                  >
+                    <span className="leading-[1.2]">Let&apos;s Chat</span>
+                    <span className="leading-[1.2]">Let&apos;s Chat</span>
+                  </span>
+                </span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  className="transition-transform duration-[0.5s] group-hover/chat:translate-x-1"
+                  style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}
+                >
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
           </div>
         </motion.div>

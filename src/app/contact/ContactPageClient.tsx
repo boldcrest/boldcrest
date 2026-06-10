@@ -17,11 +17,11 @@ interface ContactPageClientProps {
 }
 
 const defaultSocials = [
-  { label: 'Instagram', href: '#' },
-  { label: 'Behance', href: '#' },
-  { label: 'LinkedIn', href: '#' },
-  { label: 'Facebook', href: '#' },
-  { label: 'Vimeo', href: '#' },
+  { label: 'Instagram', href: 'https://www.instagram.com/boldcrest/' },
+  { label: 'Behance', href: 'https://www.behance.net/boldcrest' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/boldcrest/' },
+  { label: 'Facebook', href: 'https://www.facebook.com/boldcrest' },
+  { label: 'Vimeo', href: 'https://vimeo.com/boldcrest' },
 ]
 
 export default function ContactPageClient({

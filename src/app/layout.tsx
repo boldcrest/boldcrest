@@ -90,7 +90,7 @@ export default function RootLayout({
               email: 'info@boldcrest.com',
               description: 'Creative agency offering brand development, photography, video, animation, and communication. 300+ projects, 30+ brands, 7+ years.',
               address: { '@type': 'PostalAddress', addressLocality: 'Tirana', addressCountry: 'AL' },
-              sameAs: ['https://www.instagram.com/boldcrest/', 'https://www.linkedin.com/company/boldcrest/', 'https://www.behance.net/boldcrest', 'https://vimeo.com/boldcrest'],
+              sameAs: ['https://www.instagram.com/boldcrest/', 'https://www.behance.net/boldcrest', 'https://www.linkedin.com/company/boldcrest/', 'https://www.facebook.com/boldcrest', 'https://vimeo.com/boldcrest'],
             }),
           }}
         />

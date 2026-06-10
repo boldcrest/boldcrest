@@ -197,7 +197,10 @@ export default function ContentStack({
   }
 
   const onRailPointerDown = (e: React.PointerEvent<HTMLElement>) => {
-    if (e.pointerType === 'touch') return
+    // Mouse AND touch both initiate scrubbing. The rail has `touch-none`, so the
+    // browser won't steal the vertical gesture for page scroll — a touch-drag on
+    // the line scrubs the media stack, while a tap still falls through to a
+    // thumbnail's click (jump).
     scrub.current = { active: true, moved: false, startY: e.clientY, captured: false }
   }
   const onRailPointerMove = (e: React.PointerEvent<HTMLElement>) => {

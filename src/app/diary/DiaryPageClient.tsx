@@ -149,10 +149,12 @@ export default function DiaryPageClient({ posts }: DiaryPageClientProps) {
           </div>
         </div>
 
-        {/* Filters + Divider */}
+        {/* Divider + Filters — line sits directly below the hero, above the filters (matches Work) */}
         <div className="mt-10 md:mt-12 lg:mt-16">
+          {/* Divider — directly below hero, above filters */}
+          <div className="h-px w-full bg-border" />
           <motion.div
-            className="flex flex-wrap items-center gap-3"
+            className="mt-6 flex flex-wrap items-center gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
@@ -170,7 +172,6 @@ export default function DiaryPageClient({ posts }: DiaryPageClientProps) {
               </button>
             ))}
           </motion.div>
-          <div className="mt-4 h-px w-full bg-border" />
         </div>
       </section>
 
