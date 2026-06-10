@@ -111,11 +111,11 @@ export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
             {/* Legal */}
             <div className="md:col-span-1">
               <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">Legal</h3>
-              <Link href="#" className={linkClass}>
+              <Link href="/privacy-policy" className={linkClass}>
                 Privacy Policy
               </Link>
-              <Link href="#" className={linkClass}>
-                Terms of Service
+              <Link href="/cookie-policy" className={linkClass}>
+                Cookie Policy
               </Link>
             </div>
 
