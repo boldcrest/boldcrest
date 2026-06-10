@@ -85,6 +85,32 @@ const turnVariants = {
 
 const turnTransition = { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }
 
+/* Megi's avatar — profile photo from /public, falls back to the red "M"
+   monogram if the image is missing so it never renders as a broken image. */
+function MegiAvatar() {
+  const [imgOk, setImgOk] = useState(true)
+  return (
+    <div
+      className="mt-4 h-10 w-10 overflow-hidden rounded-full"
+      style={{ background: '#DA291C' }}
+    >
+      {imgOk ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/Megi.jpg"
+          alt="Megi"
+          className="h-full w-full object-cover"
+          onError={() => setImgOk(false)}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-[0.85rem] font-bold text-white">
+          M
+        </div>
+      )}
+    </div>
+  )
+}
+
 function AgencyTurn({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
@@ -104,12 +130,7 @@ function AgencyTurn({ children }: { children: React.ReactNode }) {
           </span>
         </header>
         <div className="flex flex-col items-start gap-2">{children}</div>
-        <div
-          className="mt-4 flex h-10 w-10 items-center justify-center rounded-full text-[0.85rem] font-bold text-white"
-          style={{ background: '#DA291C' }}
-        >
-          M
-        </div>
+        <MegiAvatar />
       </div>
     </motion.div>
   )
