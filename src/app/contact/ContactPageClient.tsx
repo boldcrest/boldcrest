@@ -160,7 +160,7 @@ export default function ContactPageClient({
                 </p>
               </div>
             ) : (
-              <form action={formAction} className="flex flex-col gap-[var(--space-lg)]">
+              <form action={formAction} className="flex flex-col gap-[var(--space-lg)] md:h-full">
                 <input
                   name="name"
                   type="text"
@@ -188,7 +188,7 @@ export default function ContactPageClient({
                   placeholder="Message*"
                   className={`${FIELD} resize-none`}
                 />
-                <div className="mt-2">
+                <div className="mt-2 md:mt-auto">
                   <button
                     type="submit"
                     disabled={isPending}
