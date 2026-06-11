@@ -6,6 +6,7 @@ import Footer from '@/components/Footer'
 import LenisProvider from '@/components/LenisProvider'
 import PageTransitionProvider from '@/components/PageTransition'
 import StartProjectProvider from '@/components/start-project/StartProjectProvider'
+import CookieBanner from '@/components/CookieBanner'
 import { SanityLive } from '@/sanity/lib/live'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -138,6 +139,7 @@ export default function RootLayout({
             </StartProjectProvider>
           </PageTransitionProvider>
         </LenisProvider>
+        <CookieBanner />
         <SanityLive />
         <Analytics />
         <SpeedInsights />
