@@ -6,16 +6,16 @@ export const metadata: Metadata = {
   title: 'Privacy Notice',
   description:
     'How BoldCrest SH.P.K. collects, uses, stores, shares, and protects personal information, in line with GDPR, UK GDPR, and Albanian data protection law.',
-  alternates: { canonical: '/privacy-policy' },
+  alternates: { canonical: '/privacy-notice' },
   openGraph: {
     title: 'Privacy Notice — BoldCrest',
     description:
       'How BoldCrest collects, uses, and protects personal information.',
-    url: '/privacy-policy',
+    url: '/privacy-notice',
   },
 }
 
-export default function PrivacyPolicyPage() {
+export default function PrivacyNoticePage() {
   return (
     <LegalLayout label="Legal" title="Privacy Notice" effectiveDate="June 10, 2026">
       <h2>Introduction</h2>

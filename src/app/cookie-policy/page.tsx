@@ -27,7 +27,7 @@ export default function CookiePolicyPage() {
       </p>
       <p>
         This Policy should be read together with our{' '}
-        <Link href="/privacy-policy">Privacy Notice</Link>.
+        <Link href="/privacy-notice">Privacy Notice</Link>.
       </p>
 
       <h2>What Are Cookies?</h2>
