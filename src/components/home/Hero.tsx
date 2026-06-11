@@ -132,7 +132,7 @@ function Word({
 
 export default function Hero() {
   return (
-    <section className="px-[var(--gutter)] pt-[clamp(10rem,20vh,16rem)] pb-[var(--space-2xl)]">
+    <section className="px-[var(--gutter)] pt-[clamp(8rem,17vh,14rem)] pb-[var(--space-2xl)]">
       {/* Desktop lines */}
       <h1 className="hidden font-display text-[clamp(3rem,8vw,7rem)] font-bold leading-[1.05] tracking-[-0.03em] md:block">
         {DESKTOP_LINES.map((line, lineIndex) => (
