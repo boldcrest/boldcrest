@@ -34,6 +34,10 @@ export default function ContactPageClient({
   socialLinks,
 }: ContactPageClientProps) {
   const [submitted, setSubmitted] = useState(false)
+  // The global `button { … }` reset (globals.css) strips border/colour utilities
+  // from <button> elements, so the SEND pill is styled inline and its hover
+  // state is driven here to mirror the site's CTA pill ("Start a Project").
+  const [sendHover, setSendHover] = useState(false)
 
   const [, formAction, isPending] = useActionState(
     async (_prevState: unknown, formData: FormData) => {
@@ -81,9 +85,12 @@ export default function ContactPageClient({
       {/* ── Info + Form ── */}
       <section className="px-[var(--gutter)] pb-[var(--space-3xl)] pt-[var(--space-2xl)]">
         <div className="grid grid-cols-1 gap-y-16 md:grid-cols-12 md:gap-x-8">
-          {/* Left: contact info — indented inward; fills the form's height so the
-              last item (Careers) ends level with the SEND button */}
-          <div className="flex flex-col gap-[var(--space-xl)] md:col-span-4 md:col-start-3 md:h-full md:justify-between">
+          {/* Left: contact info — indented inward. A tight md gap keeps its
+              natural height below the form's, so the FORM is the taller cell and
+              drives the (compact) row height; this column then stretches to that
+              height and distributes its items so the last one (Careers) ends
+              level with the bottom of the SEND button. */}
+          <div className="flex flex-col gap-[var(--space-xl)] md:col-span-4 md:col-start-3 md:h-full md:justify-between md:gap-[var(--space-md)]">
             <div>
               <p className={LABEL}>Email</p>
               <a href={`mailto:${email}`} className={VALUE}>
@@ -94,7 +101,7 @@ export default function ContactPageClient({
             <div>
               <p className={LABEL}>Location</p>
               <a
-                href="https://maps.google.com/?q=41.312222,19.807778"
+                href="https://g.page/boldcrest"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`block ${VALUE}`}
@@ -105,9 +112,14 @@ export default function ContactPageClient({
                 <br />
                 Tirana, Albania
               </a>
-              <p className="mt-5 text-[1.05rem] text-white">
+              <a
+                href="https://g.page/boldcrest"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 block text-[1.05rem] text-white transition-colors duration-300 hover:text-text-secondary"
+              >
                 41°18&apos;44&quot;N, 19°48&apos;28&quot;E
-              </p>
+              </a>
             </div>
 
             <div>
@@ -160,7 +172,7 @@ export default function ContactPageClient({
                 </p>
               </div>
             ) : (
-              <form action={formAction} className="flex flex-col gap-[var(--space-lg)] md:h-full">
+              <form action={formAction} className="flex flex-col gap-[var(--space-lg)]">
                 <input
                   name="name"
                   type="text"
@@ -188,12 +200,20 @@ export default function ContactPageClient({
                   placeholder="Message*"
                   className={`${FIELD} resize-none`}
                 />
-                <div className="mt-2 md:mt-auto">
+                <div className="mt-2">
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="inline-flex items-center justify-center rounded-[var(--radius-pill)] border px-[1.4rem] py-[0.6rem] text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-text-secondary transition-colors duration-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{ borderColor: 'rgba(255,255,255,0.45)', backgroundColor: '#000' }}
+                    onMouseEnter={() => setSendHover(true)}
+                    onMouseLeave={() => setSendHover(false)}
+                    className="inline-flex items-center justify-center rounded-[var(--radius-pill)] px-5 py-[0.55rem] text-[0.7rem] font-semibold uppercase tracking-[0.12em] transition-all duration-[0.5s] disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{
+                      borderStyle: 'solid',
+                      borderWidth: '1px',
+                      borderColor: sendHover ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)',
+                      color: sendHover ? '#fff' : 'rgba(255,255,255,0.55)',
+                      transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)',
+                    }}
                   >
                     {isPending ? 'Sending…' : 'Send'}
                   </button>
