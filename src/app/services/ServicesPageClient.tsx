@@ -3,8 +3,10 @@
 import { useRef, useState, useEffect } from 'react'
 import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import { CTAButton } from '@/components/MagneticButton'
 import FAQSection from '@/components/services/FAQSection'
+import { urlFor } from '@/sanity/lib/image'
 
 interface Service {
   _id: string
@@ -24,9 +26,16 @@ interface FAQItem {
   answer: string
 }
 
+interface Partner {
+  _id: string
+  name: string
+  logo?: { asset: { _ref: string } }
+}
+
 interface ServicesPageClientProps {
   categories: CategoryGroup[]
   faqItems?: FAQItem[]
+  partners?: Partner[]
 }
 
 const capabilities = [
@@ -400,21 +409,38 @@ const CLIENT_NAMES = [
   'Ina\'s Farm', 'EOS Mezze', 'NFMA', 'Baboon Delivery', 'Magniflex Albania',
 ]
 
-function ClientLogos() {
+function ClientLogos({ partners = [] }: { partners?: Partner[] }) {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
   const [colOffset, setColOffset] = useState(0)
   const [hovered, setHovered] = useState<string | null>(null)
 
-  const COLS_VISIBLE = 5
   const ROWS = 4
+  // Visible columns adapt to viewport so logos stay legible on small screens.
+  const [colsVisible, setColsVisible] = useState(5)
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth
+      setColsVisible(w < 640 ? 2 : w < 1024 ? 3 : 5)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
-  // Group names into vertical columns of ROWS items each
-  const columns: string[][] = []
-  for (let i = 0; i < CLIENT_NAMES.length; i += ROWS) {
-    columns.push(CLIENT_NAMES.slice(i, i + ROWS))
+  // Logos come from Sanity (servicesPartnersQuery), in order; fall back to
+  // plain names if none are published yet.
+  const items: Partner[] =
+    partners.length > 0
+      ? partners
+      : CLIENT_NAMES.map((name, i) => ({ _id: `name-${i}`, name }))
+
+  // Group into vertical columns of ROWS items each
+  const columns: Partner[][] = []
+  for (let i = 0; i < items.length; i += ROWS) {
+    columns.push(items.slice(i, i + ROWS))
   }
-  const maxOffset = Math.max(0, columns.length - COLS_VISIBLE)
+  const maxOffset = Math.max(0, columns.length - colsVisible)
   const canPrev = colOffset > 0
   const canNext = colOffset < maxOffset
 
@@ -442,7 +468,7 @@ function ClientLogos() {
             className="flex transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
             style={{
               gap: 'var(--logos-gap)',
-              transform: `translateX(calc(-1 * ${colOffset} * ((100% - 4 * var(--logos-gap)) / 5 + var(--logos-gap))))`,
+              transform: `translateX(calc(-1 * ${colOffset} * ((100% - ${colsVisible - 1} * var(--logos-gap)) / ${colsVisible} + var(--logos-gap))))`,
             }}
             onMouseLeave={() => setHovered(null)}
           >
@@ -450,20 +476,32 @@ function ClientLogos() {
               <div
                 key={i}
                 className="flex shrink-0 flex-col gap-y-12 md:gap-y-16"
-                style={{ width: 'calc((100% - 4 * var(--logos-gap)) / 5)' }}
+                style={{ width: `calc((100% - ${colsVisible - 1} * var(--logos-gap)) / ${colsVisible})` }}
               >
-                {col.map((name) => (
+                {col.map((p) => (
                   <span
-                    key={name}
+                    key={p._id}
                     className="flex cursor-default items-center justify-center px-2 py-4 transition-opacity duration-300"
                     style={{
-                      opacity: hovered ? (hovered === name ? 1 : 0.2) : 0.5,
+                      opacity: hovered ? (hovered === p.name ? 1 : 0.2) : 0.5,
                     }}
-                    onMouseEnter={() => setHovered(name)}
+                    onMouseEnter={() => setHovered(p.name)}
                   >
-                    <span className="font-display text-[clamp(1.2rem,2vw,1.7rem)] font-semibold uppercase tracking-[0.08em]">
-                      {name}
-                    </span>
+                    {p.logo?.asset?._ref ? (
+                      <Image
+                        unoptimized
+                        src={urlFor(p.logo).url()}
+                        alt={p.name}
+                        width={200}
+                        height={100}
+                        className="h-[clamp(54px,7vw,90px)] w-auto max-w-[200px] object-contain"
+                        style={{ filter: 'brightness(0) invert(1)' }}
+                      />
+                    ) : (
+                      <span className="font-display text-[clamp(1.2rem,2vw,1.7rem)] font-semibold uppercase tracking-[0.08em]">
+                        {p.name}
+                      </span>
+                    )}
                   </span>
                 ))}
               </div>
@@ -589,6 +627,7 @@ function ProcessSection() {
 export default function ServicesPageClient({
   categories,
   faqItems,
+  partners = [],
 }: ServicesPageClientProps) {
   return (
     <main className="relative">
@@ -631,7 +670,7 @@ export default function ServicesPageClient({
       <Stats />
 
       {/* ── Client Logos ── */}
-      <ClientLogos />
+      <ClientLogos partners={partners} />
 
       {/* ── FAQ ── */}
       {faqItems && faqItems.length > 0 && (

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { sanityFetch } from '@/sanity/lib/live'
-import { allServicesByCategoryQuery } from '@/sanity/lib/queries'
+import { allServicesByCategoryQuery, servicesPartnersQuery } from '@/sanity/lib/queries'
 import ServicesPageClient from './ServicesPageClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
 
@@ -62,9 +62,10 @@ interface Service {
 }
 
 export default async function ServicesPage() {
-  const { data: services } = await sanityFetch({
-    query: allServicesByCategoryQuery,
-  })
+  const [{ data: services }, { data: partners }] = await Promise.all([
+    sanityFetch({ query: allServicesByCategoryQuery }),
+    sanityFetch({ query: servicesPartnersQuery }),
+  ])
 
   const categories = ['Brand Dev', 'Still & Motion', 'Communications']
   const grouped = categories.map((cat) => ({
@@ -88,7 +89,7 @@ export default async function ServicesPage() {
         url="/services"
       />
       <FAQJsonLd items={FAQ_ITEMS} />
-      <ServicesPageClient categories={grouped} faqItems={FAQ_ITEMS} />
+      <ServicesPageClient categories={grouped} faqItems={FAQ_ITEMS} partners={partners ?? []} />
     </>
   )
 }
