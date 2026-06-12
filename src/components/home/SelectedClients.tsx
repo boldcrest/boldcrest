@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { urlFor } from '@/sanity/lib/image'
-import { sanityImageLoader } from '@/sanity/lib/loader'
 
 interface Partner {
   _id: string
@@ -33,9 +32,27 @@ export default function SelectedClients({ partners }: SelectedClientsProps) {
           { _id: '8', name: 'Altus' },
         ]
 
-  const mid = Math.ceil(displayPartners.length / 2)
-  const row1 = displayPartners.slice(0, mid)
-  const row2 = displayPartners.slice(mid)
+  // Homepage display order — interleave wide wordmarks with compact/emblem
+  // logos so similar shapes aren't grouped together. Independent of the Sanity
+  // `order` field (which the Services page still uses).
+  const HOME_ORDER = [
+    // wide wordmark / compact-emblem alternating; beverages spread apart
+    'Coca-Cola', 'ITU', 'Magniflex', 'Hako', 'Sprite', 'Cipriani', 'Lori Caffè',
+    'Red Bull', 'Tepelene', 'Joka', 'SachPizza', 'AK Invest', 'Alisa Dudaj',
+    'Barbaroza', 'ACIES', 'Matrix', 'Wolt', 'IONA', 'AutoMita', 'Fanta',
+    "Let's Drive", 'Ventoro', 'Tomarchio',
+  ]
+  const rank = (name: string) => {
+    const i = HOME_ORDER.indexOf(name)
+    return i === -1 ? HOME_ORDER.length : i
+  }
+  const ordered = [...displayPartners].sort((a, b) => rank(a.name) - rank(b.name))
+
+  // Split the interleaved list across the two rows so each row carries a mix
+  // of wide and compact logos.
+  const mid = Math.ceil(ordered.length / 2)
+  const row1 = ordered.slice(0, mid)
+  const row2 = ordered.slice(mid)
 
   const repeat = (arr: Partner[], times: number) => {
     const result: Partner[] = []
@@ -55,7 +72,7 @@ export default function SelectedClients({ partners }: SelectedClientsProps) {
   const renderPartner = (partner: Partner) => (
     <span
       key={partner._id}
-      className="shrink-0 cursor-default px-6 py-4 transition-opacity duration-300 flex items-center"
+      className="shrink-0 cursor-default px-6 py-1 transition-opacity duration-300 flex items-center"
       style={{
         opacity: hovered
           ? hovered === partner.name
@@ -67,12 +84,12 @@ export default function SelectedClients({ partners }: SelectedClientsProps) {
     >
       {hasLogo(partner) ? (
         <Image
-          loader={sanityImageLoader}
-          src={urlFor(partner.logo!).height(300).url()}
+          unoptimized
+          src={urlFor(partner.logo!).url()}
           alt={partner.name}
           width={375}
           height={150}
-          className="h-[150px] w-auto object-contain"
+          className="h-[150px] w-auto max-w-[200px] object-contain"
           style={{ filter: 'var(--zone-logo-filter, brightness(0))' }}
         />
       ) : (
@@ -95,9 +112,9 @@ export default function SelectedClients({ partners }: SelectedClientsProps) {
         <div className="h-px" style={{ backgroundColor: 'var(--zone-fg-subtle)' }} />
       </div>
 
-      {/* Row 1 — scrolls left */}
+      {/* Row 1 — scrolls left (kept tight to row 2 so they read as a pair) */}
       <div
-        className="relative mb-2"
+        className="relative"
         onMouseLeave={() => setHovered(null)}
       >
         <div className="flex animate-[marquee_35s_linear_infinite] will-change-transform items-center">
