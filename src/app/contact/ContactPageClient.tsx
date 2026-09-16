@@ -2,8 +2,21 @@
 
 import { useState, useActionState, useRef } from 'react'
 import Link from 'next/link'
+import Script from 'next/script'
 import { submitContactForm } from './actions'
 import { trackLead } from '@/lib/analytics'
+
+declare global {
+  interface Window {
+    turnstile?: { reset: (widgetId?: string) => void }
+  }
+}
+
+// Only set once the Cloudflare Turnstile widget has been created (see
+// lib/turnstile.ts) — until then the widget simply doesn't render and
+// verification is skipped server-side, same graceful-degradation pattern as
+// the Resend API key.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 interface SocialLink {
   platform: string
@@ -43,13 +56,21 @@ export default function ContactPageClient({
   // Uncontrolled form: reset() clears the fields when the visitor chooses to
   // send another message via the refresh control next to the Sent button.
   const formRef = useRef<HTMLFormElement>(null)
+  // Fill-time anti-spam signal — see lib/spam-guard.ts. Captured once at mount,
+  // not on every render.
+  const [renderedAt] = useState(() => Date.now())
 
-  const [, formAction, isPending] = useActionState(
+  const [state, formAction, isPending] = useActionState(
     async (_prevState: unknown, formData: FormData) => {
       const result = await submitContactForm(formData)
       if (result.success) {
         setSubmitted(true)
         trackLead('contact')
+      } else {
+        // A real visitor failing Turnstile is rare but should be able to
+        // retry — reset the (single-use) token so the widget can issue a
+        // fresh one.
+        window.turnstile?.reset()
       }
       return result
     },
@@ -58,6 +79,7 @@ export default function ContactPageClient({
 
   const handleReset = () => {
     formRef.current?.reset()
+    window.turnstile?.reset()
     setSubmitted(false)
   }
 
@@ -68,6 +90,12 @@ export default function ContactPageClient({
 
   return (
     <main className="relative">
+      {TURNSTILE_SITE_KEY && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          strategy="lazyOnload"
+        />
+      )}
       {/* ── Hero ── */}
       <section className="flex flex-col px-[var(--gutter)] pt-[120px] pb-0 landscape-short:pt-[5.5rem]">
         <div className="w-full">
@@ -201,6 +229,26 @@ export default function ContactPageClient({
                 aria-label="Message"
                 className={`${FIELD} resize-none`}
               />
+
+              {/* Honeypot — invisible to real visitors, bots fill it in. */}
+              <input
+                type="text"
+                name="_gotcha"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
+              />
+              <input type="hidden" name="_ts" defaultValue={renderedAt} />
+
+              {TURNSTILE_SITE_KEY && (
+                <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" />
+              )}
+
+              {state && !state.success && (
+                <p className="text-[0.85rem] text-red-400">{state.error}</p>
+              )}
+
               {/* Send / Sent pill on the left; once sent, a refresh control sits
                   on the right edge (parallel to it) to clear the form and start
                   over. */}

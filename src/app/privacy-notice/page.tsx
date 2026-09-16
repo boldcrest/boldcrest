@@ -198,6 +198,21 @@ export default function PrivacyNoticePage() {
         Additional information is available in our{' '}
         <Link href="/cookie-policy">Cookie Policy</Link>.
       </p>
+      <p>
+        We also use <strong>Cloudflare Turnstile</strong> on our contact form as a
+        security measure to distinguish human visitors from automated bots. This
+        is a strictly necessary technology that does not require your consent and
+        operates independently of the analytics and marketing tools above. See
+        Cloudflare&apos;s{' '}
+        <a
+          href="https://www.cloudflare.com/en-gb/turnstile-privacy-policy/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Turnstile Privacy Policy
+        </a>{' '}
+        for details on how it processes data.
+      </p>
 
       <h2>Marketing Communications</h2>
       <p>
