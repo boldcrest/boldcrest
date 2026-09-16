@@ -5,12 +5,8 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { submitContactForm } from './actions'
 import { trackLead } from '@/lib/analytics'
-
-declare global {
-  interface Window {
-    turnstile?: { reset: (widgetId?: string) => void }
-  }
-}
+// Global `window.turnstile` type comes from src/types/turnstile.d.ts (picked up
+// automatically by the TS program — no import needed for ambient globals).
 
 // Only set once the Cloudflare Turnstile widget has been created (see
 // lib/turnstile.ts) — until then the widget simply doesn't render and
@@ -246,7 +242,7 @@ export default function ContactPageClient({
               )}
 
               {state && !state.success && (
-                <p className="text-[0.85rem] text-red-400">{state.error}</p>
+                <p className="text-[0.85rem] text-text-secondary">{state.error}</p>
               )}
 
               {/* Send / Sent pill on the left; once sent, a refresh control sits

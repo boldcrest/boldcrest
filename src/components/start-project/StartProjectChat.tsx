@@ -3,9 +3,20 @@
 import { useState, useEffect, useRef, useCallback, Children } from 'react'
 import { flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import Script from 'next/script'
 import { submitProjectForm } from './actions'
 import { botReply, greeting } from './replies'
 import { trackLead } from '@/lib/analytics'
+// Global `window.turnstile` type comes from src/types/turnstile.d.ts.
+
+// Only set once the Cloudflare Turnstile widget has been created (see
+// lib/turnstile.ts) — until then the widget simply doesn't render and
+// verification is skipped server-side, same graceful-degradation pattern as
+// the Resend API key. Rendered explicitly (not the declarative `.cf-turnstile`
+// div) since this flow has no native <form> to auto-attach the response
+// field to — the resulting token is captured in state and attached manually
+// in handleSubmit instead.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 /**
  * Single source of truth for "is this a usable email address".
@@ -765,6 +776,31 @@ export default function StartProjectChat() {
   const [seed] = useState(() => Math.floor(Math.random() * 1_000_000))
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Anti-spam — see src/lib/spam-guard.ts and src/lib/turnstile.ts for the
+  // server-side checks these feed. mountedAt captures fill-time from the
+  // moment the chat opens; honeypot is a field no real visitor ever
+  // populates; turnstileToken is filled asynchronously by the widget below
+  // (Invisible mode resolves in the background — the multi-step conversation
+  // gives it far longer than it needs before submit).
+  const [mountedAt] = useState(() => Date.now())
+  const [honeypot, setHoneypot] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const turnstileElRef = useRef<HTMLDivElement>(null)
+  const turnstileWidgetId = useRef<string>('')
+
+  const renderTurnstile = useCallback(() => {
+    if (!TURNSTILE_SITE_KEY || !window.turnstile || !turnstileElRef.current) return
+    if (turnstileWidgetId.current) return // already rendered
+    turnstileWidgetId.current = window.turnstile.render(turnstileElRef.current, {
+      sitekey: TURNSTILE_SITE_KEY,
+      theme: 'dark',
+      callback: (token) => setTurnstileToken(token),
+      'error-callback': () => setTurnstileToken(''),
+      'expired-callback': () => setTurnstileToken(''),
+    })
+  }, [])
   // Desktop: follow the conversation by keeping the newest line pinned to the
   // bottom. Passing `step` re-attaches the follow each time the flow advances,
   // so scrolling up (to read history or see a long option list) never strands
@@ -864,6 +900,7 @@ export default function StartProjectChat() {
 
   const handleSubmit = async () => {
     setStep('submitting')
+    setSubmitError(null)
     const fd = new FormData()
     // Trim every free-text answer. Validation already tested `.trim()`, but the
     // RAW value was submitted — so " aldo@boldcrest.com " passed the check and
@@ -878,6 +915,9 @@ export default function StartProjectChat() {
     fd.set('deadline', a.deadline.trim())
     fd.set('budget', a.budget.trim())
     fd.set('source', a.source.join(', '))
+    fd.set('_gotcha', honeypot)
+    fd.set('_ts', String(mountedAt))
+    fd.set('cf-turnstile-response', turnstileToken)
     const res = await submitProjectForm(fd)
     if (res.success) {
       setStep('sent')
@@ -885,6 +925,14 @@ export default function StartProjectChat() {
         services: a.services.join(', '),
         budget: a.budget,
       })
+    } else {
+      // Rare — Invisible mode resolves silently for virtually everyone. Land
+      // back on the last question so the visitor can retry rather than get
+      // stuck on "Sending…" forever.
+      setStep('source')
+      setSubmitError(res.error || 'Something went wrong — please try again.')
+      setTurnstileToken('')
+      window.turnstile?.reset(turnstileWidgetId.current)
     }
   }
 
@@ -907,6 +955,28 @@ export default function StartProjectChat() {
 
   return (
     <div ref={containerRef} className="flex flex-col gap-12">
+        {TURNSTILE_SITE_KEY && (
+          <>
+            <Script
+              src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+              strategy="lazyOnload"
+              onLoad={renderTurnstile}
+            />
+            <div ref={turnstileElRef} />
+          </>
+        )}
+        {/* Honeypot — invisible to real visitors, bots filling every input on
+            the rendered page catch themselves here. */}
+        <input
+          type="text"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
+        />
+
         {/* ═══════════════════════════════════════════
             Turn 1 — Megi's greeting
         ═══════════════════════════════════════════ */}
@@ -1210,12 +1280,19 @@ export default function StartProjectChat() {
                   active={isActive('source')}
                 />
                 {isActive('source') && (
-                  <div className="flex justify-end">
-                    <OkButton
-                      disabled={a.source.length === 0}
-                      onClick={handleSubmit}
-                    />
-                  </div>
+                  <>
+                    {submitError && (
+                      <p className="mt-3 text-right text-[0.85rem] text-text-secondary">
+                        {submitError}
+                      </p>
+                    )}
+                    <div className="flex justify-end">
+                      <OkButton
+                        disabled={a.source.length === 0}
+                        onClick={handleSubmit}
+                      />
+                    </div>
+                  </>
                 )}
               </FormShell>
             </UserTurn>

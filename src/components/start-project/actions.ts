@@ -2,10 +2,23 @@
 
 import { sendFormEmail, buildBody } from '@/lib/email'
 import { createOpportunity } from '@/lib/clickup'
+import { isLikelyBot } from '@/lib/spam-guard'
+import { verifyTurnstile } from '@/lib/turnstile'
 
 const TO = 'sales@boldcrest.com'
 
 export async function submitProjectForm(formData: FormData) {
+  // See src/app/contact/actions.ts for the shared reasoning on both checks.
+  if (isLikelyBot(formData)) {
+    return { success: true }
+  }
+
+  const turnstileToken = (formData.get('cf-turnstile-response') as string) || null
+  const humanVerified = await verifyTurnstile(turnstileToken)
+  if (!humanVerified) {
+    return { success: false, error: 'Verification failed — please try again.' }
+  }
+
   const data = {
     name: (formData.get('name') as string) || '',
     position: (formData.get('position') as string) || '',
