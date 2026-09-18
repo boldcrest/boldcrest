@@ -32,6 +32,19 @@ const SUBDOMAIN_REDIRECTS: Record<string, string> = {
 }
 
 /**
+ * Vanity subdomains that 308-redirect to a FIXED path on the canonical host —
+ * NOT a rewrite (unlike SUBDOMAIN_EMBEDS above): the target page assumes it's
+ * on the canonical host. /start in particular is a client-side shim that
+ * opens the global chat panel then does `router.replace('/')` — under a
+ * rewrite that same-host replace would hit this exact rule again and loop.
+ * A redirect lands the visitor on www.boldcrest.com first, where that replace
+ * (and every other relative link on the site) behaves normally.
+ */
+const SUBDOMAIN_TO_CANONICAL_PATH: Record<string, string> = {
+  'start.boldcrest.com': '/start',
+}
+
+/**
  * Alternate brand domains → the canonical site (308 PERMANENT, so search engines
  * consolidate them onto boldcrest.com). Both the apex and the www host of each
  * domain are covered. We send them straight to the canonical www host to avoid a
@@ -61,6 +74,11 @@ export function proxy(req: NextRequest) {
   const destination = SUBDOMAIN_REDIRECTS[host]
   if (destination) {
     return NextResponse.redirect(destination, 307)
+  }
+
+  const canonicalPath = SUBDOMAIN_TO_CANONICAL_PATH[host]
+  if (canonicalPath) {
+    return NextResponse.redirect(`${CANONICAL_SITE}${canonicalPath}`, 308)
   }
 
   if (DOMAIN_REDIRECTS.has(host)) {
