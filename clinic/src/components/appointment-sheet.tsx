@@ -167,7 +167,7 @@ export function AppointmentSheet({
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2 border-t border-line pt-3">
+          <div className="flex flex-wrap gap-2 pt-1">
             {appointment.status === "scheduled" ? (
               <Button
                 size="sm"

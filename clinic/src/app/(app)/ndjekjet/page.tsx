@@ -9,7 +9,7 @@ import {
   Repeat,
   WhatsappLogo,
 } from "@phosphor-icons/react";
-import { Button, Card, CardHeader, EmptyState, Pill, useToast } from "@/components/ui";
+import { Button, Card, CardHeader, EmptyState, IconButton, Pill, useToast } from "@/components/ui";
 import { FadeIn, PageHeader } from "@/components/shell";
 import { FollowUpBadge } from "@/components/status";
 import { WhatsAppComposer, useWhatsAppComposer } from "@/components/whatsapp-composer";
@@ -48,7 +48,7 @@ export default function FollowUpsPage() {
     const overdue = days < 0;
 
     return (
-      <li className="flex flex-wrap items-center gap-3 px-4 py-3">
+      <li className="mx-2 flex flex-wrap items-center gap-3 rounded-card px-3 py-3 transition-colors hover:bg-surface-2">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Link
@@ -112,9 +112,8 @@ export default function FollowUpsPage() {
             <Pill tone="neutral">{t.patients.noConsent}</Pill>
           )}
 
-          <Button
-            size="sm"
-            variant="ghost"
+          <IconButton
+            tone="ghost"
             onClick={() => {
               actions.snoozeFollowUp(followUp.id);
               toast.push(t.toast.snoozed);
@@ -122,17 +121,16 @@ export default function FollowUpsPage() {
             title={t.followups.snooze}
             aria-label={t.followups.snooze}
           >
-            <HourglassMedium size={14} weight="bold" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
+            <HourglassMedium size={15} weight="bold" />
+          </IconButton>
+          <IconButton
+            tone="ghost"
             onClick={() => actions.patchFollowUp(followUp.id, { status: "done" })}
             title={t.followups.markDone}
             aria-label={t.followups.markDone}
           >
-            <CheckCircle size={14} weight="bold" />
-          </Button>
+            <CheckCircle size={15} weight="bold" />
+          </IconButton>
         </div>
       </li>
     );
@@ -148,14 +146,14 @@ export default function FollowUpsPage() {
         </p>
       </PageHeader>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         <FadeIn>
           <Card>
             <CardHeader title={t.followups.due} />
             {due.length === 0 ? (
               <EmptyState icon={<Repeat size={24} />} title={t.followups.none} />
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="flex flex-col gap-0.5 pb-3">
                 {due.map((followUp) => (
                   <Row key={followUp.id} followUp={followUp} />
                 ))}
@@ -168,7 +166,7 @@ export default function FollowUpsPage() {
           <FadeIn delay={0.05}>
             <Card>
               <CardHeader title={t.followups.upcoming} />
-              <ul className="divide-y divide-line">
+              <ul className="flex flex-col gap-0.5 pb-3">
                 {upcoming.map((followUp) => (
                   <Row key={followUp.id} followUp={followUp} />
                 ))}
@@ -181,7 +179,7 @@ export default function FollowUpsPage() {
           <FadeIn delay={0.1}>
             <Card>
               <CardHeader title={t.followups.handled} />
-              <ul className="divide-y divide-line">
+              <ul className="flex flex-col gap-0.5 pb-3">
                 {closed.slice(0, 6).map((followUp) => (
                   <Row key={followUp.id} followUp={followUp} />
                 ))}

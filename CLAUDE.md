@@ -54,8 +54,19 @@ docs/product/mvp-demo-build-plan.md            v0.1 scope
   product code; read `now` from `useDemo()`.
 - Icons: **Phosphor** (`@phosphor-icons/react`) only. Never hand-roll SVG icons.
 - Motion: `motion/react`, restrained; everything honours `prefers-reduced-motion`.
-- One radius scale (`rounded-card`), one accent colour (teal), semantic status colours
-  always paired with an icon and a label, never colour alone.
+- **Visual language**: a grey canvas (`--bg`) with white cards floating on it, no
+  borders in light mode. Two radii: `rounded-panel` (26px) for cards and modals,
+  `rounded-card` (16px) for things inside them; buttons and chips are `rounded-full`.
+- Headline counts are punched out of a dot grid via the `.dots` class (`--dot` sets
+  the colour). Guarded by `@supports (background-clip: text)`.
+- `.mesh` + a palette class (`mesh-blue|amber|green|rose|quiet`) paints a soft blurred
+  gradient field. Dashboard tiles use `mesh-quiet` at zero and a colour palette above
+  zero, so colour on the dashboard always means "something needs you".
+- Teal stays the interactive accent (primary buttons, active nav); the mesh palettes are
+  decoration, never the only carrier of meaning. Semantic status colours are always
+  paired with an icon and a label, never colour alone.
+- Grid children that hold wide rows need `min-w-0`, or they push the page sideways on
+  a phone.
 - **No em-dashes anywhere in user-visible copy.**
 - Checks before committing: `npx tsc --noEmit`, `npx eslint src`, `npx vitest run`,
   `npm run build`.

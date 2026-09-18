@@ -45,12 +45,12 @@ export default function PatientsPage() {
           weight="bold"
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
         />
-        <Input
+        <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.patients.search}
-          className="pl-9"
           aria-label={t.patients.search}
+          className="h-11 w-full rounded-full bg-surface pl-10 pr-4 text-sm text-ink shadow-[var(--shadow-card)] placeholder:text-ink-3 focus:outline-none dark:border dark:border-line"
         />
       </div>
 
@@ -59,7 +59,7 @@ export default function PatientsPage() {
           {filtered.length === 0 ? (
             <EmptyState icon={<Users size={26} />} title={t.patients.none} />
           ) : (
-            <ul className="divide-y divide-line">
+            <ul className="flex flex-col gap-0.5 px-2 pb-3">
               {filtered.map((patient) => {
                 const lastVisit = [...state.visits]
                   .filter((v) => v.patientId === patient.id && new Date(v.date) <= now)
@@ -77,7 +77,7 @@ export default function PatientsPage() {
                   <li key={patient.id}>
                     <Link
                       href={`/pacientet/${patient.id}`}
-                      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2"
+                      className="flex items-center gap-3 rounded-card px-3 py-3 transition-colors hover:bg-surface-2"
                     >
                       <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-3 text-[13px] font-semibold text-ink-2">
                         {patient.firstName[0]}

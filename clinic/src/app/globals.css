@@ -4,97 +4,121 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --bg: #faf9f7;
+  /* The canvas is grey, not white. Cards are white and float on it, which is
+     what gives the interface its depth without a single visible border. */
+  --bg: #e9e9e7;
+  --bg-2: #dededb;
   --surface: #ffffff;
-  --surface-2: #f5f4f1;
-  --surface-3: #ecebe7;
-  --border: #e3e1dc;
-  --border-strong: #cfccc5;
-  --ink: #1c1917;
-  --ink-2: #57534e;
-  --ink-3: #8a847c;
+  --surface-2: #f2f2f0;
+  --surface-3: #e8e8e5;
+  --border: #ececeb;
+  --border-strong: #d9d9d5;
+  --ink: #16161a;
+  --ink-2: #5c5c63;
+  --ink-3: #8e8e97;
+  --on-mesh: #ffffff;
 
   --accent: #0f766e;
   --accent-hover: #115e56;
   --accent-fg: #ffffff;
-  --accent-soft: #e6f2f0;
+  --accent-soft: #e4f1ef;
   --accent-ring: #0f766e40;
 
-  --ok: #047857;
-  --ok-soft: #e7f4ee;
-  --warn: #b45309;
-  --warn-soft: #fdf1e0;
-  --danger: #be123c;
-  --danger-soft: #fdeaef;
-  --muted-soft: #efedea;
+  /* Used only to mark the single most important thing on a screen. */
+  --lime: #d8f84e;
+  --lime-ink: #1d2a02;
 
-  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.05), 0 1px 3px rgb(28 25 23 / 0.04);
-  --shadow-pop: 0 8px 24px rgb(28 25 23 / 0.12), 0 2px 6px rgb(28 25 23 / 0.06);
-  --r: 10px;
+  --ok: #047857;
+  --ok-soft: #e4f2ec;
+  --warn: #b45309;
+  --warn-soft: #fbefdf;
+  --danger: #be123c;
+  --danger-soft: #fbe8ee;
+  --muted-soft: #efefec;
+
+  --shadow-card: 0 1px 2px rgb(20 20 25 / 0.04), 0 6px 20px -8px rgb(20 20 25 / 0.06);
+  --shadow-raised: 0 2px 4px rgb(20 20 25 / 0.05), 0 12px 32px -10px rgb(20 20 25 / 0.12);
+  --shadow-pop: 0 24px 64px -16px rgb(20 20 25 / 0.28), 0 4px 12px rgb(20 20 25 / 0.08);
+
+  --r: 16px;
+  --r-panel: 26px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --bg: #12100f;
-    --surface: #1b1917;
-    --surface-2: #232019;
-    --surface-3: #2c2823;
-    --border: #302c27;
-    --border-strong: #423d36;
-    --ink: #f5f3f0;
-    --ink-2: #b8b2aa;
-    --ink-3: #8a837a;
+    --bg: #0d0d0f;
+    --bg-2: #141417;
+    --surface: #1a1a1d;
+    --surface-2: #222226;
+    --surface-3: #2b2b30;
+    --border: #262629;
+    --border-strong: #3a3a40;
+    --ink: #f4f4f5;
+    --ink-2: #b0b0b8;
+    --ink-3: #85858e;
+    --on-mesh: #0d0d0f;
 
     --accent: #14b8a6;
     --accent-hover: #2dd4bf;
-    --accent-fg: #0a2725;
+    --accent-fg: #06201e;
     --accent-soft: #10312e;
     --accent-ring: #14b8a666;
 
-    --ok: #34d399;
-    --ok-soft: #102c22;
-    --warn: #fbbf24;
-    --warn-soft: #2e2413;
-    --danger: #fb7185;
-    --danger-soft: #34151d;
-    --muted-soft: #262220;
+    --lime: #cdf13c;
+    --lime-ink: #16200a;
 
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.2);
-    --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.3);
+    --ok: #34d399;
+    --ok-soft: #102b22;
+    --warn: #fbbf24;
+    --warn-soft: #2d2413;
+    --danger: #fb7185;
+    --danger-soft: #331520;
+    --muted-soft: #26262a;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-raised: 0 2px 6px rgb(0 0 0 / 0.45), 0 14px 34px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 28px 70px -18px rgb(0 0 0 / 0.75), 0 4px 12px rgb(0 0 0 / 0.4);
   }
 }
 
 .dark {
-  --bg: #12100f;
-  --surface: #1b1917;
-  --surface-2: #232019;
-  --surface-3: #2c2823;
-  --border: #302c27;
-  --border-strong: #423d36;
-  --ink: #f5f3f0;
-  --ink-2: #b8b2aa;
-  --ink-3: #8a837a;
+  --bg: #0d0d0f;
+  --bg-2: #141417;
+  --surface: #1a1a1d;
+  --surface-2: #222226;
+  --surface-3: #2b2b30;
+  --border: #262629;
+  --border-strong: #3a3a40;
+  --ink: #f4f4f5;
+  --ink-2: #b0b0b8;
+  --ink-3: #85858e;
+  --on-mesh: #0d0d0f;
 
   --accent: #14b8a6;
   --accent-hover: #2dd4bf;
-  --accent-fg: #0a2725;
+  --accent-fg: #06201e;
   --accent-soft: #10312e;
   --accent-ring: #14b8a666;
 
-  --ok: #34d399;
-  --ok-soft: #102c22;
-  --warn: #fbbf24;
-  --warn-soft: #2e2413;
-  --danger: #fb7185;
-  --danger-soft: #34151d;
-  --muted-soft: #262220;
+  --lime: #cdf13c;
+  --lime-ink: #16200a;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.2);
-  --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.3);
+  --ok: #34d399;
+  --ok-soft: #102b22;
+  --warn: #fbbf24;
+  --warn-soft: #2d2413;
+  --danger: #fb7185;
+  --danger-soft: #331520;
+  --muted-soft: #26262a;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 2px 6px rgb(0 0 0 / 0.45), 0 14px 34px -12px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 28px 70px -18px rgb(0 0 0 / 0.75), 0 4px 12px rgb(0 0 0 / 0.4);
 }
 
 @theme inline {
   --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
@@ -107,6 +131,8 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
+  --color-lime: var(--lime);
+  --color-lime-ink: var(--lime-ink);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
@@ -119,6 +145,7 @@
   --font-mono: var(--font-geist-mono);
 
   --radius-card: var(--r);
+  --radius-panel: var(--r-panel);
 }
 
 body {
@@ -126,13 +153,14 @@ body {
   color: var(--ink);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* One focus treatment everywhere, so keyboard users always see where they are. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 999px;
 }
 
 ::selection {
@@ -144,6 +172,109 @@ body {
 .nums {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* --------------------------------------------------------- dot-matrix digits
+
+   Big headline numbers are punched out of a dot grid: the glyph clips a field
+   of dots instead of being painted solid. Guarded by @supports, because without
+   background-clip:text the transparent fill would leave the number invisible. */
+.dots {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .dots {
+    background-image: radial-gradient(
+      var(--dot, var(--ink)) 42%,
+      transparent 46%
+    );
+    background-size: 0.105em 0.105em;
+    background-position: center;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* ------------------------------------------------------------ gradient mesh
+
+   Soft blurred colour fields. The blur is what keeps them from reading as
+   hard gradients; the ::before is oversized so the blur never shows an edge. */
+.mesh {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--m-base, var(--surface-2));
+}
+
+.mesh > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mesh::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  z-index: 0;
+  background-image:
+    radial-gradient(30% 38% at 16% 18%, var(--m1) 0%, transparent 66%),
+    radial-gradient(36% 46% at 84% 10%, var(--m2) 0%, transparent 70%),
+    radial-gradient(44% 48% at 64% 92%, var(--m3) 0%, transparent 72%),
+    radial-gradient(34% 40% at 6% 86%, var(--m4, var(--m2)) 0%, transparent 70%);
+  filter: blur(32px) saturate(1.12);
+}
+
+/* Fine grain over the gradients, so large colour fields do not band. */
+.mesh::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.mesh-blue {
+  --m-base: #7fa4ef;
+  --m1: rgb(255 255 255 / 0.55);
+  --m2: #a78bfa;
+  --m3: #4fcfe4;
+  --m4: #6f9bf5;
+}
+.mesh-amber {
+  --m-base: #f59a2c;
+  --m1: rgb(255 255 255 / 0.5);
+  --m2: #ff6b45;
+  --m3: #ffd35c;
+  --m4: #f98a38;
+}
+.mesh-green {
+  --m-base: #46c079;
+  --m1: rgb(255 255 255 / 0.5);
+  --m2: #c6ef4d;
+  --m3: #23c5b4;
+  --m4: #5ad089;
+}
+.mesh-rose {
+  --m-base: #ef7290;
+  --m1: rgb(255 255 255 / 0.55);
+  --m2: #ff9ec9;
+  --m3: #ffb289;
+  --m4: #f2688f;
+}
+/* The resting state: nothing needs attention, so the tile stays quiet. */
+.mesh-quiet {
+  --m-base: var(--surface-2);
+  --m1: color-mix(in oklab, var(--ink) 6%, transparent);
+  --m2: color-mix(in oklab, var(--ink) 4%, transparent);
+  --m3: color-mix(in oklab, var(--ink) 7%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

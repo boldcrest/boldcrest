@@ -34,19 +34,44 @@ export function Button({
   size?: "sm" | "md";
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-card font-medium whitespace-nowrap " +
-    "transition-[background-color,border-color,color,transform] duration-150 " +
+    "inline-flex items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap " +
+    "transition-[background-color,border-color,color,box-shadow,transform] duration-150 " +
     "active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-45";
-  const sizes = { sm: "h-8 px-3 text-[13px]", md: "h-10 px-4 text-sm" };
+  const sizes = { sm: "h-8 px-3.5 text-[13px]", md: "h-10 px-4.5 text-sm" };
   const variants: Record<ButtonVariant, string> = {
-    primary: "bg-accent text-accent-fg hover:bg-accent-hover",
+    primary: "bg-accent text-accent-fg shadow-[var(--shadow-card)] hover:bg-accent-hover",
     secondary:
-      "border border-line bg-surface text-ink hover:bg-surface-2 hover:border-line-strong",
+      "bg-surface text-ink shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-raised)] " +
+      "dark:border dark:border-line",
     ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
-    danger: "border border-line bg-surface text-danger hover:bg-danger-soft",
+    danger: "bg-surface text-danger shadow-[var(--shadow-card)] hover:bg-danger-soft",
   };
   return (
     <button className={cx(base, sizes[size], variants[variant], className)} {...props}>
+      {children}
+    </button>
+  );
+}
+
+/** Circular control for a single icon: toolbars, close buttons, row actions. */
+export function IconButton({
+  className,
+  children,
+  tone = "surface",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { tone?: "surface" | "ghost" }) {
+  return (
+    <button
+      className={cx(
+        "inline-grid size-9 shrink-0 place-items-center rounded-full transition-all duration-150",
+        "active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-45",
+        tone === "surface"
+          ? "bg-surface text-ink-2 shadow-[var(--shadow-card)] hover:text-ink hover:shadow-[var(--shadow-raised)] dark:border dark:border-line"
+          : "text-ink-3 hover:bg-surface-2 hover:text-ink",
+        className,
+      )}
+      {...props}
+    >
       {children}
     </button>
   );
@@ -66,7 +91,7 @@ export function Card({
   return (
     <Tag
       className={cx(
-        "rounded-card border border-line bg-surface shadow-[var(--shadow-card)]",
+        "rounded-panel bg-surface shadow-[var(--shadow-card)] dark:border dark:border-line",
         className,
       )}
     >
@@ -85,9 +110,9 @@ export function CardHeader({
   hint?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-line px-4 py-3">
+    <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-4">
       <div className="min-w-0">
-        <h2 className="text-sm font-semibold tracking-tight text-ink">{title}</h2>
+        <h2 className="text-[15px] font-semibold tracking-tight text-ink">{title}</h2>
         {hint ? <p className="mt-0.5 text-xs text-ink-3">{hint}</p> : null}
       </div>
       {action}
@@ -97,10 +122,11 @@ export function CardHeader({
 
 /* ------------------------------------------------------------------ Pill */
 
-export type Tone = "neutral" | "accent" | "ok" | "warn" | "danger";
+export type Tone = "neutral" | "lime" | "accent" | "ok" | "warn" | "danger";
 
 const toneClasses: Record<Tone, string> = {
   neutral: "bg-muted-soft text-ink-2",
+  lime: "bg-lime text-lime-ink",
   accent: "bg-accent-soft text-accent",
   ok: "bg-ok-soft text-ok",
   warn: "bg-warn-soft text-warn",
@@ -121,7 +147,7 @@ export function Pill({
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium leading-none",
         toneClasses[tone],
         className,
       )}
@@ -160,7 +186,7 @@ export function EmptyState({
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cx("animate-pulse rounded-card bg-surface-2", className)}
+      className={cx("animate-pulse rounded-panel bg-surface-2", className)}
       aria-hidden="true"
     />
   );
@@ -190,7 +216,7 @@ export function Field({
 }
 
 const controlClass =
-  "h-10 w-full rounded-card border border-line bg-surface px-3 text-sm text-ink " +
+  "h-10 w-full rounded-card border border-transparent bg-surface-2 px-3.5 text-sm text-ink " +
   "placeholder:text-ink-3 transition-colors hover:border-line-strong " +
   "focus:border-accent focus:outline-none focus-visible:outline-none";
 
@@ -281,8 +307,8 @@ export function Modal({
             aria-modal="true"
             aria-labelledby={titleId}
             className={cx(
-              "relative flex max-h-[92vh] w-full flex-col overflow-hidden border border-line bg-surface shadow-[var(--shadow-pop)]",
-              "rounded-t-2xl sm:rounded-card",
+              "relative flex max-h-[92vh] w-full flex-col overflow-hidden bg-surface shadow-[var(--shadow-pop)] dark:border dark:border-line",
+              "rounded-t-panel sm:rounded-panel",
               wide ? "sm:max-w-2xl" : "sm:max-w-md",
             )}
             initial={reduce ? false : { opacity: 0, y: 12, scale: 0.99 }}
@@ -290,17 +316,17 @@ export function Modal({
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.99 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="flex items-center justify-between gap-4 border-b border-line px-4 py-3">
-              <h2 id={titleId} className="text-sm font-semibold tracking-tight text-ink">
+            <div className="flex items-center justify-between gap-4 px-5 pb-2 pt-4">
+              <h2 id={titleId} className="text-base font-semibold tracking-tight text-ink">
                 {title}
               </h2>
-              <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
+              <IconButton tone="ghost" onClick={onClose} aria-label="Close">
                 <X size={16} weight="bold" />
-              </Button>
+              </IconButton>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3">{children}</div>
             {footer ? (
-              <div className="flex items-center justify-end gap-2 border-t border-line bg-surface-2 px-4 py-3">
+              <div className="flex items-center justify-end gap-2 px-5 pb-5 pt-3">
                 {footer}
               </div>
             ) : null}
@@ -347,7 +373,7 @@ export function ToastHost({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="pointer-events-auto rounded-card border border-line bg-ink px-3.5 py-2 text-[13px] font-medium text-bg shadow-[var(--shadow-pop)]"
+              className="pointer-events-auto rounded-full bg-ink px-4 py-2.5 text-[13px] font-medium text-bg shadow-[var(--shadow-pop)]"
             >
               {toast.text}
             </motion.div>

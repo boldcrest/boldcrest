@@ -15,7 +15,7 @@ import {
   Sun,
   Users,
 } from "@phosphor-icons/react";
-import { Button, Pill, cx, useToast } from "./ui";
+import { IconButton, Pill, cx, useToast } from "./ui";
 import { useDemo } from "@/lib/demo/store";
 import { capitalizeFirst, formatDate, formatWeekday } from "@/lib/i18n";
 
@@ -32,9 +32,9 @@ export function Sidebar() {
   const { t, state } = useDemo();
 
   return (
-    <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
-      <div className="flex h-16 items-center gap-2.5 border-b border-line px-5">
-        <span className="grid size-8 place-items-center rounded-card bg-accent text-[13px] font-bold text-accent-fg">
+    <aside className="hidden w-64 shrink-0 flex-col px-3 py-4 lg:flex">
+      <div className="flex items-center gap-3 px-3 py-3">
+        <span className="grid size-9 place-items-center rounded-2xl bg-accent text-sm font-bold text-accent-fg">
           A
         </span>
         <div className="min-w-0">
@@ -45,7 +45,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 p-3">
+      <nav className="flex flex-1 flex-col gap-1 pt-4">
         {NAV.map(({ href, key, Icon }) => {
           const active = pathname.startsWith(href);
           return (
@@ -54,21 +54,21 @@ export function Sidebar() {
               href={href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "relative flex items-center gap-2.5 rounded-card px-3 py-2 text-sm transition-colors",
+                "relative flex items-center gap-3 rounded-full py-2.5 pl-3.5 pr-4 text-sm transition-all duration-150",
                 active
-                  ? "bg-accent-soft font-medium text-accent"
-                  : "text-ink-2 hover:bg-surface-2 hover:text-ink",
+                  ? "bg-surface font-medium text-ink shadow-[var(--shadow-card)] dark:border dark:border-line"
+                  : "text-ink-2 hover:bg-surface/60 hover:text-ink",
               )}
             >
-              <Icon size={18} weight={active ? "fill" : "regular"} />
+              <Icon size={18} weight={active ? "fill" : "regular"} className={active ? "text-accent" : undefined} />
               {t.nav[key]}
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-line p-3">
-        <p className="px-2 text-[11px] leading-relaxed text-ink-3">{t.clock.hint}</p>
+      <div className="px-4 py-3">
+        <p className="text-[11px] leading-relaxed text-ink-3">{t.clock.hint}</p>
       </div>
     </aside>
   );
@@ -78,7 +78,7 @@ export function MobileNav() {
   const pathname = usePathname();
   const { t } = useDemo();
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-line bg-surface px-3 py-2 lg:hidden">
+    <nav className="flex gap-1.5 overflow-x-auto px-4 pb-1 pt-1 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {NAV.map(({ href, key, Icon }) => {
         const active = pathname.startsWith(href);
         return (
@@ -86,11 +86,17 @@ export function MobileNav() {
             key={href}
             href={href}
             className={cx(
-              "flex shrink-0 items-center gap-1.5 rounded-card px-2.5 py-1.5 text-[13px] transition-colors",
-              active ? "bg-accent-soft font-medium text-accent" : "text-ink-2",
+              "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] transition-colors",
+              active
+                ? "bg-surface font-medium text-ink shadow-[var(--shadow-card)] dark:border dark:border-line"
+                : "text-ink-2",
             )}
           >
-            <Icon size={16} weight={active ? "fill" : "regular"} />
+            <Icon
+              size={16}
+              weight={active ? "fill" : "regular"}
+              className={active ? "text-accent" : undefined}
+            />
             {t.nav[key]}
           </Link>
         );
@@ -128,9 +134,9 @@ function ThemeToggle() {
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={toggle} aria-label="Theme">
+    <IconButton onClick={toggle} aria-label="Theme">
       {dark ? <Sun size={16} weight="bold" /> : <Moon size={16} weight="bold" />}
-    </Button>
+    </IconButton>
   );
 }
 
@@ -139,53 +145,59 @@ export function Topbar() {
   const toast = useToast();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-surface/85 px-4 backdrop-blur-md sm:px-6">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-30 flex h-auto flex-wrap items-center gap-x-3 gap-y-2 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:h-18 sm:flex-nowrap sm:py-0 sm:px-7">
+      <div className="min-w-0 basis-full sm:flex-1 sm:basis-auto">
+        <div className="flex items-center gap-2.5">
           <p className="truncate text-sm font-semibold tracking-tight text-ink">
             <span>{capitalizeFirst(formatWeekday(now, state.lang))}</span>
             {", "}
             {formatDate(now, state.lang)}
           </p>
-          <Pill tone="accent">{t.demoBadge}</Pill>
+          <Pill tone="lime">{t.demoBadge}</Pill>
         </div>
         <p className="truncate text-[11px] text-ink-3">{t.clock.label}</p>
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <Button size="sm" variant="secondary" onClick={() => actions.advanceDays(1)}>
-          <CaretDoubleRight size={14} weight="bold" />
-          <span className="hidden sm:inline">{t.clock.advanceDay}</span>
-          <span className="sm:hidden">+1</span>
-        </Button>
-        <Button size="sm" variant="secondary" onClick={() => actions.advanceDays(7)}>
-          <span className="hidden sm:inline">{t.clock.advanceWeek}</span>
-          <span className="sm:hidden">+7</span>
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            actions.reset();
-            toast.push(t.toast.reset);
-          }}
-          aria-label={t.clock.reset}
-          title={t.clock.reset}
-        >
-          <ArrowCounterClockwise size={15} weight="bold" />
-        </Button>
+      <div className="flex items-center gap-2">
+        {/* The demo clock: one white capsule holding both jumps and the reset. */}
+        <div className="flex items-center gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:border dark:border-line">
+          <button
+            onClick={() => actions.advanceDays(1)}
+            className="flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
+          >
+            <CaretDoubleRight size={13} weight="bold" />
+            <span className="hidden sm:inline">{t.clock.advanceDay}</span>
+            <span className="sm:hidden">+1</span>
+          </button>
+          <button
+            onClick={() => actions.advanceDays(7)}
+            className="h-7 rounded-full px-2.5 text-[12px] font-medium text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
+          >
+            <span className="hidden sm:inline">{t.clock.advanceWeek}</span>
+            <span className="sm:hidden">+7</span>
+          </button>
+          <button
+            onClick={() => {
+              actions.reset();
+              toast.push(t.toast.reset);
+            }}
+            aria-label={t.clock.reset}
+            title={t.clock.reset}
+            className="grid size-7 place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+          >
+            <ArrowCounterClockwise size={14} weight="bold" />
+          </button>
+        </div>
 
-        <div className="mx-1 h-5 w-px bg-line" />
-
-        <div className="flex items-center rounded-card border border-line p-0.5">
+        <div className="flex items-center rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:border dark:border-line">
           {(["sq", "en"] as const).map((lang) => (
             <button
               key={lang}
               onClick={() => actions.setLang(lang)}
               className={cx(
-                "rounded-[7px] px-2 py-1 text-[11px] font-semibold uppercase transition-colors",
+                "rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase transition-colors",
                 state.lang === lang
-                  ? "bg-accent text-accent-fg"
+                  ? "bg-ink text-bg"
                   : "text-ink-3 hover:text-ink",
               )}
             >
@@ -209,9 +221,11 @@ export function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-ink">{title}</h1>
+        <h1 className="text-[28px] font-medium leading-tight tracking-[-0.02em] text-ink sm:text-[32px]">
+          {title}
+        </h1>
         {children}
       </div>
       {action}

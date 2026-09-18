@@ -17,14 +17,14 @@ export default function SettingsPage() {
     <>
       <PageHeader title={t.settings.title} />
 
-      <div className="mb-4 flex flex-wrap gap-1 rounded-card border border-line p-1">
+      <div className="mb-5 inline-flex flex-wrap gap-1 rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:border dark:border-line">
         {TABS.map((key) => (
           <button
             key={key}
             onClick={() => setTab(key)}
             className={cx(
-              "rounded-[7px] px-3 py-1.5 text-[13px] font-medium transition-colors",
-              tab === key ? "bg-accent text-accent-fg" : "text-ink-2 hover:text-ink",
+              "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
+              tab === key ? "bg-ink text-bg" : "text-ink-2 hover:text-ink",
             )}
           >
             {t.settings[key]}
@@ -36,11 +36,14 @@ export default function SettingsPage() {
         {tab === "treatments" ? (
           <Card>
             <CardHeader title={t.settings.treatments} />
-            <ul className="divide-y divide-line">
+            <ul className="flex flex-col gap-0.5 px-2 pb-3">
               {state.treatments.map((treatment) => {
                 const protocol = state.protocols.find((p) => p.id === treatment.protocolId);
                 return (
-                  <li key={treatment.id} className="flex items-center gap-3 px-4 py-3">
+                  <li
+                    key={treatment.id}
+                    className="flex items-center gap-3 rounded-card px-3 py-3 transition-colors hover:bg-surface-2"
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-ink">
                         {treatment.name[state.lang]}
@@ -74,9 +77,9 @@ export default function SettingsPage() {
                     .filter(Boolean)
                     .join(", ")}
                 />
-                <ol className="divide-y divide-line">
+                <ol className="flex flex-col gap-0.5 px-2 pb-3">
                   {protocol.steps.map((step, index) => (
-                    <li key={step.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <li key={step.id} className="flex items-center gap-3 rounded-card px-3 py-2.5">
                       <span className="nums grid size-6 shrink-0 place-items-center rounded-full bg-surface-3 text-[11px] font-semibold text-ink-2">
                         {index + 1}
                       </span>

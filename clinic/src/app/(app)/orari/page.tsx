@@ -69,13 +69,13 @@ export default function SchedulePage() {
       </PageHeader>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex items-center rounded-card border border-line">
+        <div className="flex items-center gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:border dark:border-line">
           <Button variant="ghost" size="sm" onClick={() => move(-1)} aria-label="previous">
             <CaretLeft size={15} weight="bold" />
           </Button>
           <button
             onClick={() => setCursor(now)}
-            className="px-3 text-[13px] font-medium text-ink-2 hover:text-ink"
+            className="rounded-full px-3 py-1 text-[13px] font-medium text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
           >
             {t.schedule.today}
           </button>
@@ -84,14 +84,14 @@ export default function SchedulePage() {
           </Button>
         </div>
 
-        <div className="flex items-center rounded-card border border-line p-0.5">
+        <div className="flex items-center rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:border dark:border-line">
           {(["day", "week"] as const).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
               className={cx(
-                "rounded-[7px] px-2.5 py-1 text-[13px] font-medium transition-colors",
-                view === v ? "bg-accent text-accent-fg" : "text-ink-3 hover:text-ink",
+                "rounded-full px-3 py-1 text-[13px] font-medium transition-colors",
+                view === v ? "bg-ink text-bg" : "text-ink-3 hover:text-ink",
               )}
             >
               {v === "day" ? t.schedule.day : t.schedule.week}
@@ -102,7 +102,7 @@ export default function SchedulePage() {
         <select
           value={providerFilter}
           onChange={(e) => setProviderFilter(e.target.value)}
-          className="h-8 rounded-card border border-line bg-surface px-2 text-[13px] text-ink"
+          className="h-9 rounded-full border-none bg-surface px-3.5 text-[13px] text-ink shadow-[var(--shadow-card)]"
         >
           <option value="all">{t.schedule.allProviders}</option>
           {state.providers.map((p) => (
@@ -164,7 +164,7 @@ function DayGrid({
   return (
     <Card className="overflow-hidden">
       <div className="grid" style={{ gridTemplateColumns: `56px repeat(${providers.length}, minmax(0, 1fr))` }}>
-        <div className="border-b border-line bg-surface-2" />
+        <div className="bg-surface-2" />
         {providers.map((provider) => (
           <div
             key={provider.id}
@@ -263,7 +263,7 @@ function DayGrid({
       </div>
 
       {dayAppointments.length === 0 ? (
-        <div className="border-t border-line">
+        <div className="pt-1">
           <EmptyState icon={<CalendarBlank size={24} />} title={t.schedule.noneThisDay} />
         </div>
       ) : null}
@@ -301,15 +301,18 @@ function WeekGrid({
 
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {days.map((day) => {
         const items = s
           .appointmentsOn(day)
           .filter((a) => providerFilter === "all" || a.providerId === providerFilter);
         const today = isSameDay(day, now);
         return (
-          <Card key={day.toISOString()} className={cx(today && "border-accent")}>
-            <div className="flex items-baseline justify-between border-b border-line px-3 py-2">
+          <Card
+            key={day.toISOString()}
+            className={cx(today && "ring-1 ring-accent ring-offset-2 ring-offset-bg")}
+          >
+            <div className="flex items-baseline justify-between px-4 pb-2 pt-3">
               <p className="text-[13px] font-semibold capitalize text-ink">
                 {formatWeekday(day, state.lang, true)}
               </p>
@@ -318,7 +321,7 @@ function WeekGrid({
             {items.length === 0 ? (
               <p className="px-3 py-4 text-xs text-ink-3">{t.schedule.noneThisDay}</p>
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="flex flex-col gap-0.5 px-2 pb-2">
                 {items.map((appointment) => {
                   const provider = s.providerById(appointment.providerId);
                   return (
@@ -326,7 +329,7 @@ function WeekGrid({
                       <button
                         onClick={() => onOpen(appointment)}
                         className={cx(
-                          "flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-2",
+                          "flex w-full items-center gap-2 rounded-card px-2.5 py-2 text-left transition-colors hover:bg-surface-2",
                           TINTS[provider?.tint ?? "teal"].replace(/bg-\S+/g, ""),
                         )}
                       >

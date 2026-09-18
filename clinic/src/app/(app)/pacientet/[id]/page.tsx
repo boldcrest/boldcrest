@@ -163,11 +163,11 @@ export default function PatientDetailPage() {
         </p>
       </PageHeader>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_1.5fr]">
-        <FadeIn className="flex flex-col gap-5">
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.5fr]">
+        <FadeIn className="flex min-w-0 flex-col gap-4">
           <Card>
             <CardHeader title={t.patients.details} />
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-3.5 text-sm">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 pb-5 text-sm">
               <div>
                 <dt className="text-xs text-ink-3">{t.form.language}</dt>
                 <dd className="text-ink uppercase">{patient.lang}</dd>

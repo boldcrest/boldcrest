@@ -182,7 +182,7 @@ export default function ConfirmPage() {
           </p>
         </div>
 
-        <div className="rounded-card border border-line bg-surface-2 p-4">
+        <div className="rounded-panel bg-surface-2 p-5">
           {appointment ? (
             <ul className="flex flex-col gap-2.5 text-sm">
               <li className="flex items-center gap-2.5 text-ink">
@@ -230,12 +230,12 @@ function Shell({ clinic, children }: { clinic: string; children: React.ReactNode
   return (
     <div className="flex min-h-[100dvh] flex-col items-center bg-bg px-4 py-10">
       <div className="mb-6 flex items-center gap-2.5">
-        <span className="grid size-8 place-items-center rounded-card bg-accent text-[13px] font-bold text-accent-fg">
+        <span className="grid size-9 place-items-center rounded-2xl bg-accent text-sm font-bold text-accent-fg">
           A
         </span>
         <span className="text-sm font-semibold tracking-tight text-ink">{clinic}</span>
       </div>
-      <div className="w-full max-w-sm rounded-card border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
+      <div className="w-full max-w-sm rounded-panel bg-surface p-6 shadow-[var(--shadow-raised)] dark:border dark:border-line">
         {children}
       </div>
       <p className="mt-5 max-w-sm text-center text-[11px] leading-relaxed text-ink-3">

@@ -194,7 +194,7 @@ export function WhatsAppComposer({
 
           <div>
             <p className="mb-1.5 text-[13px] font-medium text-ink-2">{t.message.preview}</p>
-            <div className="rounded-card border border-line bg-[#e7f3e8] p-3 dark:bg-surface-2">
+            <div className="rounded-panel bg-[#e7f3e8] p-4 dark:bg-surface-2">
               <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-stone-900 dark:text-ink">
                 {draft.body}
               </p>

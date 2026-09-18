@@ -64,34 +64,41 @@ export default function DashboardPage() {
     [state.visits, now],
   );
 
+  /* A tile only takes on colour when it has something in it. A clinic with
+     nothing outstanding sees four quiet grey tiles; work arriving is what
+     lights the dashboard up, so colour always means "look here". */
   const stats = [
     {
       label: t.dashboard.todayAppointments,
       value: todays.length,
       Icon: CalendarBlank,
-      tone: "neutral" as const,
+      mesh: "mesh-blue",
       href: "/orari",
+      to: t.nav.schedule,
     },
     {
       label: t.dashboard.unconfirmed,
       value: unconfirmed.length,
       Icon: Clock,
-      tone: unconfirmed.length > 0 ? ("warn" as const) : ("neutral" as const),
+      mesh: "mesh-amber",
       href: "/orari",
+      to: t.nav.schedule,
     },
     {
       label: t.dashboard.followupsDue,
       value: dueFollowUps.length,
       Icon: Repeat,
-      tone: dueFollowUps.length > 0 ? ("accent" as const) : ("neutral" as const),
+      mesh: "mesh-green",
       href: "/ndjekjet",
+      to: t.nav.followups,
     },
     {
       label: t.dashboard.overdue,
       value: overdueCount,
       Icon: WarningCircle,
-      tone: overdueCount > 0 ? ("danger" as const) : ("neutral" as const),
+      mesh: "mesh-rose",
       href: "/ndjekjet",
+      to: t.nav.followups,
     },
   ];
 
@@ -105,51 +112,81 @@ export default function DashboardPage() {
         </p>
       </PageHeader>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.28, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Link href={stat.href} className="block">
-              <Card className="px-4 py-3.5 transition-colors hover:border-line-strong">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        {stats.map((stat, i) => {
+          const live = stat.value > 0;
+          return (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.34, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Link
+                href={stat.href}
+                className={cx(
+                  "mesh group flex h-36 flex-col justify-between rounded-panel p-4 sm:h-40 sm:p-5",
+                  "shadow-[var(--shadow-card)] transition-shadow duration-200 hover:shadow-[var(--shadow-raised)]",
+                  live ? stat.mesh : "mesh-quiet",
+                )}
+              >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[13px] text-ink-2">{stat.label}</p>
-                    <p
-                      className={cx(
-                        "nums mt-1 text-3xl font-semibold tracking-tight",
-                        stat.tone === "danger"
-                          ? "text-danger"
-                          : stat.tone === "warn"
-                            ? "text-warn"
-                            : stat.tone === "accent"
-                              ? "text-accent"
-                              : "text-ink",
-                      )}
-                    >
-                      {stat.value}
-                    </p>
-                  </div>
-                  <stat.Icon size={18} weight="regular" className="mt-0.5 text-ink-3" />
+                  <p
+                    className={cx(
+                      "text-[12px] font-medium leading-snug sm:text-[13px]",
+                      live ? "text-white/85" : "text-ink-2",
+                    )}
+                  >
+                    {stat.label}
+                  </p>
+                  <span
+                    className={cx(
+                      "grid size-7 shrink-0 place-items-center rounded-full",
+                      live ? "bg-white/25 text-white" : "bg-surface text-ink-3",
+                    )}
+                  >
+                    <stat.Icon size={14} weight="bold" />
+                  </span>
                 </div>
-              </Card>
-            </Link>
-          </motion.div>
-        ))}
+
+                <div>
+                  <p
+                    className={cx(
+                      "dots text-[52px] leading-[0.8] sm:text-[68px]",
+                      live ? "[--dot:#ffffff]" : "[--dot:var(--ink-3)]",
+                    )}
+                  >
+                    {stat.value}
+                  </p>
+                  <span
+                    className={cx(
+                      "mt-2.5 inline-flex items-center gap-1 text-[11px] font-medium sm:mt-3.5 sm:text-[12px]",
+                      live ? "text-white/80" : "text-ink-3",
+                    )}
+                  >
+                    {stat.to}
+                    <ArrowRight
+                      size={12}
+                      weight="bold"
+                      className="transition-transform duration-200 group-hover:translate-x-0.5"
+                    />
+                  </span>
+                </div>
+              </Link>
+            </motion.div>
+          );
+        })}
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1.55fr_1fr]">
-        <FadeIn delay={0.05}>
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1.55fr_1fr]">
+        <FadeIn delay={0.05} className="min-w-0">
           <Card>
             <CardHeader
               title={t.dashboard.agenda}
               action={
                 <Link
                   href="/orari"
-                  className="flex items-center gap-1 text-[13px] font-medium text-accent hover:underline"
+                  className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-ink-2 transition-colors hover:text-ink"
                 >
                   {t.schedule.title}
                   <ArrowRight size={13} weight="bold" />
@@ -162,7 +199,7 @@ export default function DashboardPage() {
                 title={t.dashboard.noAppointments}
               />
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="flex flex-col gap-0.5 px-2 pb-3">
                 {todays.map((appointment) => {
                   const patient = s.patientById(appointment.patientId);
                   const provider = s.providerById(appointment.providerId);
@@ -170,7 +207,7 @@ export default function DashboardPage() {
                     <li key={appointment.id}>
                       <button
                         onClick={() => setOpenAppointment(appointment)}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2"
+                        className="flex w-full items-center gap-3 rounded-card px-3 py-3 text-left transition-colors hover:bg-surface-2"
                       >
                         <span className="nums w-12 shrink-0 text-[13px] font-medium text-ink-2">
                           {formatTime(appointment.start)}
@@ -199,7 +236,7 @@ export default function DashboardPage() {
           </Card>
         </FadeIn>
 
-        <FadeIn delay={0.1} className="flex flex-col gap-5">
+        <FadeIn delay={0.1} className="flex min-w-0 flex-col gap-4">
           <Card>
             <CardHeader
               title={t.dashboard.needsAttention}
@@ -212,13 +249,13 @@ export default function DashboardPage() {
             {unconfirmed.length === 0 && dueFollowUps.length === 0 ? (
               <EmptyState icon={<CheckCircle size={26} />} title={t.dashboard.noAttention} />
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="flex flex-col gap-0.5 px-2 pb-3">
                 {unconfirmed.slice(0, 4).map((appointment) => {
                   const patient = s.patientById(appointment.patientId);
                   return (
                     <li
                       key={appointment.id}
-                      className="flex items-center gap-3 px-4 py-2.5"
+                      className="flex items-center gap-3 rounded-card px-3 py-2.5 transition-colors hover:bg-surface-2"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-ink">
@@ -254,7 +291,10 @@ export default function DashboardPage() {
                   const patient = s.patientById(followUp.patientId);
                   const days = daysUntilDue(followUp, now);
                   return (
-                    <li key={followUp.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <li
+                      key={followUp.id}
+                      className="flex items-center gap-3 rounded-card px-3 py-2.5 transition-colors hover:bg-surface-2"
+                    >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-ink">
                           {patient?.firstName} {patient?.lastName}
@@ -289,7 +329,7 @@ export default function DashboardPage() {
               </ul>
             )}
             {unconfirmed.length + dueFollowUps.length > 8 ? (
-              <div className="border-t border-line px-4 py-2.5">
+              <div className="px-5 pb-4 pt-1">
                 <Link
                   href="/ndjekjet"
                   className="text-[13px] font-medium text-accent hover:underline"
@@ -305,14 +345,14 @@ export default function DashboardPage() {
             {recentVisits.length === 0 ? (
               <EmptyState title={t.patients.emptyTimeline} />
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="flex flex-col gap-0.5 px-2 pb-3">
                 {recentVisits.map((visit) => {
                   const patient = s.patientById(visit.patientId);
                   return (
-                    <li key={visit.id} className="px-4 py-2.5">
+                    <li key={visit.id}>
                       <Link
                         href={`/pacientet/${visit.patientId}`}
-                        className="block transition-colors hover:text-accent"
+                        className="block rounded-card px-3 py-2.5 transition-colors hover:bg-surface-2"
                       >
                         <p className="truncate text-sm font-medium">
                           {patient?.firstName} {patient?.lastName}
