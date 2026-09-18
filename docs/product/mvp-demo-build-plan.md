@@ -1,36 +1,49 @@
-# MVP Demo Build Plan — v0.1 "Patient logs, hours, protocol reminders"
+# MVP Demo Build Plan — v0.1 "Patient logs, hours, WhatsApp reminders, follow-up confirmations"
 
-**Goal:** a launchable first product with the basics — patients + visit logs, provider hours + appointments, and protocol-driven follow-up reminders — built on the architecture in `platform-architecture-spec.md` so later modules (tourism, odontogram, face charting, fiscalization) are additive updates, not rewrites.
+**Goal:** a launchable first product with the basics — patients + visit logs, provider hours + appointments, WhatsApp booking reminders with ready messages and confirmation links, and protocol-driven follow-ups the patient confirms — built on `platform-architecture-spec.md` so later modules are additive updates.
 
-**Location:** `clinic/` — standalone Next.js app inside this repo (the root is the Boldcrest marketing site; keeping it separate avoids coupling builds).
+**Location:** `clinic/` — standalone Next.js app inside this repo (the root is the Boldcrest marketing site).
 
-## Scope (what v0.1 does)
+## Scope
 
-| Area | In v0.1 | Deferred (later updates) |
+| Area | In v0.1 | Deferred |
 |---|---|---|
-| Auth & workspace | Email/password sign-in (Supabase Auth); clinic workspace; roles owner/practitioner/reception; invite by email | SSO, MFA enforcement UI, external collaborator seats |
-| Patients | List/search, create/edit, consent-to-contact flags, **patient timeline** (visits, notes, reminders, messages) | Documents/photos, anamnesis forms, odontogram, face charting |
-| Visit log | Log a visit: provider, date, treatments performed (from a catalog with dental + aesthetics presets), notes | Charting depth, inventory deduction, quotes |
-| Hours & schedule | Providers with weekly working hours; day + week calendar; create/move/cancel appointments; statuses (booked → confirmed → arrived → done / no-show / cancelled); conflict detection per provider | Rooms/devices, online booking page, deposits |
-| Protocols & reminders | Protocol definitions (trigger treatment → follow-up steps with day offsets + message template); logging a treatment spawns reminders; **Due / overdue dashboard**; actions: mark done, snooze, book appointment; message log with a provider interface (console/log "sender" in v0.1) | Real WhatsApp/SMS sending, escalation ladders, reactivation scoring |
-| Dashboard | Today's appointments, reminders due, overdue count, recent visits | Revenue/utilization reports |
-| Ops | Migrations + seed, README setup (Supabase project, env, Vercel deploy), RLS tests, unit tests for protocol scheduling | Fiscalization, payments |
+| Auth & workspace | Supabase Auth email/password; clinic workspace; roles owner/practitioner/reception; multi-tenant (`clinic_id` + RLS) | SSO, MFA UI, external collaborator seats |
+| Patients | List/search, create/edit, WhatsApp number + contact consent, patient timeline (visits, notes, reminders, messages) | Documents/photos, anamnesis forms, odontogram, face charting |
+| Visit log | Provider, date, treatments from catalog (dental + aesthetics presets), notes | Charting depth, inventory, quotes |
+| Hours & schedule | Provider weekly working hours; day/week calendar; create/move/cancel; statuses booked→confirmed→arrived→done / no-show / cancelled; per-provider conflict detection | Rooms/devices, online booking page, deposits |
+| **Booking reminders (WhatsApp)** | Templates (sq/it/en, auto-picked per patient): booking confirmation, 48h reminder, 3h reminder, reschedule notice. Generated with name/date/time/provider/address + **confirm link**. **"Send on WhatsApp"** opens WhatsApp with prefilled text to the patient's number (`wa.me` deep link); message logged on timeline. Public tokenized confirm page (Confirm / Need to reschedule) flips appointment to confirmed; reschedule requests go to a staff queue. **Awaiting-confirmation list** with one-click resend. | Automated sending via WhatsApp Business API (same templates + log; settings toggle), two-way inbox |
+| **Follow-ups needing confirmation** | Protocols (trigger treatment → steps with day offsets + template) spawn follow-ups on visit logging. Due follow-up → ready WhatsApp message with confirm link → patient confirms interest → "confirmed, to be booked" → staff books into provider hours. Lifecycle: due → sent → confirmed / declined / no reply → booked → done; snooze; "no reply after N days" flag. | Slot-picking in the link (optional v0.1 decision), escalation ladders, reactivation scoring |
+| Dashboard | Today's appointments, unconfirmed bookings, follow-ups due, follow-ups awaiting confirmation, overdue | Revenue/utilization reports |
+| Settings | Editable treatment catalog, protocols, message templates, working hours | — |
+| Ops | Migrations + demo seed, README (Supabase project, env, Vercel), tests: protocol scheduling, confirmation tokens, RLS isolation | Fiscalization, payments |
 
-Multi-tenant from day one (`clinic_id` on every table + RLS), Albanian/English strings via a small i18n dictionary (sq default, en) so localization is structural, not bolted on.
+**Compliance built in:** WhatsApp messages carry scheduling text + links only (treatment name at most, no clinical content) per Guideline 2/2025; confirmation tokens are single-purpose and expiring; messages logged for audit.
+
+## Why this messaging design for the demo
+Zero API approvals, zero per-message cost, works with the clinic's existing WhatsApp number on day one; confirmation links produce real "confirmed" data immediately; the identical templates + message log later drive automated API sending (utility templates) — a settings toggle, not a rebuild.
 
 ## Stack
+Next.js (App Router, TypeScript, Tailwind), Supabase (Postgres, Auth, RLS; `@supabase/ssr`), server actions + Zod, date-fns, Vitest, SQL RLS tests, Supabase CLI local stack (Docker).
 
-Next.js (App Router, TypeScript, Tailwind), Supabase (Postgres, Auth, RLS; `@supabase/ssr`), server actions + Zod validation, date-fns, Vitest (protocol logic), SQL-based RLS tests, Supabase CLI local stack (Docker) for development and verification.
+## Data model additions vs. the first plan
+`message_templates` (clinic, key, language, body), `messages` (patient, channel, template, rendered body, status, sent_at, related appointment/follow-up), `confirmation_tokens` (token, purpose, target id, expires_at, used_at), `appointments.confirmation_status`, `followups` (protocol step instance with lifecycle status, due date, snooze_until, message/appointment links), `reschedule_requests`.
 
-## Steps (each ends in a commit)
+## Steps (each ends in a commit + push)
+0. Scaffold + local Supabase stack (scaffold exists).
+1. Schema + RLS + seed (incl. templates, tokens, follow-up lifecycle; demo clinic with presets).
+2. Auth + app shell + i18n (sq/it/en).
+3. Patients + timeline + visit log.
+4. Schedule + working hours.
+5. Booking reminders: templates, generator, Send-on-WhatsApp, public confirm page, awaiting-confirmation list.
+6. Protocol engine + follow-up confirmations: spawn on treatment, due list, confirm-link flow, lifecycle, snooze.
+7. Dashboard, settings, README, verification (typecheck, unit + RLS tests, end-to-end walkthrough with screenshots).
 
-0. **Scaffold** `clinic/` app, Supabase CLI project, local stack running.
-1. **Schema + RLS + seed:** clinics, memberships, patients, providers, working_hours, appointments, treatments, visits, visit_treatments, protocols, protocol_steps, reminders, messages, audit_log; RLS policies with JWT `clinic_id` claim via auth hook; seed a demo clinic (dental + aesthetics treatments, protocols, sample patients/appointments).
-2. **Auth + app shell:** sign-in, clinic context, role-aware navigation, i18n.
-3. **Patients + timeline + visit logging.**
-4. **Schedule:** providers/hours settings, day/week calendar, appointment CRUD + status flow + conflict checks.
-5. **Protocol engine:** trigger on visit treatments → reminders; due/overdue dashboard; done/snooze/book; message log + sender interface; unit tests.
-6. **Dashboard + README + verification:** typecheck, tests, RLS cross-tenant tests, end-to-end walkthrough on local Supabase, screenshots.
+## Definition of done
+A clinic signs in, books a patient, sends the ready WhatsApp reminder, the patient confirms via link; the clinic logs a visit with a treatment, the follow-up becomes due, the ready message goes out, the patient confirms, staff books it — all visible on the timeline, with tenant isolation proven by tests.
 
-## Definition of done for the demo
-A clinic can sign in, add a patient, log a visit with a treatment, see the protocol reminders it generated, work the due list, book the follow-up into a provider's hours, and see it all on the patient timeline — with tenant isolation proven by tests.
+## Open decisions (defaults in bold)
+- Default UI language: **Albanian with English toggle** vs English-first.
+- Follow-up confirm link: **simple "yes, book me"** vs two proposed slots the patient picks.
+- Reminder timing defaults: **48h + 3h before**.
+- Keep existing `clinic/` scaffold: **yes**.
