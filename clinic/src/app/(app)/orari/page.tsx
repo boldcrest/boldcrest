@@ -17,11 +17,15 @@ const DAY_START = 8;
 const DAY_END = 20;
 const HOUR_PX = 64;
 
-const TINTS: Record<string, string> = {
-  teal: "border-l-[3px] border-l-teal-600 bg-teal-50 dark:bg-teal-950/40",
-  amber: "border-l-[3px] border-l-amber-600 bg-amber-50 dark:bg-amber-950/40",
-  violet: "border-l-[3px] border-l-violet-600 bg-violet-50 dark:bg-violet-950/40",
+/* One hue per clinician. The block is that hue mixed into the card surface,
+   so it tints in the light and glows in the dark from a single value. */
+const TINT_HEX: Record<string, string> = {
+  teal: "#12a04e",
+  amber: "#f97316",
+  violet: "#7c2fe0",
 };
+
+const tintOf = (key: string) => TINT_HEX[key] ?? TINT_HEX.teal;
 
 export default function SchedulePage() {
   const { t, state, now } = useDemo();
@@ -69,7 +73,7 @@ export default function SchedulePage() {
       </PageHeader>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:border dark:border-line">
+        <div className="flex items-center gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:hairline">
           <Button variant="ghost" size="sm" onClick={() => move(-1)} aria-label="previous">
             <CaretLeft size={15} weight="bold" />
           </Button>
@@ -84,7 +88,7 @@ export default function SchedulePage() {
           </Button>
         </div>
 
-        <div className="flex items-center rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:border dark:border-line">
+        <div className="flex items-center rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:hairline">
           {(["day", "week"] as const).map((v) => (
             <button
               key={v}
@@ -168,7 +172,7 @@ function DayGrid({
         {providers.map((provider) => (
           <div
             key={provider.id}
-            className="border-b border-l border-line bg-surface-2 px-3 py-2"
+            className="bg-surface-2 px-3.5 py-2.5"
           >
             <p className="truncate text-[13px] font-semibold text-ink">{provider.name}</p>
             <p className="truncate text-[11px] text-ink-3">{provider.title}</p>
@@ -200,11 +204,11 @@ function DayGrid({
             const block = provider.hours.find((h) => h.weekday === weekday);
             const items = dayAppointments.filter((a) => a.providerId === provider.id);
             return (
-              <div key={provider.id} className="relative border-l border-line">
+              <div key={provider.id} className="relative border-l border-line/70">
                 {hours.map((hour, i) => (
                   <div
                     key={hour}
-                    className="absolute inset-x-0 border-t border-line/60"
+                    className="absolute inset-x-0 border-t border-line/50"
                     style={{ top: i * HOUR_PX }}
                   />
                 ))}
@@ -236,12 +240,21 @@ function DayGrid({
                       key={appointment.id}
                       onClick={() => onOpen(appointment)}
                       className={cx(
-                        "absolute inset-x-1 overflow-hidden rounded-[8px] px-2 py-1.5 text-left transition-shadow hover:shadow-[var(--shadow-card)]",
-                        TINTS[provider.tint],
+                        "absolute inset-x-1 overflow-hidden rounded-[12px] py-1.5 pl-3 pr-2 text-left",
+                        "transition-shadow duration-200 ease-[var(--ease)] hover:shadow-[var(--shadow-card)]",
                         cancelled && "opacity-55 grayscale",
                       )}
-                      style={{ top, height }}
+                      style={{
+                        top,
+                        height,
+                        background: `color-mix(in oklab, ${tintOf(provider.tint)} 10%, var(--surface))`,
+                      }}
                     >
+                      <span
+                        className="absolute inset-y-1.5 left-1.5 w-[3px] rounded-full"
+                        style={{ background: tintOf(provider.tint) }}
+                        aria-hidden="true"
+                      />
                       <span className="nums block text-[11px] font-medium text-ink-2">
                         {formatTime(start)}
                       </span>
@@ -328,11 +341,14 @@ function WeekGrid({
                     <li key={appointment.id}>
                       <button
                         onClick={() => onOpen(appointment)}
-                        className={cx(
-                          "flex w-full items-center gap-2 rounded-card px-2.5 py-2 text-left transition-colors hover:bg-surface-2",
-                          TINTS[provider?.tint ?? "teal"].replace(/bg-\S+/g, ""),
-                        )}
+                        className="flex w-full items-center gap-2 rounded-card px-2.5 py-2 text-left transition-colors duration-200 hover:bg-surface-2"
                       >
+                        {/* Which clinician, as a mark rather than a rule. */}
+                        <span
+                          className="size-1.5 shrink-0 rounded-full"
+                          style={{ background: tintOf(provider?.tint ?? "teal") }}
+                          aria-hidden="true"
+                        />
                         <span className="nums w-10 shrink-0 text-[11px] text-ink-2">
                           {formatTime(appointment.start)}
                         </span>

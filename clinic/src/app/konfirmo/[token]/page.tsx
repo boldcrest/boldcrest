@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { motion } from "motion/react";
 import { CalendarBlank, CheckCircle, Clock, MapPin, SealCheck, XCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui";
+import { AppMark } from "@/components/shell";
 import { useDemo, useSelectors } from "@/lib/demo/store";
 import { capitalizeFirst, formatDate, formatTime } from "@/lib/i18n";
 
@@ -171,10 +172,10 @@ export default function ConfirmPage() {
         className="flex flex-col gap-5"
       >
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-accent">
+          <p className="eyebrow text-ink-3">
             {appointment ? c.appointment : c.followup}
           </p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight text-ink">
+          <h1 className="display mt-2.5 text-[27px] text-ink">
             {c.hello}, {patient.firstName}
           </h1>
           <p className="mt-1 text-sm text-ink-2">
@@ -230,12 +231,10 @@ function Shell({ clinic, children }: { clinic: string; children: React.ReactNode
   return (
     <div className="flex min-h-[100dvh] flex-col items-center bg-bg px-4 py-10">
       <div className="mb-6 flex items-center gap-2.5">
-        <span className="grid size-9 place-items-center rounded-2xl bg-accent text-sm font-bold text-accent-fg">
-          A
-        </span>
+        <AppMark />
         <span className="text-sm font-semibold tracking-tight text-ink">{clinic}</span>
       </div>
-      <div className="w-full max-w-sm rounded-panel bg-surface p-6 shadow-[var(--shadow-raised)] dark:border dark:border-line">
+      <div className="w-full max-w-sm rounded-tile bg-surface p-7 shadow-[var(--shadow-float)] dark:hairline">
         {children}
       </div>
       <p className="mt-5 max-w-sm text-center text-[11px] leading-relaxed text-ink-3">

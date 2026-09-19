@@ -35,14 +35,14 @@ export function Button({
 }) {
   const base =
     "inline-flex items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap " +
-    "transition-[background-color,border-color,color,box-shadow,transform] duration-150 " +
-    "active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-45";
-  const sizes = { sm: "h-8 px-3.5 text-[13px]", md: "h-10 px-4.5 text-sm" };
+    "transition-[background-color,color,box-shadow,transform] duration-200 ease-[var(--ease)] " +
+    "active:scale-[0.985] disabled:pointer-events-none disabled:opacity-40";
+  const sizes = { sm: "h-8 px-3.5 text-[13px]", md: "h-10 px-5 text-[13.5px]" };
   const variants: Record<ButtonVariant, string> = {
-    primary: "bg-accent text-accent-fg shadow-[var(--shadow-card)] hover:bg-accent-hover",
+    primary: "bg-accent text-accent-fg shadow-[var(--shadow-card)] hover:bg-accent-hover hover:shadow-[var(--shadow-raised)]",
     secondary:
       "bg-surface text-ink shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-raised)] " +
-      "dark:border dark:border-line",
+      "dark:hairline",
     ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
     danger: "bg-surface text-danger shadow-[var(--shadow-card)] hover:bg-danger-soft",
   };
@@ -63,10 +63,10 @@ export function IconButton({
   return (
     <button
       className={cx(
-        "inline-grid size-9 shrink-0 place-items-center rounded-full transition-all duration-150",
-        "active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-45",
+        "inline-grid size-9 shrink-0 place-items-center rounded-full transition-all duration-200 ease-[var(--ease)]",
+        "active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40",
         tone === "surface"
-          ? "bg-surface text-ink-2 shadow-[var(--shadow-card)] hover:text-ink hover:shadow-[var(--shadow-raised)] dark:border dark:border-line"
+          ? "bg-surface text-ink-2 shadow-[var(--shadow-card)] hover:text-ink hover:shadow-[var(--shadow-raised)] dark:hairline"
           : "text-ink-3 hover:bg-surface-2 hover:text-ink",
         className,
       )}
@@ -91,7 +91,7 @@ export function Card({
   return (
     <Tag
       className={cx(
-        "rounded-panel bg-surface shadow-[var(--shadow-card)] dark:border dark:border-line",
+        "rounded-panel bg-surface shadow-[var(--shadow-card)] dark:hairline",
         className,
       )}
     >
@@ -110,10 +110,10 @@ export function CardHeader({
   hint?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-4">
+    <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
       <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold tracking-tight text-ink">{title}</h2>
-        {hint ? <p className="mt-0.5 text-xs text-ink-3">{hint}</p> : null}
+        <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink">{title}</h2>
+        {hint ? <p className="mt-1 text-[12.5px] text-ink-3">{hint}</p> : null}
       </div>
       {action}
     </div>
@@ -127,7 +127,7 @@ export type Tone = "neutral" | "lime" | "accent" | "ok" | "warn" | "danger";
 const toneClasses: Record<Tone, string> = {
   neutral: "bg-muted-soft text-ink-2",
   lime: "bg-lime text-lime-ink",
-  accent: "bg-accent-soft text-accent",
+  accent: "bg-ink/[0.07] text-ink dark:bg-white/10",
   ok: "bg-ok-soft text-ok",
   warn: "bg-warn-soft text-warn",
   danger: "bg-danger-soft text-danger",
@@ -147,7 +147,7 @@ export function Pill({
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium leading-none",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-[5px] text-[11px] font-medium leading-none",
         toneClasses[tone],
         className,
       )}
@@ -216,8 +216,8 @@ export function Field({
 }
 
 const controlClass =
-  "h-10 w-full rounded-card border border-transparent bg-surface-2 px-3.5 text-sm text-ink " +
-  "placeholder:text-ink-3 transition-colors hover:border-line-strong " +
+  "h-11 w-full rounded-card border border-transparent bg-surface-2 px-4 text-sm text-ink " +
+  "placeholder:text-ink-3 transition-colors duration-200 hover:border-line-strong " +
   "focus:border-accent focus:outline-none focus-visible:outline-none";
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
@@ -307,8 +307,8 @@ export function Modal({
             aria-modal="true"
             aria-labelledby={titleId}
             className={cx(
-              "relative flex max-h-[92vh] w-full flex-col overflow-hidden bg-surface shadow-[var(--shadow-pop)] dark:border dark:border-line",
-              "rounded-t-panel sm:rounded-panel",
+              "relative flex max-h-[92vh] w-full flex-col overflow-hidden bg-surface shadow-[var(--shadow-pop)] dark:hairline",
+              "rounded-t-tile sm:rounded-tile",
               wide ? "sm:max-w-2xl" : "sm:max-w-md",
             )}
             initial={reduce ? false : { opacity: 0, y: 12, scale: 0.99 }}

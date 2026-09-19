@@ -50,7 +50,7 @@ export default function PatientsPage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.patients.search}
           aria-label={t.patients.search}
-          className="h-11 w-full rounded-full bg-surface pl-10 pr-4 text-sm text-ink shadow-[var(--shadow-card)] placeholder:text-ink-3 focus:outline-none dark:border dark:border-line"
+          className="h-11 w-full rounded-full bg-surface pl-10 pr-4 text-sm text-ink shadow-[var(--shadow-card)] placeholder:text-ink-3 focus:outline-none dark:hairline"
         />
       </div>
 

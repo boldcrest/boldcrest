@@ -17,7 +17,7 @@ export default function SettingsPage() {
     <>
       <PageHeader title={t.settings.title} />
 
-      <div className="mb-5 inline-flex flex-wrap gap-1 rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:border dark:border-line">
+      <div className="mb-5 inline-flex flex-wrap gap-1 rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:hairline">
         {TABS.map((key) => (
           <button
             key={key}
