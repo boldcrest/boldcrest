@@ -5,7 +5,7 @@
     "people": "Ekipi",
     "diary": "Ditari",
     "contact": "Kontakt",
-    "startProject": "Nis një Projekt",
+    "startProject": "Nis një projekt",
     "home": "BoldCrest — kryefaqja",
     "toggleMenu": "Hap ose mbyll menunë",
     "closeMenu": "Mbyll menunë",
@@ -20,8 +20,8 @@
     "fr": "Français"
   },
   "Work": {
-    "eyebrow": "Projektet Tona",
-    "title": "Guximi Ndërton Marka",
+    "eyebrow": "Projektet tona",
+    "title": "Guximi ndërton marka",
     "intro": "Këtu mendimi merr formë. Emrat, botët që krijojmë, fushatat, ambalazhet, detajet që njerëzit vënë re pa e kuptuar ende pse. Çdo projekt këtu nisi si një sfidë biznesi dhe mori një fytyrë, një zë dhe një vend në treg.",
     "filterServices": "Shërbime",
     "filterIndustry": "Industri",
@@ -29,7 +29,7 @@
     "overview": "Përmbledhje",
     "challenge": "Sfida",
     "solution": "Zgjidhja",
-    "moreWork": "Projekte të Tjera"
+    "moreWork": "Projekte të tjera"
   },
   "Contact": {
     "eyebrow": "Kontakt",
@@ -83,8 +83,8 @@
     "coffee": "Le të pimë ⟦një kafe⟧ bashkë.",
     "noEgosLabel": "Pa ego",
     "go": "Guxo",
-    "brandDev": "Zhvillim Marke",
-    "stillMotion": "Foto & Video",
+    "brandDev": "Zhvillim marke",
+    "stillMotion": "Foto & video",
     "brandDevDesc": "Marrim atë që është marka jote, atë që dëshiron të bëhet dhe mënyrën si duhet ta mbajnë mend njerëzit, pastaj e kthejmë në një identitet që ata mund ta njohin, t’i besojnë dhe t’i kthehen."
   },
   "Services": {
@@ -142,7 +142,7 @@
     "felt": "Nëse ke lexuar deri këtu, shpresojmë të kesh ndier diçka.",
     "felt1": "Pak ngrohtësi. Pak besim. Ndoshta edhe një buzëqeshje për kaosin e dy të rinjve që ndërtojnë diçka të vërtetë në një vend që ende po kupton çfarë do të thotë “markë”.",
     "join": "Do të bëhesh pjesë e ekipit tonë?",
-    "visitCareers": "Shiko Karrierën",
+    "visitCareers": "Shiko karrierën",
     "teamAlt": "Ekipi i BoldCrest",
     "climbing": "Ngjitemi në male së bashku.",
     "founders": "Xhulio dhe Aldo, themeluesit e BoldCrest",
@@ -155,7 +155,7 @@
     "world": "jonë",
     "intro": "Lexo më shumë për atë që bëjmë, mendojmë dhe krijojmë në BoldCrest.",
     "empty": "Ende nuk ka shkrime. Kthehu së shpejti.",
-    "more": "Më shumë nga Ditari",
+    "more": "Më shumë nga ditari",
     "post1Title": "Pse markës sate i duhet një këndvështrim",
     "post2Title": "Fundi i dizajnit të sigurt",
     "post3Title": "Lëvizja është tipografia e re",
@@ -178,8 +178,8 @@
     "allServices": "Të gjitha shërbimet",
     "work": "Projekte",
     "backToTop": "Kthehu lart",
-    "brandDevelopment": "Zhvillim i Markës",
-    "stillMotion": "Fotografi dhe Video"
+    "brandDevelopment": "Zhvillim i markës",
+    "stillMotion": "Fotografi dhe video"
   },
   "Chat": {
     "imMegi": "Jam Megi.",
@@ -342,7 +342,7 @@
   },
   "Cta": {
     "nextStep": "Hapi i radhës",
-    "startProject": "Nis një Projekt",
+    "startProject": "Nis një projekt",
     "brandHeading": "Gati të ndërtosh një markë që njerëzit e mbajnë mend?",
     "brandBody": "Na trego ku është marka sot dhe çfarë duhet të bëjë më pas. Do të të propozojmë një shtrirje të qartë të punës, afatet dhe çmimin. Pa detyrim.",
     "commsHeading": "Gati ta thuash siç duhet?",
