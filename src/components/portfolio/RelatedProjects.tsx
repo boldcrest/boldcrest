@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { urlFor } from '@/sanity/lib/image'
@@ -21,14 +23,17 @@ interface RelatedProject {
 
 export default function RelatedProjects({
   projects,
-  heading = 'More Work',
+  heading,
   noTopBorder = false,
 }: {
   projects?: RelatedProject[]
+  /** Defaults to the localized "More Work" label. */
   heading?: string
   /** Suppress the divider when the preceding section already draws one. */
   noTopBorder?: boolean
 }) {
+  const t = useTranslations('Work')
+  const title = heading ?? t('moreWork')
   if (!projects || projects.length === 0) return null
 
   return (
@@ -41,7 +46,7 @@ export default function RelatedProjects({
     >
       <div className="w-full">
         <h2 className="mb-[var(--space-sm)] text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
-          {heading}
+          {title}
         </h2>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-5">

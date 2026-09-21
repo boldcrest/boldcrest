@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { PortableText, type PortableTextBlock } from '@portabletext/react'
 
 interface ProjectDetailsProps {
@@ -27,10 +29,11 @@ export default function ProjectDetails({
   challenge,
   solution,
 }: ProjectDetailsProps) {
+  const t = useTranslations('Work')
   const cols = [
-    column('Overview', overview),
-    column('Challenge', challenge),
-    column('Solution', solution),
+    column(t('overview'), overview),
+    column(t('challenge'), challenge),
+    column(t('solution'), solution),
   ].filter(Boolean)
 
   if (cols.length === 0) return null

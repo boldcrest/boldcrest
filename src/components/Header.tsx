@@ -5,7 +5,11 @@ import Link from 'next/link'
 import LocaleLink from './LocaleLink'
 import { useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
-import { usePathname } from 'next/navigation'
+// i18n usePathname, NOT next/navigation: it returns the path WITHOUT the locale
+// prefix, so `/sq/work` compares as `/work`. With next/navigation the logo's
+// back-to-top and the active-nav highlight silently stopped matching on every
+// non-default locale.
+import { usePathname } from '@/i18n/navigation'
 import MobileMenu from './MobileMenu'
 import LanguageButton from './LanguageButton'
 import { useStartProject } from './start-project/StartProjectProvider'
@@ -337,7 +341,15 @@ export default function Header() {
                   : ctaCompact
                     ? 'rgba(255,255,255,0.35)'
                     : 'rgba(255,255,255,0.45)',
-                backgroundColor: ctaCompact ? 'transparent' : '#000',
+                backgroundColor: ctaCompact ? 'transparent' : 'rgba(10,10,10,0.72)',
+                // Frosted rather than solid #000. At rest the button sits on the
+                // page itself (no pill behind it), and pure black on the #0a0a0a
+                // background read as a darker patch. This matches the scrolled
+                // pill's own treatment: invisible as a fill over the page, but it
+                // darkens and blurs whatever passes behind it — which on the deck
+                // pages is photography moving under the header.
+                backdropFilter: ctaCompact ? 'none' : 'blur(24px) saturate(1.5)',
+                WebkitBackdropFilter: ctaCompact ? 'none' : 'blur(24px) saturate(1.5)',
                 // GEOMETRY MUST MATCH THE HEADER'S OWN 650ms. The cluster is
                 // pulled right as this button narrows and pushed left as the
                 // inner container's padding grows to 1.25rem; at 500ms vs

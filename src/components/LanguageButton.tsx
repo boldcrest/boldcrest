@@ -116,14 +116,15 @@ export default function LanguageButton({ compact }: { compact: boolean }) {
   // Compact, the FILL is transparent so the frosted pill shows through
   // untouched — the circle reads as stroke only, exactly the pill's colour,
   // rather than the slightly lighter disc a 0.08 white wash produced.
-  const fill = compact ? 'transparent' : '#000'
+  const fill = compact ? 'transparent' : 'rgba(10,10,10,0.72)'
+  const glass = compact ? 'none' : 'blur(24px) saturate(1.5)'
   const edge = compact ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.45)'
   const ink = compact ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)'
 
   // The COLUMN can't be transparent: it hangs BELOW the pill, over live page
   // content. It carries the pill's own frosted fill so the part that overhangs
   // looks like a continuation of the pill rather than a window onto the page.
-  const columnBg = compact ? 'rgba(10,10,10,0.88)' : '#000'
+  const columnBg = compact ? 'rgba(10,10,10,0.88)' : 'rgba(10,10,10,0.88)'
   const columnBlur = compact ? 'blur(24px) saturate(1.5)' : 'none'
 
   return (
@@ -192,6 +193,8 @@ export default function LanguageButton({ compact }: { compact: boolean }) {
           borderStyle: 'solid',
           borderColor: expanded ? 'transparent' : hover ? 'rgba(255,255,255,0.6)' : edge,
           backgroundColor: expanded ? 'transparent' : fill,
+          backdropFilter: expanded ? 'none' : glass,
+          WebkitBackdropFilter: expanded ? 'none' : glass,
           color: hover || expanded ? '#fff' : ink,
           transitionProperty: 'color, border-color, background-color',
           // 500ms matches the CTA's hover brightening; 0s only while the column
