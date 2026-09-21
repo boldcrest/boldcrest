@@ -240,5 +240,17 @@
     "challenge": "Sfida",
     "solution": "Soluzione",
     "moreWork": "Altri lavori"
+  },
+  "Seo": {
+    "siteDescription": "Creiamo identità e plasmiamo percezioni. Osa o resta invisibile.",
+    "homeDescription": "Brand identity audaci, packaging, fotografia, video e campagne per brand ambiziosi.",
+    "homeOgDescription": "BoldCrest, agenzia creativa a Tirana, Albania: brand identity audaci, packaging, foto, video e campagne per brand ambiziosi. Osa o resta invisibile.",
+    "workTitle": "Lavori — BoldCrest",
+    "workDescription": "Le nostre creazioni, plasmate con cura negli anni.",
+    "peopleTitle": "Persone — BoldCrest",
+    "peopleDescription": "Non si tratta di noi, ma di te. Scopri il team dietro BoldCrest.",
+    "diaryTitle": "Diario — BoldCrest",
+    "contactTitle": "Contatti — BoldCrest",
+    "contactDescription": "Parliamone. Contatta BoldCrest per iniziare il tuo prossimo progetto."
   }
 }

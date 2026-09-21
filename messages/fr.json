@@ -240,5 +240,17 @@
     "listView": "Affichage en liste",
     "prevLogos": "Logos précédents",
     "nextLogos": "Logos suivants"
+  },
+  "Seo": {
+    "siteDescription": "Nous créons des identités et façonnons les perceptions. Osez ou restez invisibles.",
+    "homeDescription": "Des identités de marque audacieuses, du packaging, des photos, des vidéos et des campagnes pour des marques ambitieuses.",
+    "homeOgDescription": "BoldCrest, agence créative à Tirana, Albanie : identités de marque audacieuses, packaging, photo, vidéo et campagnes pour marques ambitieuses. Osez ou restez invisibles.",
+    "workTitle": "Projets — BoldCrest",
+    "workDescription": "Nos créations, façonnées avec savoir-faire au fil des années.",
+    "peopleTitle": "Équipe — BoldCrest",
+    "peopleDescription": "Il ne s’agit pas de nous, mais de vous. Découvrez l’équipe derrière BoldCrest.",
+    "diaryTitle": "Journal — BoldCrest",
+    "contactTitle": "Contact — BoldCrest",
+    "contactDescription": "Parlons-en. Contactez BoldCrest pour lancer votre prochain projet."
   }
 }

@@ -13,7 +13,7 @@ import { SanityLive } from '@/sanity/lib/live'
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import { hasLocale } from 'next-intl'
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { routing } from '@/i18n/routing'
 
 const metropolis = localFont({
@@ -39,80 +39,104 @@ export const viewport: Viewport = {
   themeColor: '#0a0a0a',
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: 'BoldCrest',
-    template: '%s — BoldCrest',
-  },
-  description:
-    'We build identities and shape perceptions. Go bold or go unseen.',
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    siteName: 'BoldCrest',
-    title: 'BoldCrest',
-    description:
-      'We build identities and shape perceptions. Go bold or go unseen.',
-    url: siteUrl,
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'BoldCrest',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'BoldCrest',
-    description:
-      'We build identities and shape perceptions. Go bold or go unseen.',
-    images: ['/og-image.png'],
-  },
-  // Tab icon — a black CIRCLE + white crest on EVERY tab (icon.svg vector +
-  // matching black-circle favicon.ico 16/32/48, both transparent outside the
-  // disc). Chrome/Firefox/Edge and inactive Safari tabs render it as a clean
-  // disc — the transparent corners show the tab's own colour, no white.
-  // Known, accepted trade-off: Safari's *active* tab has a lighter background,
-  // so on that one focused tab the circle's corners show as faint grey. There's
-  // no way to avoid this for a dark disc (a light tile like wolffolins.com's
-  // yellow hides it, but that fights the brand); the round look is worth it.
-  // apple-touch (iPhone Safari favourites + iOS home screen) stays the rounded
-  // square on purpose — that one is intentional and left as-is.
-  // ?v busts Safari's sticky favicon cache — bump it whenever the bytes change.
-  icons: {
-    icon: [
-      { url: '/favicon.ico?v=9', sizes: '16x16 32x32 48x48' },
-      { url: '/icon.svg?v=9', type: 'image/svg+xml' },
-    ],
-    shortcut: '/favicon.ico?v=9',
-    apple: [{ url: '/apple-touch-icon.png?v=9', sizes: '180x180', type: 'image/png' }],
-    other: [{ rel: 'mask-icon', url: '/safari-pinned-tab.svg?v=3', color: '#0a0a0a' }],
-  },
-  manifest: '/site.webmanifest',
-  other: {
-    'msapplication-config': '/browserconfig.xml',
-    'msapplication-TileColor': '#0a0a0a',
-  },
-  applicationName: 'BoldCrest',
-  authors: [{ name: 'BoldCrest', url: siteUrl }],
-  creator: 'BoldCrest',
-  publisher: 'BoldCrest',
-  category: 'Creative Agency',
-  formatDetection: { telephone: false, address: false, email: false },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+const OG_LOCALE: Record<string, string> = {
+  en: 'en_US',
+  sq: 'sq_AL',
+  it: 'it_IT',
+  fr: 'fr_FR',
+}
+
+/**
+ * Per-locale metadata. The title and description are the ones people see in
+ * Google and when the site is shared, so they follow the page language.
+ *
+ * hreflang lives in the sitemap (`app/sitemap.ts`) rather than here: a layout
+ * cannot know the current path, so emitting `alternates.languages` at this
+ * level would point every page's alternates at the homepage. Google supports
+ * sitemap hreflang as an equivalent signal to the link tags.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const active = hasLocale(routing.locales, locale) ? locale : routing.defaultLocale
+  const t = await getTranslations({ locale: active, namespace: 'Seo' })
+
+  return {
+
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: 'BoldCrest',
+      template: '%s — BoldCrest',
+    },
+    description: t('siteDescription'),
+    openGraph: {
+      type: 'website',
+        locale: OG_LOCALE[active] ?? 'en_US',
+      siteName: 'BoldCrest',
+      title: 'BoldCrest',
+      description: t('siteDescription'),
+      url: siteUrl,
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: 'BoldCrest',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'BoldCrest',
+      description: t('siteDescription'),
+      images: ['/og-image.png'],
+    },
+    // Tab icon — a black CIRCLE + white crest on EVERY tab (icon.svg vector +
+    // matching black-circle favicon.ico 16/32/48, both transparent outside the
+    // disc). Chrome/Firefox/Edge and inactive Safari tabs render it as a clean
+    // disc — the transparent corners show the tab's own colour, no white.
+    // Known, accepted trade-off: Safari's *active* tab has a lighter background,
+    // so on that one focused tab the circle's corners show as faint grey. There's
+    // no way to avoid this for a dark disc (a light tile like wolffolins.com's
+    // yellow hides it, but that fights the brand); the round look is worth it.
+    // apple-touch (iPhone Safari favourites + iOS home screen) stays the rounded
+    // square on purpose — that one is intentional and left as-is.
+    // ?v busts Safari's sticky favicon cache — bump it whenever the bytes change.
+    icons: {
+      icon: [
+        { url: '/favicon.ico?v=9', sizes: '16x16 32x32 48x48' },
+        { url: '/icon.svg?v=9', type: 'image/svg+xml' },
+      ],
+      shortcut: '/favicon.ico?v=9',
+      apple: [{ url: '/apple-touch-icon.png?v=9', sizes: '180x180', type: 'image/png' }],
+      other: [{ rel: 'mask-icon', url: '/safari-pinned-tab.svg?v=3', color: '#0a0a0a' }],
+    },
+    manifest: '/site.webmanifest',
+    other: {
+      'msapplication-config': '/browserconfig.xml',
+      'msapplication-TileColor': '#0a0a0a',
+    },
+    applicationName: 'BoldCrest',
+    authors: [{ name: 'BoldCrest', url: siteUrl }],
+    creator: 'BoldCrest',
+    publisher: 'BoldCrest',
+    category: 'Creative Agency',
+    formatDetection: { telephone: false, address: false, email: false },
+    robots: {
       index: true,
       follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-      'max-video-preview': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+        'max-video-preview': -1,
+      },
     },
-  },
+  }
 }
 
 export function generateStaticParams() {

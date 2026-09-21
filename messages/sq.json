@@ -240,5 +240,17 @@
     "listView": "Pamje në listë",
     "prevLogos": "Logot e mëparshme",
     "nextLogos": "Logot e radhës"
+  },
+  "Seo": {
+    "siteDescription": "Ndërtojmë identitete dhe formësojmë perceptime. Guxo ose mbetu në hije.",
+    "homeDescription": "Identitete të guximshme markash, ambalazhe, fotografi, video dhe fushata për marka ambicioze.",
+    "homeOgDescription": "BoldCrest, agjenci krijuese në Tiranë, Shqipëri: identitete të guximshme markash, ambalazhe, foto, video e fushata për marka ambicioze. Guxo ose mbetu në hije.",
+    "workTitle": "Projekte — BoldCrest",
+    "workDescription": "Krijimet tona, të punuara me mjeshtëri ndër vite.",
+    "peopleTitle": "Ekipi — BoldCrest",
+    "peopleDescription": "Nuk bëhet fjalë për ne, por për ty. Njihu me ekipin pas BoldCrest.",
+    "diaryTitle": "Ditari — BoldCrest",
+    "contactTitle": "Kontakt — BoldCrest",
+    "contactDescription": "Le të flasim. Kontakto BoldCrest për të nisur projektin tënd të radhës."
   }
 }

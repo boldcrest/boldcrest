@@ -1,4 +1,4 @@
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import dynamic from 'next/dynamic'
 import { sanityFetch } from '@/sanity/lib/live'
 import {
@@ -9,18 +9,27 @@ import {
   siteSettingsQuery,
 } from '@/sanity/lib/queries'
 import type { Metadata } from 'next'
+import { routing } from '@/i18n/routing'
 
-export const metadata: Metadata = {
-  title: { absolute: 'BoldCrest' },
-  description:
-    'BoldCrest is a creative agency in Tirana, Albania, building bold brand identities, packaging, photography, video, and campaigns for ambitious brands. Go bold or go unseen.',
-  alternates: { canonical: '/' },
-  openGraph: {
-    title: 'BoldCrest',
-    description:
-      'Bold brand identities, packaging, photography, video, and campaigns for ambitious brands.',
-    url: 'https://www.boldcrest.com',
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'Seo' })
+  const path = locale === routing.defaultLocale ? '/' : `/${locale}`
+
+  return {
+    title: { absolute: 'BoldCrest' },
+    description: t('homeOgDescription'),
+    alternates: { canonical: path },
+    openGraph: {
+      title: 'BoldCrest',
+      description: t('homeDescription'),
+      url: `https://www.boldcrest.com${path === '/' ? '' : path}`,
+    },
+  }
 }
 
 const Hero = dynamic(() => import('@/components/home/Hero'))
