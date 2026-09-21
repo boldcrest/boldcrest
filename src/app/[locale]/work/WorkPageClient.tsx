@@ -84,8 +84,15 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         href={`/work/${project.slug?.current}`}
         className="group block"
       >
-        {/* Card container — fixed aspect, overflow hidden */}
-        <div className="relative aspect-[1.28/1] overflow-hidden rounded-xl bg-bg-card md:rounded-2xl">
+        {/* Card container — fixed aspect, overflow hidden.
+            [transform:translate3d(0,0,0)] is load-bearing, not a perf tweak:
+            `overflow-hidden` + `border-radius` does NOT reliably clip an
+            <iframe>, because the iframe composites on its own layer. On the
+            video-thumbnail projects its square corners showed through the
+            card's rounded ones as pale arcs. Forcing the card onto its own
+            layer makes the rounded clip apply to composited children too.
+            Image cards never showed it, which is what pointed at the iframe. */}
+        <div className="relative aspect-[1.28/1] overflow-hidden rounded-xl bg-bg-card [transform:translate3d(0,0,0)] md:rounded-2xl">
           {/* Image — translates UP on hover (desktop only) */}
           {project.thumbnailType === 'video' && project.thumbnailVideo ? (
             <iframe
@@ -120,9 +127,14 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               Sits 1px BELOW the card (that pixel added back as padding) so its
               fill always covers the clip edge — the aspect-ratio height is
               fractional, and at fractional device pixels this composited
-              scaleY layer otherwise leaves a hairline of the cover showing. */}
+              scaleY layer otherwise leaves a hairline of the cover showing.
+              Height follows its CONTENT, so a project with two services gets a
+              shorter panel than one with five. rounded-b-2xl matches the card's
+              own radius: with square corners the panel's fill stopped short of
+              the card's rounded clip and the curve read as a pale arc at each
+              bottom corner. */}
           <div
-            className="absolute -bottom-px left-0 z-20 hidden w-full origin-bottom scale-y-0 bg-[#0a0a0a] px-5 pt-4 pb-[calc(1rem+1px)] transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-y-100 md:block"
+            className="absolute -bottom-px left-0 z-20 hidden w-full origin-bottom scale-y-0 rounded-b-2xl bg-[#0a0a0a] px-5 pt-4 pb-[calc(1rem+1px)] transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-y-100 md:block"
           >
             {project.client && (
               <span className="block text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-text-tertiary">
@@ -132,16 +144,16 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <h3 className="mt-1.5 font-display text-[1.15rem] font-semibold uppercase leading-[1.15] text-text-primary">
               {withSmallMarks(project.tagline || project.name)}
             </h3>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               {project.industry && (
-                <span className="rounded-[var(--radius-pill)] bg-white/10 px-3.5 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-secondary">
+                <span className="rounded-[var(--radius-pill)] bg-white/10 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-secondary">
                   {project.industry}
                 </span>
               )}
               {project.services?.map((service) => (
                 <span
                   key={service}
-                  className="rounded-[var(--radius-pill)] border border-border px-3.5 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
+                  className="rounded-[var(--radius-pill)] border border-border px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
                 >
                   {service}
                 </span>

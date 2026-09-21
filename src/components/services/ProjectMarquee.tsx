@@ -215,7 +215,7 @@ export default function ProjectMarquee({
               style={{ width: 'clamp(320px, 32vw, 580px)' }}
             >
               {/* Card container */}
-              <div className="relative aspect-[1.28/1] overflow-hidden rounded-2xl bg-bg-card">
+              <div className="relative aspect-[1.28/1] overflow-hidden rounded-2xl bg-bg-card [transform:translate3d(0,0,0)]">
                 {/* Image / Video — translates UP on hover (desktop only) */}
                 {vimeoId ? (
                   <iframe

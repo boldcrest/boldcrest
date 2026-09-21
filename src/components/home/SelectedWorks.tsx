@@ -51,7 +51,7 @@ function ProjectCard({
     >
       <Link href={`/work/${project.slug?.current}`} className="group block">
         {/* Card container — fixed aspect, overflow hidden */}
-        <div className="relative aspect-[1.28/1] overflow-hidden rounded-xl bg-bg-card md:rounded-2xl">
+        <div className="relative aspect-[1.28/1] overflow-hidden rounded-xl bg-bg-card [transform:translate3d(0,0,0)] md:rounded-2xl">
           {/* Image — translates UP on hover (desktop only) */}
           {project.thumbnailType === 'video' && project.thumbnailVideo ? (
             <iframe
