@@ -5,7 +5,7 @@ import { defineRouting } from 'next-intl/routing'
  * that is what local visitors read, but the URL, <html lang> and hreflang must
  * all use `sq` for search engines and screen readers.
  */
-export const LOCALES = ['en', 'sq', 'it'] as const
+export const LOCALES = ['en', 'sq', 'it', 'fr'] as const
 export type AppLocale = (typeof LOCALES)[number]
 
 export const routing = defineRouting({

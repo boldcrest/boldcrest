@@ -23,9 +23,9 @@ export const allProjectsQuery = defineQuery(
   `*[_type == "project"] | order(orderRank) {
     _id,
     _updatedAt,
-    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name), name),
+    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name, $locale == "fr" => i18n.fr.name), name),
     slug,
-    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline), tagline),
+    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline, $locale == "fr" => i18n.fr.tagline), tagline),
     client,
     industry,
     year,
@@ -40,16 +40,16 @@ export const allProjectsQuery = defineQuery(
 export const projectBySlugQuery = defineQuery(
   `*[_type == "project" && slug.current == $slug][0] {
     _id,
-    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name), name),
+    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name, $locale == "fr" => i18n.fr.name), name),
     slug,
-    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline), tagline),
+    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline, $locale == "fr" => i18n.fr.tagline), tagline),
     client,
     industry,
     year,
     services,
-    "overview": coalesce(select($locale == "sq" => i18n.sq.overview, $locale == "it" => i18n.it.overview), overview),
-    "challenge": coalesce(select($locale == "sq" => i18n.sq.challenge, $locale == "it" => i18n.it.challenge), challenge),
-    "solution": coalesce(select($locale == "sq" => i18n.sq.solution, $locale == "it" => i18n.it.solution), solution),
+    "overview": coalesce(select($locale == "sq" => i18n.sq.overview, $locale == "it" => i18n.it.overview, $locale == "fr" => i18n.fr.overview), overview),
+    "challenge": coalesce(select($locale == "sq" => i18n.sq.challenge, $locale == "it" => i18n.it.challenge, $locale == "fr" => i18n.fr.challenge), challenge),
+    "solution": coalesce(select($locale == "sq" => i18n.sq.solution, $locale == "it" => i18n.it.solution, $locale == "fr" => i18n.fr.solution), solution),
     thumbnailType,
     thumbnail,
     thumbnailVideo,
@@ -169,9 +169,9 @@ export const servicesPartnersQuery = defineQuery(
 export const projectsByServicesQuery = defineQuery(
   `*[_type == "project" && count((services[])[@ in $serviceNames]) > 0] | order(orderRank) [0...6] {
     _id,
-    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name), name),
+    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name, $locale == "fr" => i18n.fr.name), name),
     slug,
-    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline), tagline),
+    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline, $locale == "fr" => i18n.fr.tagline), tagline),
     client,
     industry,
     services,
@@ -267,9 +267,9 @@ export const siteSettingsQuery = defineQuery(
 export const relatedProjectsQuery = defineQuery(
   `*[_type == "project" && slug.current != $slug && count((services[])[@ in $serviceNames]) > 0] | order(year desc, _createdAt desc) [0...5] {
     _id,
-    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name), name),
+    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name, $locale == "fr" => i18n.fr.name), name),
     slug,
-    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline), tagline),
+    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline, $locale == "fr" => i18n.fr.tagline), tagline),
     client,
     industry,
     services,
@@ -283,9 +283,9 @@ export const relatedProjectsQuery = defineQuery(
 export const moreProjectsQuery = defineQuery(
   `*[_type == "project" && slug.current != $slug] | order(year desc, _createdAt desc) [0...5] {
     _id,
-    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name), name),
+    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name, $locale == "fr" => i18n.fr.name), name),
     slug,
-    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline), tagline),
+    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline, $locale == "fr" => i18n.fr.tagline), tagline),
     client,
     industry,
     services,
