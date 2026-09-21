@@ -17,47 +17,47 @@ export type ReplyStep = 'services' | 'kickoff' | 'deadline' | 'budget' | 'source
 
 // 5 alternative acknowledgement openers. No trailing punctuation — a comma +
 // the clause is appended.
-const OPENERS = ['Perfect', 'Love that', 'Great', 'Got it', 'Nice'] as const
+const OPENERS = ['perfect', 'loveThat', 'great', 'gotIt', 'nice'] as const
 
 // Per-option clause. Reads as the second half of `${opener}, ${clause}`, so
 // keep each one lowercase, short, and able to follow a comma naturally.
 const CLAUSES: Record<ReplyStep, Record<string, string>> = {
   services: {
-    'Branding': 'an identity people actually remember is our happy place.',
-    'Packaging design': 'shelf presence is where we have the most fun.',
-    'Photography': 'we will make sure it looks every bit the part.',
-    'Videography': 'motion is one of our favourite ways to tell a story.',
-    'TV commercials': 'big screen, bigger ideas, count us in.',
-    'Social media': 'we will keep your feed worth the follow.',
-    'Website': 'a site that works as hard as it looks, done.',
-    'Other': 'tell us a little more and we will shape it together.',
+    'Branding': 'anIdentityPeopleActuallyRememberIs',
+    'Packaging design': 'shelfPresenceIsWhereWeHaveTheMostF',
+    'Photography': 'weWillMakeSureItLooksEveryBitThePa',
+    'Videography': 'motionIsOneOfOurFavouriteWaysToTel',
+    'TV commercials': 'bigScreenBiggerIdeasCountUsIn',
+    'Social media': 'weWillKeepYourFeedWorthTheFollow',
+    'Website': 'aSiteThatWorksAsHardAsItLooksDone',
+    'Other': 'tellUsALittleMoreAndWeWillShapeItT',
   },
   kickoff: {
-    'ASAP, within the next two weeks.': 'we like momentum just as much as you do.',
-    'Soon, next month would be great.': 'that gives us room to start it right.',
-    'Within the next 3 months.': 'a healthy runway to do this properly.',
-    'No rush. Whenever fits your team.': 'good work rarely likes being rushed.',
+    'ASAP, within the next two weeks.': 'weLikeMomentumJustAsMuchAsYouDo',
+    'Soon, next month would be great.': 'thatGivesUsRoomToStartItRight',
+    'Within the next 3 months.': 'aHealthyRunwayToDoThisProperly',
+    'No rush. Whenever fits your team.': 'goodWorkRarelyLikesBeingRushed',
   },
   deadline: {
-    'Within 3 months.': 'tight but very doable, we like the pace.',
-    'Within 6 months.': 'plenty of space to get it right.',
-    'In about a year.': 'room to be properly ambitious.',
-    'Open-ended, quality over speed.': 'our favourite kind of brief.',
+    'Within 3 months.': 'tightButVeryDoableWeLikeThePace',
+    'Within 6 months.': 'plentyOfSpaceToGetItRight',
+    'In about a year.': 'roomToBeProperlyAmbitious',
+    'Open-ended, quality over speed.': 'ourFavouriteKindOfBrief',
   },
   budget: {
-    'Under €5,000': 'we will make every euro pull its weight.',
-    '€5,000 – €15,000': 'a solid base to build something sharp.',
-    '€15,000 – €50,000': 'now we have room to get ambitious.',
-    '€50,000+': 'this is where we do our best work.',
-    "Not sure yet, let's figure it out.": 'no problem, we will shape it around the work.',
+    'Under €5,000': 'weWillMakeEveryEuroPullItsWeight',
+    '€5,000 – €15,000': 'aSolidBaseToBuildSomethingSharp',
+    '€15,000 – €50,000': 'nowWeHaveRoomToGetAmbitious',
+    '€50,000+': 'thisIsWhereWeDoOurBestWork',
+    "Not sure yet, let's figure it out.": 'noProblemWeWillShapeItAroundTheWor',
   },
   source: {
-    'A client referral': 'always the best kind of introduction.',
-    'A friend or colleague': 'good people talk, and we appreciate it.',
-    'Google': 'glad the search sent you our way.',
-    'Social media': 'glad the feed did its job.',
-    "I've been following BoldCrest for a while": 'that genuinely means a lot.',
-    'Somewhere else': 'however you found us, we are glad you did.',
+    'A client referral': 'alwaysTheBestKindOfIntroduction',
+    'A friend or colleague': 'goodPeopleTalkAndWeAppreciateIt',
+    'Google': 'gladTheSearchSentYouOurWay',
+    'Social media': 'gladTheFeedDidItsJob',
+    "I've been following BoldCrest for a while": 'thatGenuinelyMeansALot',
+    'Somewhere else': 'howeverYouFoundUsWeAreGladYouDid',
   },
 }
 
@@ -75,9 +75,13 @@ function pickOpener(seed: string): string {
  * picked). Falls back gracefully so an unmapped/empty value never breaks the
  * flow.
  */
-export function botReply(step: ReplyStep, value: string | undefined): string {
-  const clause = (value && CLAUSES[step]?.[value]) || 'sounds good, let us keep going.'
-  return `${pickOpener(value || step)}, ${clause}`
+export function botReply(
+  step: ReplyStep,
+  value: string | undefined,
+  t: (key: string) => string,
+): string {
+  const clauseKey = (value && CLAUSES[step]?.[value]) || 'soundsGoodLetUsKeepGoing'
+  return `${t(pickOpener(value || step))}, ${t(clauseKey)}`
 }
 
 /* ════════════════════════════════════════════════════
@@ -98,37 +102,37 @@ export function botReply(step: ReplyStep, value: string | undefined): string {
 
 export const GREETINGS = {
   // Megi's opening wave (paired with a fixed "I'm Megi." line).
-  agencyHello: ['Hi there 👋', 'Hey there 👋', 'Hello 👋', 'Hi 👋', 'Hey 👋'],
+  agencyHello: ['hiThere', 'heyThere', 'hello', 'hi', 'hey'],
   // The visitor waving back (paired with a fixed 👋 bubble).
   userHello: [
-    'Nice to meet you, Megi!',
-    'Hey Megi, great to meet you!',
-    'Lovely to meet you, Megi!',
-    'Good to meet you, Megi!',
-    'Pleasure to meet you, Megi!',
+    'niceToMeetYouMegi',
+    'heyMegiGreatToMeetYou',
+    'lovelyToMeetYouMegi',
+    'goodToMeetYouMegi',
+    'pleasureToMeetYouMegi',
   ],
   // Megi's welcome right after the visitor shares name / role / company.
   agencyWelcome: [
-    'The pleasure is mine, {name}.',
-    'Great to have you here, {name}.',
-    'Wonderful to meet you, {name}.',
-    'Lovely to have you, {name}.',
-    'Brilliant, thanks {name}.',
+    'thePleasureIsMineName',
+    'greatToHaveYouHereName',
+    'wonderfulToMeetYouName',
+    'lovelyToHaveYouName',
+    'brilliantThanksName',
   ],
   // ...followed by the actual ask.
   agencyAsk: [
-    'How can we help?',
-    'So, how can we help?',
-    'What can we do for you?',
-    'Where can we jump in?',
+    'howCanWeHelp',
+    'soHowCanWeHelp',
+    'whatCanWeDoForYou',
+    'whereCanWeJumpIn',
   ],
   // Megi's sign-off on the sent screen.
   agencyBye: [
-    'Talk soon, {name} 🤝',
-    'Speak soon, {name} 🤝',
-    'Chat soon, {name} 🤝',
-    'Catch you soon, {name} 🤝',
-    'Until next time, {name} 🤝',
+    'talkSoonName',
+    'speakSoonName',
+    'chatSoonName',
+    'catchYouSoonName',
+    'untilNextTimeName',
   ],
 } as const
 
@@ -148,7 +152,12 @@ function pickVariant(pool: readonly string[], seed: number, slot: string): strin
  * per-conversation seed (see StartProjectChat) and the visitor's name; {name}
  * is filled with their first word, or a friendly fallback if unknown.
  */
-export function greeting(slot: GreetingSlot, seed: number, name?: string): string {
+export function greeting(
+  slot: GreetingSlot,
+  seed: number,
+  t: (key: string) => string,
+  name?: string,
+): string {
   const first = (name || '').trim().split(/\s+/)[0]
-  return pickVariant(GREETINGS[slot], seed, slot).replace('{name}', first || 'there')
+  return t(pickVariant(GREETINGS[slot], seed, slot)).replace('{name}', first || 'there')
 }

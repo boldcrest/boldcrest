@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import {
   createContext,
   useCallback,
@@ -31,6 +33,7 @@ export function useStartProject() {
 }
 
 export default function StartProjectProvider({ children }: { children: ReactNode }) {
+  const tc = useTranslations('Chat')
   const [isOpen, setIsOpen] = useState(false)
   const [chatKey, setChatKey] = useState(0)
   const open = useCallback(() => {
@@ -196,7 +199,7 @@ export default function StartProjectProvider({ children }: { children: ReactNode
               ref={panelRef}
               role="dialog"
               aria-modal="true"
-              aria-label="Start a new project"
+              aria-label={tc('newProject')}
               className="fixed right-0 top-0 z-[2000] flex h-[100dvh] w-full max-w-[480px] flex-col overflow-hidden bg-bg"
               style={{ borderLeft: '1px solid var(--border)', boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}
               initial={{ x: '100%' }}
@@ -207,13 +210,13 @@ export default function StartProjectProvider({ children }: { children: ReactNode
               {/* Panel header */}
               <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-5">
                 <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
-                  Start a new project
+                  {tc('newProject')}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={restartChat}
-                    aria-label="Start a new conversation"
-                    title="Start a new conversation"
+                    aria-label={tc('newConversation')}
+                    title={tc('newConversation')}
                     className="flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-300 hover:border-white/40"
                     style={{ borderColor: 'var(--border)' }}
                   >
@@ -224,7 +227,7 @@ export default function StartProjectProvider({ children }: { children: ReactNode
                   </button>
                   <button
                     onClick={close}
-                    aria-label="Close"
+                    aria-label={tc('close')}
                     className="flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-300 hover:border-white/40"
                     style={{ borderColor: 'var(--border)' }}
                   >

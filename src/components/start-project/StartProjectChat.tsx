@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useState, useEffect, useRef, useCallback, Children } from 'react'
 import { flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -45,6 +47,109 @@ type Answers = {
   budget: string
   email: string
   source: string[]
+}
+
+
+/* Option values stay ENGLISH in state: they are the stable identifiers that
+   Megi's reply map is keyed by, and they are what gets emailed to the team.
+   Only the rendered label is translated. */
+const OPTION_KEY: Record<string, string> = {
+  "Branding": "branding",
+  "Packaging design": "packagingDesign",
+  "Photography": "photography",
+  "Videography": "videography",
+  "TV commercials": "tvCommercials",
+  "Social media": "socialMedia",
+  "Website": "website",
+  "Other": "other",
+  "ASAP, within the next two weeks.": "asapWithinTheNextTwoWeeks",
+  "Soon, next month would be great.": "soonNextMonthWouldBeGreat",
+  "Within the next 3 months.": "withinTheNext3Months",
+  "No rush. Whenever fits your team.": "noRushWheneverFitsYourTeam",
+  "Within 3 months.": "within3Months",
+  "Within 6 months.": "within6Months",
+  "In about a year.": "inAboutAYear",
+  "Open-ended, quality over speed.": "openendedQualityOverSpeed",
+  "Under €5,000": "under5000",
+  "€5,000 – €15,000": "500015000",
+  "€15,000 – €50,000": "1500050000",
+  "€50,000+": "50000",
+  "Not sure yet, let's figure it out.": "notSureYetLetsFigureItOut",
+  "A client referral": "aClientReferral",
+  "A friend or colleague": "aFriendOrColleague",
+  "I've been following BoldCrest for a while": "iveBeenFollowingBoldcrestForAWhile",
+  "Somewhere else": "somewhereElse",
+  "Perfect": "perfect",
+  "Love that": "loveThat",
+  "Great": "great",
+  "Got it": "gotIt",
+  "Nice": "nice",
+  "an identity people actually remember is our happy place.": "anIdentityPeopleActuallyRememberIs",
+  "shelf presence is where we have the most fun.": "shelfPresenceIsWhereWeHaveTheMostF",
+  "we will make sure it looks every bit the part.": "weWillMakeSureItLooksEveryBitThePa",
+  "motion is one of our favourite ways to tell a story.": "motionIsOneOfOurFavouriteWaysToTel",
+  "big screen, bigger ideas, count us in.": "bigScreenBiggerIdeasCountUsIn",
+  "we will keep your feed worth the follow.": "weWillKeepYourFeedWorthTheFollow",
+  "a site that works as hard as it looks, done.": "aSiteThatWorksAsHardAsItLooksDone",
+  "tell us a little more and we will shape it together.": "tellUsALittleMoreAndWeWillShapeItT",
+  "we like momentum just as much as you do.": "weLikeMomentumJustAsMuchAsYouDo",
+  "that gives us room to start it right.": "thatGivesUsRoomToStartItRight",
+  "a healthy runway to do this properly.": "aHealthyRunwayToDoThisProperly",
+  "good work rarely likes being rushed.": "goodWorkRarelyLikesBeingRushed",
+  "tight but very doable, we like the pace.": "tightButVeryDoableWeLikeThePace",
+  "plenty of space to get it right.": "plentyOfSpaceToGetItRight",
+  "room to be properly ambitious.": "roomToBeProperlyAmbitious",
+  "our favourite kind of brief.": "ourFavouriteKindOfBrief",
+  "we will make every euro pull its weight.": "weWillMakeEveryEuroPullItsWeight",
+  "a solid base to build something sharp.": "aSolidBaseToBuildSomethingSharp",
+  "now we have room to get ambitious.": "nowWeHaveRoomToGetAmbitious",
+  "this is where we do our best work.": "thisIsWhereWeDoOurBestWork",
+  "no problem, we will shape it around the work.": "noProblemWeWillShapeItAroundTheWor",
+  "always the best kind of introduction.": "alwaysTheBestKindOfIntroduction",
+  "good people talk, and we appreciate it.": "goodPeopleTalkAndWeAppreciateIt",
+  "glad the search sent you our way.": "gladTheSearchSentYouOurWay",
+  "glad the feed did its job.": "gladTheFeedDidItsJob",
+  "that genuinely means a lot.": "thatGenuinelyMeansALot",
+  "however you found us, we are glad you did.": "howeverYouFoundUsWeAreGladYouDid",
+  "sounds good, let us keep going.": "soundsGoodLetUsKeepGoing",
+  "Hi there 👋": "hiThere",
+  "Hey there 👋": "heyThere",
+  "Hello 👋": "hello",
+  "Hi 👋": "hi",
+  "Hey 👋": "hey",
+  "Nice to meet you, Megi!": "niceToMeetYouMegi",
+  "Hey Megi, great to meet you!": "heyMegiGreatToMeetYou",
+  "Lovely to meet you, Megi!": "lovelyToMeetYouMegi",
+  "Good to meet you, Megi!": "goodToMeetYouMegi",
+  "Pleasure to meet you, Megi!": "pleasureToMeetYouMegi",
+  "The pleasure is mine, {name}.": "thePleasureIsMineName",
+  "Great to have you here, {name}.": "greatToHaveYouHereName",
+  "Wonderful to meet you, {name}.": "wonderfulToMeetYouName",
+  "Lovely to have you, {name}.": "lovelyToHaveYouName",
+  "Brilliant, thanks {name}.": "brilliantThanksName",
+  "How can we help?": "howCanWeHelp",
+  "So, how can we help?": "soHowCanWeHelp",
+  "What can we do for you?": "whatCanWeDoForYou",
+  "Where can we jump in?": "whereCanWeJumpIn",
+  "Talk soon, {name} 🤝": "talkSoonName",
+  "Speak soon, {name} 🤝": "speakSoonName",
+  "Chat soon, {name} 🤝": "chatSoonName",
+  "Catch you soon, {name} 🤝": "catchYouSoonName",
+  "Until next time, {name} 🤝": "untilNextTimeName",
+  "Thanks {name}.": "thanksName",
+  "Founder": "founder",
+  "Build a brand that doesn't fade with the trend cycle.": "buildABrandThatDoesntFadeWithTheTr",
+  "Google": "google",
+  "Acme Co.": "acmeCo"
+}
+
+function useOptionLabel() {
+  const tc = useTranslations('Chat')
+  const t = useTranslations('Chat')
+  return (value: string) => {
+    const key = OPTION_KEY[value]
+    return key ? tc(key) : value
+  }
 }
 
 const SERVICE_OPTIONS = [
@@ -636,6 +741,7 @@ function CheckboxList({
   onToggle: (v: string) => void
   active: boolean
 }) {
+  const label = useOptionLabel()
   return (
     <div className="flex flex-col">
       {options.map((opt) => {
@@ -647,7 +753,7 @@ function CheckboxList({
               checked ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
             } ${active ? '' : 'pointer-events-none'}`}
           >
-            <span>{opt}</span>
+            <span>{label(opt)}</span>
             <input
               type="checkbox"
               checked={checked}
@@ -692,6 +798,7 @@ function RadioList({
   onPick: (v: string) => void
   active: boolean
 }) {
+  const label = useOptionLabel()
   return (
     <div className="flex flex-col">
       {options.map((opt) => {
@@ -703,7 +810,7 @@ function RadioList({
               checked ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
             } ${active ? '' : 'pointer-events-none'}`}
           >
-            <span>{opt}</span>
+            <span>{label(opt)}</span>
             <input
               type="radio"
               checked={checked}
@@ -765,6 +872,7 @@ const ORDER: Step[] = [
 ]
 
 export default function StartProjectChat() {
+  const tc = useTranslations('Chat')
   const [step, setStep] = useState<Step>('name')
   const [a, setA] = useState<Answers>(EMPTY)
   // One random seed per conversation, fixed for its lifetime, so the greeting /
@@ -930,7 +1038,7 @@ export default function StartProjectChat() {
       // back on the last question so the visitor can retry rather than get
       // stuck on "Sending…" forever.
       setStep('source')
-      setSubmitError(res.error || 'Something went wrong — please try again.')
+      setSubmitError(res.error || tc('failed'))
       setTurnstileToken('')
       window.turnstile?.reset(turnstileWidgetId.current)
     }
@@ -942,7 +1050,7 @@ export default function StartProjectChat() {
     if (a.position) parts.push(a.position)
     let label = parts.join(', ')
     if (a.company) label = label ? `${label} @ ${a.company}` : `@ ${a.company}`
-    return label || 'You'
+    return label || tc('you')
   })()
 
   const userInitial = a.name ? a.name.charAt(0).toUpperCase() : 'Y'
@@ -981,18 +1089,18 @@ export default function StartProjectChat() {
             Turn 1 — Megi's greeting
         ═══════════════════════════════════════════ */}
         <AgencyTurn>
-          <Bubble>{greeting('agencyHello', seed)}</Bubble>
-          <Bubble>I&rsquo;m Megi.</Bubble>
+          <Bubble>{greeting('agencyHello', seed, tc)}</Bubble>
+          <Bubble>{tc('imMegi')}</Bubble>
         </AgencyTurn>
 
         {/* Turn 1 — User identity */}
         <UserTurn heading={userHeading} initial={userInitial}>
           <Bubble side="right">👋</Bubble>
-          <Bubble side="right">{greeting('userHello', seed)}</Bubble>
+          <Bubble side="right">{greeting('userHello', seed, tc)}</Bubble>
 
           <FormShell active={showIdentity && !identitySubmitted}>
             <InlineInput
-              label="My name is"
+              label={tc('myNameIs')}
               placeholder="Leonard Cohen"
               value={a.name}
               onChange={(v) => setA({ ...a, name: v })}
@@ -1002,8 +1110,8 @@ export default function StartProjectChat() {
             {!isActive('name') && (
               <div className="mt-4">
                 <InlineInput
-                  label="I'm a"
-                  placeholder="Founder"
+                  label={tc('imA')}
+                  placeholder={tc('founder')}
                   value={a.position}
                   onChange={(v) => setA({ ...a, position: v })}
                   onSubmit={() => a.position.trim() && advanceText()}
@@ -1014,8 +1122,8 @@ export default function StartProjectChat() {
             {showIdentityCompany && (
               <div className="mt-4">
                 <InlineInput
-                  label="at"
-                  placeholder="Acme Co."
+                  label={tc('at')}
+                  placeholder={tc('acmeCo')}
                   value={a.company}
                   onChange={(v) => setA({ ...a, company: v })}
                   onSubmit={() => a.company.trim() && advanceText()}
@@ -1044,14 +1152,14 @@ export default function StartProjectChat() {
         {isReached('services') && (
           <>
             <AgencyTurn>
-              <Bubble>{greeting('agencyWelcome', seed, a.name)}</Bubble>
-              <Bubble>{greeting('agencyAsk', seed)}</Bubble>
+              <Bubble>{greeting('agencyWelcome', seed, tc, a.name)}</Bubble>
+              <Bubble>{greeting('agencyAsk', seed, tc)}</Bubble>
             </AgencyTurn>
 
             <UserTurn heading={userHeading} initial={userInitial}>
               <FormShell active={isActive('services')}>
                 <span className="mb-3 block text-[0.75rem] uppercase tracking-[0.18em] text-text-tertiary">
-                  I&rsquo;m looking for
+                  {tc('lookingFor')}
                 </span>
                 <CheckboxList
                   options={SERVICE_OPTIONS}
@@ -1085,16 +1193,16 @@ export default function StartProjectChat() {
         {isReached('message') && (
           <>
             <AgencyTurn>
-              <Bubble>{botReply('services', a.services[0])}</Bubble>
+              <Bubble>{botReply('services', a.services[0], tc)}</Bubble>
               <Bubble>
-                In a sentence or two, what are you trying to build?
+                {tc('describe')}
               </Bubble>
             </AgencyTurn>
 
             <UserTurn heading={userHeading} initial={userInitial}>
               <FormShell active={isActive('message')}>
                 <span className="mb-3 block text-[0.75rem] uppercase tracking-[0.18em] text-text-tertiary">
-                  I want to&hellip;
+                  {tc('iWantTo')}
                 </span>
                 <textarea
                   value={a.message}
@@ -1108,7 +1216,7 @@ export default function StartProjectChat() {
                   }}
                   disabled={!isActive('message')}
                   rows={3}
-                  placeholder="Build a brand that doesn't fade with the trend cycle."
+                  placeholder={tc('buildABrandThatDoesntFadeWith')}
                   className="w-full resize-none border-b border-white/15 bg-transparent pb-2 text-[1.05rem] text-text-primary outline-none placeholder:text-text-tertiary disabled:cursor-default"
                 />
                 {isActive('message') && (
@@ -1130,14 +1238,14 @@ export default function StartProjectChat() {
         {isReached('kickoff') && (
           <>
             <AgencyTurn>
-              <Bubble>Got it.</Bubble>
-              <Bubble>When would you like to kick this off?</Bubble>
+              <Bubble>{tc('gotIt')}</Bubble>
+              <Bubble>{tc('kickoff')}</Bubble>
             </AgencyTurn>
 
             <UserTurn heading={userHeading} initial={userInitial}>
               <FormShell active={isActive('kickoff')}>
                 <span className="mb-3 block text-[0.75rem] uppercase tracking-[0.18em] text-text-tertiary">
-                  We can start
+                  {tc('weCanStart')}
                 </span>
                 <RadioList
                   options={KICKOFF_OPTIONS}
@@ -1161,14 +1269,14 @@ export default function StartProjectChat() {
         {isReached('deadline') && (
           <>
             <AgencyTurn>
-              <Bubble>{botReply('kickoff', a.kickoff)}</Bubble>
-              <Bubble>And when do you want it live?</Bubble>
+              <Bubble>{botReply('kickoff', a.kickoff, tc)}</Bubble>
+              <Bubble>{tc('deadline')}</Bubble>
             </AgencyTurn>
 
             <UserTurn heading={userHeading} initial={userInitial}>
               <FormShell active={isActive('deadline')}>
                 <span className="mb-3 block text-[0.75rem] uppercase tracking-[0.18em] text-text-tertiary">
-                  I&rsquo;m aiming for
+                  {tc('aimingFor')}
                 </span>
                 <RadioList
                   options={DEADLINE_OPTIONS}
@@ -1192,8 +1300,8 @@ export default function StartProjectChat() {
         {isReached('budget') && (
           <>
             <AgencyTurn>
-              <Bubble>{botReply('deadline', a.deadline)}</Bubble>
-              <Bubble>What budget range did you have in mind?</Bubble>
+              <Bubble>{botReply('deadline', a.deadline, tc)}</Bubble>
+              <Bubble>{tc('budget')}</Bubble>
             </AgencyTurn>
 
             <UserTurn heading={userHeading} initial={userInitial}>
@@ -1223,14 +1331,14 @@ export default function StartProjectChat() {
         {isReached('email') && (
           <>
             <AgencyTurn>
-              <Bubble>{botReply('budget', a.budget)}</Bubble>
-              <Bubble>What&rsquo;s the best email to reach you on?</Bubble>
+              <Bubble>{botReply('budget', a.budget, tc)}</Bubble>
+              <Bubble>{tc('emailAsk')}</Bubble>
             </AgencyTurn>
 
             <UserTurn heading={userHeading} initial={userInitial}>
               <FormShell active={isActive('email')}>
                 <InlineInput
-                  label="Reach me at"
+                  label={tc('reachMeAt')}
                   placeholder="leonardcohen@boldcrest.com"
                   value={a.email}
                   type="email"
@@ -1257,14 +1365,14 @@ export default function StartProjectChat() {
         {isReached('source') && (
           <>
             <AgencyTurn>
-              <Bubble>Thanks {a.name}.</Bubble>
-              <Bubble>One last thing before we go.</Bubble>
+              <Bubble>{tc('thanksName').replace('{name}', a.name.trim().split(/\s+/)[0] || 'there')}</Bubble>
+              <Bubble>{tc('lastThing')}</Bubble>
             </AgencyTurn>
 
             <UserTurn heading={userHeading} initial={userInitial}>
               <FormShell active={isActive('source')}>
                 <span className="mb-3 block text-[0.75rem] uppercase tracking-[0.18em] text-text-tertiary">
-                  I found you through
+                  {tc('foundThrough')}
                 </span>
                 <CheckboxList
                   options={SOURCE_OPTIONS}
@@ -1312,18 +1420,18 @@ export default function StartProjectChat() {
             >
               <AgencyTurn>
                 {step === 'submitting' ? (
-                  <Bubble>Sending&hellip;</Bubble>
+                  <Bubble>{tc('sending')}</Bubble>
                 ) : (
                   <>
-                    <Bubble>{botReply('source', a.source[0])}</Bubble>
+                    <Bubble>{botReply('source', a.source[0], tc)}</Bubble>
                     <Bubble>
-                      That&rsquo;s everything, message received.
+                      {tc('received')}
                     </Bubble>
                     <Bubble>
-                      We&rsquo;ll get back to you at
+                      {tc('getBack')}
                       <span className="text-white"> {a.email}</span>.
                     </Bubble>
-                    <Bubble>{greeting('agencyBye', seed, a.name)}</Bubble>
+                    <Bubble>{greeting('agencyBye', seed, tc, a.name)}</Bubble>
                   </>
                 )}
               </AgencyTurn>
