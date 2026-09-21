@@ -49,7 +49,13 @@ export default function MobileMenu({ open, onClose, scrolled = false, onExitComp
     const { search, hash } = typeof window !== 'undefined'
       ? window.location
       : { search: '', hash: '' }
-    router.replace(`${pathname}${search}${hash}`, { locale: next.code })
+    // Keep the reader in place across a language switch — see LanguageButton.
+    ;(window as unknown as { __localeSwitchY?: number }).__localeSwitchY =
+      window.scrollY
+    router.replace(`${pathname}${search}${hash}`, {
+      locale: next.code,
+      scroll: false,
+    })
     onClose()
   }
   // On a vanity form subdomain, point links at the absolute canonical site so

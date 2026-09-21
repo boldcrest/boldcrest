@@ -59,8 +59,17 @@ export default function LanguageButton({ compact }: { compact: boolean }) {
     const { search, hash } = typeof window !== 'undefined'
       ? window.location
       : { search: '', hash: '' }
+    // A language switch is the SAME page in another language, so it must not
+    // behave like a navigation: keep the reader exactly where they were.
+    // The route still changes (/work -> /fr/work), and both scroll resets key
+    // off `__navIsPop`, so flag this nav explicitly for them to honour.
+    ;(window as unknown as { __localeSwitchY?: number }).__localeSwitchY =
+      window.scrollY
     startTransition(() => {
-      router.replace(`${pathname}${search}${hash}`, { locale: next.code })
+      router.replace(`${pathname}${search}${hash}`, {
+        locale: next.code,
+        scroll: false,
+      })
     })
   }
 

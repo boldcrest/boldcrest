@@ -35,7 +35,10 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
     // expects to land exactly where they left off: there we leave the restored
     // scroll position alone. (`__navIsPop` is set by the popstate listener in
     // PageTransition and reset on the next forward navigation.)
-    if (!(window as any).__navIsPop) {
+    // A locale switch keeps its position (see PageTransition) — don't zero it.
+    if (typeof (window as any).__localeSwitchY === 'number') {
+      // position is re-asserted by PageTransition; nothing to do here
+    } else if (!(window as any).__navIsPop) {
       window.scrollTo(0, 0)
     }
 

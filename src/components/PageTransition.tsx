@@ -68,7 +68,22 @@ export default function PageTransitionProvider({
   useEffect(() => {
     const mem = ((window as any).__scrollMem ||= {})
     const key = window.location.pathname + window.location.search
-    if ((window as any).__navIsPop) {
+    // A language switch re-renders the same page under a different route, so
+    // hold the reader's position instead of snapping to the top. Cleared on a
+    // delay, after the re-asserts below, so LenisProvider's own reset (which
+    // may run either side of this one) sees it too.
+    const localeY = (window as any).__localeSwitchY
+    if (typeof localeY === 'number') {
+      const hold = () => {
+        window.scrollTo(0, localeY)
+        if ((window as any).__lenis) (window as any).__lenis.scrollTo(localeY, { immediate: true })
+      }
+      hold()
+      requestAnimationFrame(hold)
+      setTimeout(hold, 90)
+      setTimeout(hold, 220)
+      setTimeout(() => { delete (window as any).__localeSwitchY }, 400)
+    } else if ((window as any).__navIsPop) {
       const y = mem[key]
       if (typeof y === 'number') {
         const apply = () => {
