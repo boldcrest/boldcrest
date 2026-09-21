@@ -767,13 +767,18 @@ export default function ServicesPageClient({
 
       {/* ── CTA (before the FAQ, matching the single service pages) ── */}
       <ServiceCTA
-        label={content?.ctaSection?.label ?? undefined}
+        // "Need Help" rather than the default "Next Step": this block is for a
+        // visitor who has not chosen a service yet, so it is an offer of help,
+        // not the next move in a sequence.
+        label={content?.ctaSection?.label ?? 'Need Help'}
         heading={content?.ctaSection?.heading ?? 'Not sure which service you need?'}
         description={
           content?.ctaSection?.description ??
           'Tell us the problem, not the deliverable. We\u2019ll tell you what the work actually needs and come back with a clear scope, a timeline and a price. No obligation.'
         }
-        buttonLabel={content?.ctaSection?.buttonLabel ?? undefined}
+        // Not "Start a Project" here: this CTA answers someone who does not yet
+        // know which service they need, so the ask is help choosing, not a brief.
+        buttonLabel={content?.ctaSection?.buttonLabel ?? 'Request Assistance'}
       />
 
       {/* ── FAQ ── */}
