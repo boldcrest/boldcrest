@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
 import { useStartProject } from '@/components/start-project/StartProjectProvider'
 import { useTranslations } from 'next-intl'

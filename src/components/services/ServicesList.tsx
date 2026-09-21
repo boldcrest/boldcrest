@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { CTAButton } from '@/components/MagneticButton'
 import { useStartProject } from '@/components/start-project/StartProjectProvider'
 

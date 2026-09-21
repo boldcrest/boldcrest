@@ -19,7 +19,9 @@ import {
 } from '@/lib/seo'
 
 export async function generateStaticParams() {
-  const posts = await client.fetch(allDiaryPostsQuery)
+  const posts = await client.fetch(allDiaryPostsQuery, {
+    locale: routing.defaultLocale,
+  })
   // Cross product with the locales: returning slugs alone leaves the `locale`
   // segment unresolved, and Next silently drops the whole route to dynamic
   // rendering instead of prerendering it.
@@ -40,7 +42,7 @@ export async function generateMetadata({
   setRequestLocale(locale)
   const { data: post } = await sanityFetch({
     query: diaryPostBySlugQuery,
-    params: { slug },
+    params: { slug, locale },
   })
 
   if (!post) return { title: 'Diary' }
@@ -77,10 +79,10 @@ export default async function DiaryPostPage({
 }: {
   params: Promise<{ locale: string; slug: string }>
 }) {
-  const { slug } = await params
+  const { locale, slug } = await params
   const { data: post } = await sanityFetch({
     query: diaryPostBySlugQuery,
-    params: { slug },
+    params: { slug, locale },
   })
 
   if (!post) notFound()
@@ -88,8 +90,11 @@ export default async function DiaryPostPage({
   // MORE DIARY — same category first, then fill with the most recent posts
   // (dedup against the current post + already-picked related), up to 3.
   const [{ data: related }, { data: more }] = await Promise.all([
-    sanityFetch({ query: relatedDiaryPostsQuery, params: { slug, category: post.category ?? '' } }),
-    sanityFetch({ query: moreDiaryPostsQuery, params: { slug } }),
+    sanityFetch({
+      query: relatedDiaryPostsQuery,
+      params: { slug, category: post.category ?? '', locale },
+    }),
+    sanityFetch({ query: moreDiaryPostsQuery, params: { slug, locale } }),
   ])
   const seen = new Set<string>()
   const morePosts = [...(related ?? []), ...(more ?? [])]

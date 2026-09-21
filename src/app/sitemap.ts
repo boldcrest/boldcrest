@@ -58,7 +58,7 @@ function localized(
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [projects, posts] = await Promise.all([
     client.fetch(allProjectsQuery, { locale: routing.defaultLocale }) as Promise<ProjectRow[]>,
-    client.fetch(allDiaryPostsQuery) as Promise<DiaryRow[]>,
+    client.fetch(allDiaryPostsQuery, { locale: routing.defaultLocale }) as Promise<DiaryRow[]>,
   ])
 
   const projectUrls: MetadataRoute.Sitemap = (projects ?? []).flatMap((p) => {

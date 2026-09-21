@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useCallback, useState, useEffect, ReactNode } from 'react'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 
 /* Three monochrome pill outlines that trail the cursor with staggered
    spring-like easing — inspired by Reform Collective.

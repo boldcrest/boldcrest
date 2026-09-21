@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import ScrollReveal from '@/components/ScrollReveal'
 import { InlineButton } from '@/components/MagneticButton'
 import { useTranslations } from 'next-intl'

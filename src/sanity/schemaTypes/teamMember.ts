@@ -20,6 +20,37 @@ export const teamMember = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'i18n',
+      title: 'Translations',
+      description:
+        'Per-language job title. Names are never translated. Empty falls back to the English role above.',
+      type: 'object',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'sq',
+          title: 'Albanian (shqip)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [defineField({ name: 'role', title: 'Role', type: 'string' })],
+        }),
+        defineField({
+          name: 'it',
+          title: 'Italian (italiano)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [defineField({ name: 'role', title: 'Role', type: 'string' })],
+        }),
+        defineField({
+          name: 'fr',
+          title: 'French (français)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [defineField({ name: 'role', title: 'Role', type: 'string' })],
+        }),
+      ],
+    }),
+    defineField({
       name: 'image',
       title: 'Image',
       type: 'image',

@@ -24,7 +24,7 @@ export default async function PeoplePage({ params }: { params: Promise<{ locale:
   setRequestLocale(locale)
 
   const [{ data: members }, { data: yearPhotos }] = await Promise.all([
-    sanityFetch({ query: allTeamMembersQuery }),
+    sanityFetch({ query: allTeamMembersQuery, params: { locale } }),
     sanityFetch({ query: allYearPhotosQuery }),
   ])
 

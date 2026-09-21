@@ -59,10 +59,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
   const [projectsResult, partnersResult, membersResult, diaryResult, settingsResult] =
     await Promise.all([
-      sanityFetch({ query: featuredProjectsQuery }),
+      sanityFetch({ query: featuredProjectsQuery, params: { locale } }),
       sanityFetch({ query: homepagePartnersQuery }),
-      sanityFetch({ query: allTeamMembersQuery }),
-      sanityFetch({ query: latestDiaryPostsQuery }),
+      sanityFetch({ query: allTeamMembersQuery, params: { locale } }),
+      sanityFetch({ query: latestDiaryPostsQuery, params: { locale } }),
       sanityFetch({ query: siteSettingsQuery }),
     ])
 

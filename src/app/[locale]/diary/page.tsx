@@ -27,7 +27,7 @@ export default async function DiaryPage({
   const { locale } = await params
   setRequestLocale(locale)
   const { category } = await searchParams
-  const { data: posts } = await sanityFetch({ query: allDiaryPostsQuery })
+  const { data: posts } = await sanityFetch({ query: allDiaryPostsQuery, params: { locale } })
 
   return (
     <DiaryPageClient

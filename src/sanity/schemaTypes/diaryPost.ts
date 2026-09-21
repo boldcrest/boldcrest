@@ -67,6 +67,49 @@ export const diaryPost = defineType({
       ],
     }),
     defineField({
+      name: 'i18n',
+      title: 'Translations',
+      description:
+        'Per-language overrides. Anything left empty falls back to the English field above, so a partially translated document still renders.',
+      type: 'object',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'sq',
+          title: 'Albanian (shqip)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: 'title', title: 'Title', type: 'string' }),
+            defineField({ name: 'excerpt', title: 'Excerpt', type: 'text' }),
+            defineField({ name: 'body', title: 'Body', type: 'array', of: [{ type: 'block' }] }),
+          ],
+        }),
+        defineField({
+          name: 'it',
+          title: 'Italian (italiano)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: 'title', title: 'Title', type: 'string' }),
+            defineField({ name: 'excerpt', title: 'Excerpt', type: 'text' }),
+            defineField({ name: 'body', title: 'Body', type: 'array', of: [{ type: 'block' }] }),
+          ],
+        }),
+        defineField({
+          name: 'fr',
+          title: 'French (français)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: 'title', title: 'Title', type: 'string' }),
+            defineField({ name: 'excerpt', title: 'Excerpt', type: 'text' }),
+            defineField({ name: 'body', title: 'Body', type: 'array', of: [{ type: 'block' }] }),
+          ],
+        }),
+      ],
+    }),
+    defineField({
       name: 'publishedAt',
       title: 'Published At',
       type: 'datetime',

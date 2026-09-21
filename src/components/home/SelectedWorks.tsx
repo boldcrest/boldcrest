@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 
 import { useRef } from 'react'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import Image from 'next/image'
 import { motion, useInView } from 'framer-motion'
 import { urlFor } from '@/sanity/lib/image'

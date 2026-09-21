@@ -5,9 +5,9 @@ import { defineQuery } from 'next-sanity'
 export const featuredProjectsQuery = defineQuery(
   `*[_type == "project" && featured == true] | order(coalesce(featuredOrder, 999) asc, year desc, _createdAt desc) [0...6] {
     _id,
-    name,
+    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name, $locale == "fr" => i18n.fr.name), name),
     slug,
-    tagline,
+    "tagline": coalesce(select($locale == "sq" => i18n.sq.tagline, $locale == "it" => i18n.it.tagline, $locale == "fr" => i18n.fr.tagline), tagline),
     client,
     industry,
     year,
@@ -88,7 +88,7 @@ export const projectBySlugQuery = defineQuery(
 export const nextProjectQuery = defineQuery(
   `*[_type == "project" && orderRank > $currentRank] | order(orderRank) [0] {
     _id,
-    name,
+    "name": coalesce(select($locale == "sq" => i18n.sq.name, $locale == "it" => i18n.it.name, $locale == "fr" => i18n.fr.name), name),
     slug
   }`
 )
@@ -185,7 +185,7 @@ export const allTeamMembersQuery = defineQuery(
   `*[_type == "teamMember"] | order(orderRank) {
     _id,
     name,
-    role,
+    "role": coalesce(select($locale == "sq" => i18n.sq.role, $locale == "it" => i18n.it.role, $locale == "fr" => i18n.fr.role), role),
     image
   }`
 )
@@ -202,9 +202,9 @@ export const allYearPhotosQuery = defineQuery(
 export const latestDiaryPostsQuery = defineQuery(
   `*[_type == "diaryPost"] | order(orderRank) [0...4] {
     _id,
-    title,
+    "title": coalesce(select($locale == "sq" => i18n.sq.title, $locale == "it" => i18n.it.title, $locale == "fr" => i18n.fr.title), title),
     slug,
-    excerpt,
+    "excerpt": coalesce(select($locale == "sq" => i18n.sq.excerpt, $locale == "it" => i18n.it.excerpt, $locale == "fr" => i18n.fr.excerpt), excerpt),
     category,
     coverImage,
     publishedAt
@@ -215,9 +215,9 @@ export const allDiaryPostsQuery = defineQuery(
   `*[_type == "diaryPost"] | order(orderRank) {
     _id,
     _updatedAt,
-    title,
+    "title": coalesce(select($locale == "sq" => i18n.sq.title, $locale == "it" => i18n.it.title, $locale == "fr" => i18n.fr.title), title),
     slug,
-    excerpt,
+    "excerpt": coalesce(select($locale == "sq" => i18n.sq.excerpt, $locale == "it" => i18n.it.excerpt, $locale == "fr" => i18n.fr.excerpt), excerpt),
     category,
     coverImage,
     publishedAt
@@ -227,12 +227,12 @@ export const allDiaryPostsQuery = defineQuery(
 export const diaryPostBySlugQuery = defineQuery(
   `*[_type == "diaryPost" && slug.current == $slug][0] {
     _id,
-    title,
+    "title": coalesce(select($locale == "sq" => i18n.sq.title, $locale == "it" => i18n.it.title, $locale == "fr" => i18n.fr.title), title),
     slug,
-    excerpt,
+    "excerpt": coalesce(select($locale == "sq" => i18n.sq.excerpt, $locale == "it" => i18n.it.excerpt, $locale == "fr" => i18n.fr.excerpt), excerpt),
     category,
     coverImage,
-    body,
+    "body": coalesce(select($locale == "sq" => i18n.sq.body, $locale == "it" => i18n.it.body, $locale == "fr" => i18n.fr.body), body),
     publishedAt
   }`
 )
@@ -241,13 +241,13 @@ export const diaryPostBySlugQuery = defineQuery(
 // fallback to fill remaining slots (combined in the page).
 export const relatedDiaryPostsQuery = defineQuery(
   `*[_type == "diaryPost" && slug.current != $slug && category == $category] | order(publishedAt desc) [0...5] {
-    _id, title, slug, excerpt, category, coverImage, publishedAt
+    _id, "title": coalesce(select($locale == "sq" => i18n.sq.title, $locale == "it" => i18n.it.title, $locale == "fr" => i18n.fr.title), title), slug, "excerpt": coalesce(select($locale == "sq" => i18n.sq.excerpt, $locale == "it" => i18n.it.excerpt, $locale == "fr" => i18n.fr.excerpt), excerpt), category, coverImage, publishedAt
   }`
 )
 
 export const moreDiaryPostsQuery = defineQuery(
   `*[_type == "diaryPost" && slug.current != $slug] | order(publishedAt desc) [0...8] {
-    _id, title, slug, excerpt, category, coverImage, publishedAt
+    _id, "title": coalesce(select($locale == "sq" => i18n.sq.title, $locale == "it" => i18n.it.title, $locale == "fr" => i18n.fr.title), title), slug, "excerpt": coalesce(select($locale == "sq" => i18n.sq.excerpt, $locale == "it" => i18n.it.excerpt, $locale == "fr" => i18n.fr.excerpt), excerpt), category, coverImage, publishedAt
   }`
 )
 
