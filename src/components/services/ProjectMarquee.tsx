@@ -250,8 +250,12 @@ export default function ProjectMarquee({
                   </div>
                 )}
 
-                {/* Info panel — scales up from bottom on hover (desktop only) */}
-                <div className="absolute bottom-0 left-0 z-20 hidden w-full origin-bottom scale-y-0 bg-[#0a0a0a] px-5 pt-4 pb-4 transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-y-100 md:block">
+                {/* Info panel — scales up from bottom on hover (desktop only).
+                    Sits 1px BELOW the card (that pixel added back as padding) so
+                    its fill always covers the clip edge — the aspect-ratio height
+                    is fractional, and at fractional device pixels this composited
+                    scaleY layer otherwise leaves a hairline of the cover showing. */}
+                <div className="absolute -bottom-px left-0 z-20 hidden w-full origin-bottom scale-y-0 bg-[#0a0a0a] px-5 pt-4 pb-[calc(1rem+1px)] transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-y-100 md:block">
                   {project.client && (
                     <span className="block text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-text-tertiary">
                       {project.client}
