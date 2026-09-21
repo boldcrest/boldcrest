@@ -210,6 +210,7 @@ export default async function ProjectPage({
           line reads as the end of the case study, with the CTA below it. */}
       <ServiceCTA
         topBorder
+        fullWidth
         label="Your turn"
         heading="What are we shaping next?"
         description="Tell us what you have in mind. It can be a clear brief or just the start of an idea. We’ll help shape the next steps and keep everything simple from there."

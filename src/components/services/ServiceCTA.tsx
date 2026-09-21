@@ -13,6 +13,13 @@ interface ServiceCTAProps {
   buttonLabel?: string
   /** Draws the section divider above the CTA instead of on whatever follows. */
   topBorder?: boolean
+  /**
+   * Span the full gutter-to-gutter width instead of the centred --max-width
+   * measure. The services sections all use the centred measure, but
+   * RelatedProjects ("More Work") is full width — so on project pages the
+   * centred CTA sat visibly indented from the carousel beneath it.
+   */
+  fullWidth?: boolean
 }
 
 /**
@@ -33,6 +40,7 @@ export default function ServiceCTA({
   description,
   buttonLabel = 'Start a Project',
   topBorder = false,
+  fullWidth = false,
 }: ServiceCTAProps) {
   const { open: openStartProject } = useStartProject()
   const ref = useRef<HTMLElement>(null)
@@ -50,7 +58,7 @@ export default function ServiceCTA({
         topBorder ? 'border-t border-border pt-[var(--space-lg)]' : ''
       }`}
     >
-      <div className="mx-auto max-w-[var(--max-width)]">
+      <div className={fullWidth ? 'w-full' : 'mx-auto max-w-[var(--max-width)]'}>
         <motion.p
           className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
           initial={{ opacity: 0 }}
@@ -59,6 +67,13 @@ export default function ServiceCTA({
         >
           {label}
         </motion.p>
+
+        {/* Split once there is room: heading + copy left, button right, tops
+            aligned. The eyebrow sits ABOVE this row on purpose — inside it,
+            items-start would line the button up with the small grey label
+            rather than the heading. Below md it stacks. */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between md:gap-[var(--space-2xl)]">
+          <div className="md:max-w-[680px]">
 
         <motion.h2
           className="max-w-[760px] font-display text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold leading-[1.1] tracking-[-0.02em] text-white"
@@ -78,16 +93,18 @@ export default function ServiceCTA({
           >
             {description}
           </motion.p>
-        )}
+          )}
+          </div>
 
-        <motion.div
-          className="mt-[var(--space-lg)]"
+          <motion.div
+            className="mt-[var(--space-lg)] md:mt-0 md:shrink-0"
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
         >
-          <CtaPill onClick={openStartProject} label={buttonLabel} />
-        </motion.div>
+            <CtaPill onClick={openStartProject} label={buttonLabel} />
+          </motion.div>
+        </div>
       </div>
     </section>
   )
@@ -101,8 +118,9 @@ export default function ServiceCTA({
  * appear. Inline styles beat that reset, which is the same fix the contact
  * form's SEND pill uses.
  *
- * Stroke only in BOTH states — no fill inversion. Hover just brightens the
- * stroke (0.45 -> 0.6), matching the header CTA and the language button.
+ * Solid white with a black label. The hover move is the label roll-up plus the
+ * arrow nudge — the fill deliberately does not change, so the button reads as
+ * one stable shape and the motion is all in the type.
  */
 function CtaPill({ onClick, label }: { onClick: () => void; label: string }) {
   const [hover, setHover] = useState(false)
@@ -119,9 +137,9 @@ function CtaPill({ onClick, label }: { onClick: () => void; label: string }) {
         borderRadius: 'var(--radius-pill)',
         borderWidth: '1px',
         borderStyle: 'solid',
-        borderColor: hover ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.45)',
-        backgroundColor: 'transparent',
-        color: '#fff',
+        borderColor: '#fff',
+        backgroundColor: '#fff',
+        color: '#0a0a0a',
         transitionProperty: 'background-color, border-color, color',
         transitionDuration: '0.5s',
         transitionTimingFunction: CUBIC,
