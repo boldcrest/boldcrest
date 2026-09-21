@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { useStartProject } from '@/components/start-project/StartProjectProvider'
@@ -35,13 +37,16 @@ interface ServiceCTAProps {
  * matching the header CTA and the other in-page buttons.
  */
 export default function ServiceCTA({
-  label = 'Next Step',
+  label,
   heading,
   description,
-  buttonLabel = 'Start a Project',
+  buttonLabel,
   topBorder = false,
   fullWidth = false,
 }: ServiceCTAProps) {
+  const t = useTranslations('Cta')
+  const ctaLabel = label ?? t('nextStep')
+  const ctaButton = buttonLabel ?? t('startProject')
   const { open: openStartProject } = useStartProject()
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
@@ -65,7 +70,7 @@ export default function ServiceCTA({
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6 }}
         >
-          {label}
+          {ctaLabel}
         </motion.p>
 
         {/* Split once there is room: heading + copy left, button right, tops
@@ -102,7 +107,7 @@ export default function ServiceCTA({
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
         >
-            <CtaPill onClick={openStartProject} label={buttonLabel} />
+            <CtaPill onClick={openStartProject} label={ctaButton} />
           </motion.div>
         </div>
       </div>

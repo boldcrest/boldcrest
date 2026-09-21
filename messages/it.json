@@ -252,5 +252,22 @@
     "diaryTitle": "Diario — BoldCrest",
     "contactTitle": "Contatti — BoldCrest",
     "contactDescription": "Parliamone. Contatta BoldCrest per iniziare il tuo prossimo progetto."
+  },
+  "Cta": {
+    "nextStep": "Prossimo passo",
+    "startProject": "Inizia un progetto",
+    "brandHeading": "Vuoi costruire un brand che le persone ricordino?",
+    "brandBody": "Raccontaci dove si trova oggi il brand e cosa deve fare adesso. Ti proporremo un perimetro di lavoro chiaro, tempistiche e un prezzo. Senza impegno.",
+    "commsHeading": "Vuoi trovare il messaggio giusto?",
+    "commsBody": "Raccontaci chi vuoi raggiungere e cosa vuoi che faccia. Ti proporremo un perimetro di lavoro chiaro, tempistiche e un prezzo. Senza impegno.",
+    "motionHeading": "Vuoi portare la tua idea davanti all’obiettivo?",
+    "motionBody": "Raccontaci cosa vuoi fotografare o filmare e dove verrà pubblicato. Ti proporremo un perimetro di lavoro chiaro, tempistiche e un prezzo. Senza impegno.",
+    "needHelp": "Serve una mano",
+    "servicesHeading": "Non sai quale servizio ti serve?",
+    "servicesBody": "Raccontaci il problema, non cosa vuoi ricevere. Ti diremo cosa serve davvero e ti proporremo un perimetro di lavoro chiaro, tempistiche e un prezzo. Senza impegno.",
+    "requestAssistance": "Chiedi assistenza",
+    "exploreOther": "Scopri gli altri nostri servizi",
+    "explore": "Scopri",
+    "faq": "FAQ"
   }
 }

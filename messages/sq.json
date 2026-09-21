@@ -252,5 +252,22 @@
     "diaryTitle": "Ditari — BoldCrest",
     "contactTitle": "Kontakt — BoldCrest",
     "contactDescription": "Le të flasim. Kontakto BoldCrest për të nisur projektin tënd të radhës."
+  },
+  "Cta": {
+    "nextStep": "Hapi i radhës",
+    "startProject": "Nis një Projekt",
+    "brandHeading": "Gati të ndërtosh një markë që njerëzit e mbajnë mend?",
+    "brandBody": "Na trego ku është marka sot dhe çfarë duhet të bëjë më pas. Do të të propozojmë një shtrirje të qartë të punës, afatet dhe çmimin. Pa detyrim.",
+    "commsHeading": "Gati ta thuash siç duhet?",
+    "commsBody": "Na trego kujt duhet t’i drejtohesh dhe çfarë dëshiron të bëjë. Do të të propozojmë një shtrirje të qartë të punës, afatet dhe çmimin. Pa detyrim.",
+    "motionHeading": "Gati ta sjellësh para kamerës?",
+    "motionBody": "Na trego çfarë duhet të fotografosh ose filmosh dhe ku do të shfaqet. Do të të propozojmë një shtrirje të qartë të punës, afatet dhe çmimin. Pa detyrim.",
+    "needHelp": "Të duhet ndihmë",
+    "servicesHeading": "Nuk e di cili shërbim të duhet?",
+    "servicesBody": "Na trego problemin, jo materialin që mendon se duhet prodhuar. Do të të themi çfarë kërkon vërtet puna dhe do të të propozojmë një shtrirje të qartë të punës, afatet dhe çmimin. Pa detyrim.",
+    "requestAssistance": "Kërko ndihmë",
+    "exploreOther": "Zbulo shërbimet tona të tjera",
+    "explore": "Zbulo",
+    "faq": "Pyetje të shpeshta"
   }
 }

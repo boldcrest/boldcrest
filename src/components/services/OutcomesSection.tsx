@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 
@@ -15,10 +17,12 @@ interface OutcomesSectionProps {
 }
 
 export default function OutcomesSection({
-  label = 'Outcomes',
+  label,
   heading,
   outcomes,
 }: OutcomesSectionProps) {
+  const tl = useTranslations('Services')
+  const sectionLabel = label ?? tl('outcomes')
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -31,7 +35,7 @@ export default function OutcomesSection({
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6 }}
         >
-          {label}
+          {sectionLabel}
         </motion.p>
 
         <motion.h2

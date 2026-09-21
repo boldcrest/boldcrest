@@ -252,5 +252,22 @@
     "diaryTitle": "Journal — BoldCrest",
     "contactTitle": "Contact — BoldCrest",
     "contactDescription": "Parlons-en. Contactez BoldCrest pour lancer votre prochain projet."
+  },
+  "Cta": {
+    "nextStep": "Prochaine étape",
+    "startProject": "Lancer un Projet",
+    "brandHeading": "Vous voulez créer une marque qui reste en mémoire ?",
+    "brandBody": "Dites-nous où en est votre marque et ce qu’elle doit faire ensuite. Nous vous proposerons un périmètre clair, un calendrier et un prix. Sans engagement.",
+    "commsHeading": "Vous voulez trouver le bon message ?",
+    "commsBody": "Dites-nous qui vous voulez toucher et ce que vous souhaitez que ces personnes fassent. Nous vous proposerons un périmètre clair, un calendrier et un prix. Sans engagement.",
+    "motionHeading": "On met votre idée en images ?",
+    "motionBody": "Dites-nous ce que vous souhaitez photographier ou filmer et où le diffuser. Nous vous proposerons un périmètre clair, un calendrier et un prix. Sans engagement.",
+    "needHelp": "Besoin d’aide",
+    "servicesHeading": "Vous ne savez pas quel service choisir ?",
+    "servicesBody": "Parlez-nous du problème, pas du livrable. Nous vous dirons ce que le travail demande réellement et vous proposerons un périmètre clair, un calendrier et un prix. Sans engagement.",
+    "requestAssistance": "Demander de l’aide",
+    "exploreOther": "Découvrez nos autres services",
+    "explore": "Découvrir",
+    "faq": "FAQ"
   }
 }

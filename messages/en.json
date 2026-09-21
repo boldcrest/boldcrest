@@ -252,5 +252,22 @@
     "diaryTitle": "Diary — BoldCrest",
     "contactTitle": "Contact — BoldCrest",
     "contactDescription": "Let's talk. Get in touch with BoldCrest to start your next project."
+  },
+  "Cta": {
+    "nextStep": "Next Step",
+    "startProject": "Start a Project",
+    "brandHeading": "Ready to build a brand people remember?",
+    "brandBody": "Tell us where the brand is today and what it needs to do next. We’ll come back with a clear scope, a timeline and a price. No obligation.",
+    "commsHeading": "Ready to get the message right?",
+    "commsBody": "Tell us who you need to reach and what you need them to do. We’ll come back with a clear scope, a timeline and a price. No obligation.",
+    "motionHeading": "Ready to put it on camera?",
+    "motionBody": "Tell us what you need to shoot and where it needs to run. We’ll come back with a clear scope, a timeline and a price. No obligation.",
+    "needHelp": "Need Help",
+    "servicesHeading": "Not sure which service you need?",
+    "servicesBody": "Tell us the problem, not the deliverable. We’ll tell you what the work actually needs and come back with a clear scope, a timeline and a price. No obligation.",
+    "requestAssistance": "Request Assistance",
+    "exploreOther": "Explore Our Other Services",
+    "explore": "Explore",
+    "faq": "FAQ"
   }
 }

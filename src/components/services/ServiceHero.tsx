@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { Link } from '@/i18n/navigation'
 import { motion } from 'framer-motion'
 
@@ -16,6 +18,7 @@ export default function ServiceHero({
   title,
   subtitle,
 }: ServiceHeroProps) {
+  const tn = useTranslations('Nav')
   return (
     <section className="flex flex-col px-[var(--gutter)] pt-[120px] pb-0">
       <div>
@@ -29,7 +32,7 @@ export default function ServiceHero({
             href="/services"
             className="transition-colors duration-200 hover:text-white"
           >
-            Services
+            {tn('services')}
           </Link>
           <span aria-hidden="true">/</span>
           <span className="text-text-secondary" aria-current="page">

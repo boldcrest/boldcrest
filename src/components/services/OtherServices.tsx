@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Link } from '@/i18n/navigation'
@@ -17,9 +19,11 @@ interface OtherServicesProps {
 }
 
 export default function OtherServices({
-  heading = 'Explore Our Other Services',
+  heading,
   services,
 }: OtherServicesProps) {
+  const tl = useTranslations('Cta')
+  const sectionHeading = heading ?? tl('exploreOther')
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -32,7 +36,7 @@ export default function OtherServices({
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          {heading}
+          {sectionHeading}
         </motion.h2>
 
         <div className="grid gap-5 md:grid-cols-2">
@@ -60,7 +64,7 @@ export default function OtherServices({
                   </p>
                 </div>
                 <div className="mt-6 flex items-center gap-2 text-[0.75rem] font-semibold uppercase tracking-[0.1em] text-text-tertiary transition-colors duration-300 group-hover:text-text-primary">
-                  <span>Explore</span>
+                  <span>{tl('explore')}</span>
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="transition-transform duration-300 group-hover:translate-x-1">
                     <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>

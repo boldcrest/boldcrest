@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import ServiceHero from '@/components/services/ServiceHero'
 import ProjectMarquee from '@/components/services/ProjectMarquee'
 import OutcomesServices from '@/components/services/OutcomesServices'
@@ -72,6 +74,7 @@ export default function StillMotionClient({
   projects: Project[]
   content?: ServicePageContent | null
 }) {
+  const tCta = useTranslations('Cta')
   const hero = content?.hero
   const outcomes = content?.outcomes?.length ? content.outcomes : OUTCOMES
   const services = content?.capabilities?.length
@@ -111,8 +114,8 @@ export default function StillMotionClient({
           copy below as the fallback. */}
       <ServiceCTA
         label={content?.ctaSection?.label ?? undefined}
-        heading={content?.ctaSection?.heading ?? 'Ready to put it on camera?'}
-        description={content?.ctaSection?.description ?? 'Tell us what you need to shoot and where it needs to run. We’ll come back with a clear scope, a timeline and a price. No obligation.'}
+        heading={content?.ctaSection?.heading ?? tCta('motionHeading')}
+        description={content?.ctaSection?.description ?? tCta('motionBody')}
         buttonLabel={content?.ctaSection?.buttonLabel ?? undefined}
       />
       <FAQSection heading="Production Questions Answered" items={faqItems} noTopBorder grayBg />

@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 
@@ -16,10 +18,12 @@ interface WhyUsSectionProps {
 }
 
 export default function WhyUsSection({
-  label = 'Why Us',
+  label,
   heading,
   items,
 }: WhyUsSectionProps) {
+  const tl = useTranslations('Services')
+  const sectionLabel = label ?? tl('whyUs')
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -32,7 +36,7 @@ export default function WhyUsSection({
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6 }}
         >
-          {label}
+          {sectionLabel}
         </motion.p>
 
         <motion.h2

@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import ServiceHero from '@/components/services/ServiceHero'
 import ProjectMarquee from '@/components/services/ProjectMarquee'
 import OutcomesServices from '@/components/services/OutcomesServices'
@@ -72,6 +74,7 @@ export default function CommunicationClient({
   projects: Project[]
   content?: ServicePageContent | null
 }) {
+  const tCta = useTranslations('Cta')
   const hero = content?.hero
   const outcomes = content?.outcomes?.length ? content.outcomes : OUTCOMES
   const services = content?.capabilities?.length
@@ -118,8 +121,8 @@ export default function CommunicationClient({
           copy below as the fallback. */}
       <ServiceCTA
         label={content?.ctaSection?.label ?? undefined}
-        heading={content?.ctaSection?.heading ?? 'Ready to get the message right?'}
-        description={content?.ctaSection?.description ?? 'Tell us who you need to reach and what you need them to do. We’ll come back with a clear scope, a timeline and a price. No obligation.'}
+        heading={content?.ctaSection?.heading ?? tCta('commsHeading')}
+        description={content?.ctaSection?.description ?? tCta('commsBody')}
         buttonLabel={content?.ctaSection?.buttonLabel ?? undefined}
       />
       <FAQSection heading="Communication Questions Answered" items={faqItems} noTopBorder grayBg />

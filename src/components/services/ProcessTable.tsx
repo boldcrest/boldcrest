@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 
@@ -18,12 +20,14 @@ interface ProcessTableProps {
 }
 
 export default function ProcessTable({
-  label = 'Process',
+  label,
   heading,
   intro,
   steps,
   accentColor = '#DA291C',
 }: ProcessTableProps) {
+  const tl = useTranslations('Services')
+  const sectionLabel = label ?? tl('process')
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -59,7 +63,7 @@ export default function ProcessTable({
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6 }}
         >
-          {label}
+          {sectionLabel}
         </motion.p>
 
         <motion.h2

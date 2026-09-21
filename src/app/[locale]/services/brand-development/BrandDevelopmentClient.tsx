@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import ServiceHero from '@/components/services/ServiceHero'
 import ProjectMarquee from '@/components/services/ProjectMarquee'
 import OutcomesServices from '@/components/services/OutcomesServices'
@@ -93,6 +95,7 @@ export default function BrandDevelopmentClient({
   projects: Project[]
   content?: ServicePageContent | null
 }) {
+  const tCta = useTranslations('Cta')
   const hero = content?.hero
   const outcomes = content?.outcomes?.length ? content.outcomes : OUTCOMES
   const services = content?.capabilities?.length
@@ -140,8 +143,8 @@ export default function BrandDevelopmentClient({
           copy below as the fallback. */}
       <ServiceCTA
         label={content?.ctaSection?.label ?? undefined}
-        heading={content?.ctaSection?.heading ?? 'Ready to build a brand people remember?'}
-        description={content?.ctaSection?.description ?? 'Tell us where the brand is today and what it needs to do next. We’ll come back with a clear scope, a timeline and a price. No obligation.'}
+        heading={content?.ctaSection?.heading ?? tCta('brandHeading')}
+        description={content?.ctaSection?.description ?? tCta('brandBody')}
         buttonLabel={content?.ctaSection?.buttonLabel ?? undefined}
       />
       <FAQSection heading="Brand Development Questions Answered" items={faqItems} noTopBorder grayBg />

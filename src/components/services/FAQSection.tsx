@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useState, useRef } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { CTAButton } from '@/components/MagneticButton'
@@ -21,7 +23,7 @@ interface FAQSectionProps {
 }
 
 export default function FAQSection({
-  label = 'FAQ',
+  label,
   heading,
   items,
   ctaLabel,
@@ -29,6 +31,8 @@ export default function FAQSection({
   tightTop = false,
   grayBg = false,
 }: FAQSectionProps) {
+  const tl = useTranslations('Services')
+  const sectionLabel = label ?? tl('faq')
   const { open: openStartProject } = useStartProject()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const ref = useRef<HTMLElement>(null)
@@ -49,7 +53,7 @@ export default function FAQSection({
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6 }}
         >
-          {label}
+          {sectionLabel}
         </motion.p>
 
         <motion.h2

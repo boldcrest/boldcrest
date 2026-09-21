@@ -153,7 +153,7 @@ export const serviceDetailPageQuery = defineQuery(
     "capabilitiesHeading": coalesce(select($locale == "sq" => i18n.sq.capabilitiesHeading, $locale == "it" => i18n.it.capabilitiesHeading, $locale == "fr" => i18n.fr.capabilitiesHeading), capabilitiesHeading),
     "capabilities": capabilities[]{
       ...,
-      "title": coalesce(select($locale == "sq" => ^.i18n.sq.capabilities[@._key == ^._key][0].title, $locale == "it" => ^.i18n.it.capabilities[@._key == ^._key][0].title, $locale == "fr" => ^.i18n.fr.capabilities[@._key == ^._key][0].title), title),
+      "name": coalesce(select($locale == "sq" => ^.i18n.sq.capabilities[@._key == ^._key][0].name, $locale == "it" => ^.i18n.it.capabilities[@._key == ^._key][0].name, $locale == "fr" => ^.i18n.fr.capabilities[@._key == ^._key][0].name), name),
       "description": coalesce(select($locale == "sq" => ^.i18n.sq.capabilities[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.capabilities[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.capabilities[@._key == ^._key][0].description), description)
     },
     "processHeading": coalesce(select($locale == "sq" => i18n.sq.processHeading, $locale == "it" => i18n.it.processHeading, $locale == "fr" => i18n.fr.processHeading), processHeading),
@@ -170,7 +170,7 @@ export const serviceDetailPageQuery = defineQuery(
     },
     "otherServices": otherServices[]{
       ...,
-      "name": coalesce(select($locale == "sq" => ^.i18n.sq.otherServices[@._key == ^._key][0].name, $locale == "it" => ^.i18n.it.otherServices[@._key == ^._key][0].name, $locale == "fr" => ^.i18n.fr.otherServices[@._key == ^._key][0].name), name),
+      "title": coalesce(select($locale == "sq" => ^.i18n.sq.otherServices[@._key == ^._key][0].title, $locale == "it" => ^.i18n.it.otherServices[@._key == ^._key][0].title, $locale == "fr" => ^.i18n.fr.otherServices[@._key == ^._key][0].title), title),
       "description": coalesce(select($locale == "sq" => ^.i18n.sq.otherServices[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.otherServices[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.otherServices[@._key == ^._key][0].description), description)
     },
     ctaSection,
