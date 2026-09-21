@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -151,6 +153,7 @@ function ProjectCard({
 }
 
 export default function SelectedWorks({ projects }: SelectedWorksProps) {
+  const t = useTranslations('Home')
   if (!projects.length) return null
 
   const padded: Project[] = []
@@ -171,7 +174,7 @@ export default function SelectedWorks({ projects }: SelectedWorksProps) {
           <div className="mb-4 h-px bg-border" />
           <div className="mb-[var(--space-lg)] flex items-center justify-between">
             <h2 className="font-display text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-secondary">
-              Selected Works
+              {t('selectedWorks')}
             </h2>
             <Link
               href="/work"
@@ -183,8 +186,8 @@ export default function SelectedWorks({ projects }: SelectedWorksProps) {
                   className="flex flex-col transition-transform duration-[0.5s] group-hover/link:-translate-y-1/2"
                   style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}
                 >
-                  <span className="leading-[1.2]">See All</span>
-                  <span className="leading-[1.2]">See All</span>
+                  <span className="leading-[1.2]">{t('seeAll')}</span>
+                  <span className="leading-[1.2]">{t('seeAll')}</span>
                 </span>
               </span>
               <svg

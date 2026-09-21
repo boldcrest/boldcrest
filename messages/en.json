@@ -82,7 +82,10 @@
     "whatWaiting": "What are you waiting for?",
     "coffee": "Let's have ⟦A Coffee⟧ together.",
     "noEgosLabel": "No egos",
-    "go": "Go"
+    "go": "Go",
+    "brandDev": "Brand Dev",
+    "stillMotion": "Still & Motion",
+    "brandDevDesc": "We take what your brand is, what it wants to become, and how people should remember it, then turn that into an identity people can recognize, trust, and return to."
   },
   "Services": {
     "visualIdentity": "Visual Identity",
@@ -109,7 +112,8 @@
     "explore": "Explore",
     "exploreOther": "Explore Our Other Services",
     "mediaPlanning": "Media Planning",
-    "process": "Process"
+    "process": "Process",
+    "motionGraphics": "Motion Graphics"
   },
   "People": {
     "eyebrow": "People",

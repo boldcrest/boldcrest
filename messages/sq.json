@@ -82,7 +82,10 @@
     "whatWaiting": "Çfarë po pret?",
     "coffee": "Le të pimë ⟦një kafe⟧ bashkë.",
     "noEgosLabel": "Pa ego",
-    "go": "Guxo"
+    "go": "Guxo",
+    "brandDev": "Zhvillim Marke",
+    "stillMotion": "Foto & Video",
+    "brandDevDesc": "Marrim atë që është marka jote, atë që dëshiron të bëhet dhe mënyrën si duhet ta mbajnë mend njerëzit, pastaj e kthejmë në një identitet që ata mund ta njohin, t’i besojnë dhe t’i kthehen."
   },
   "Services": {
     "visualIdentity": "Identitet vizual",
@@ -109,7 +112,8 @@
     "explore": "Zbulo",
     "exploreOther": "Zbulo shërbimet tona të tjera",
     "mediaPlanning": "Planifikim mediash",
-    "process": "Procesi"
+    "process": "Procesi",
+    "motionGraphics": "Grafikë në lëvizje"
   },
   "People": {
     "eyebrow": "Ekipi",

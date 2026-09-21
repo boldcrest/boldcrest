@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import Image from 'next/image'
 import { urlFor } from '@/sanity/lib/image'
 
@@ -15,6 +17,7 @@ interface SelectedClientsProps {
 }
 
 export default function SelectedClients({ partners }: SelectedClientsProps) {
+  const t = useTranslations('Home')
   const displayPartners =
     partners.length > 0
       ? partners
@@ -104,7 +107,7 @@ export default function SelectedClients({ partners }: SelectedClientsProps) {
     <section className="overflow-hidden pt-20 pb-[var(--space-md)] md:pt-0 md:pb-[var(--space-2xl)]">
       <div className="mb-[var(--space-lg)] px-[var(--gutter)]">
         <h2 className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--zone-fg-half)' }}>
-          Trusted by the ambitious<span className="text-accent">.</span>
+          {t('trustedBy')}<span className="text-accent">.</span>
         </h2>
         <div className="h-px" style={{ backgroundColor: 'var(--zone-fg-subtle)' }} />
       </div>

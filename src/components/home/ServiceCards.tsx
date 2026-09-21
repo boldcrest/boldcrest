@@ -4,25 +4,25 @@ import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
 import { useStartProject } from '@/components/start-project/StartProjectProvider'
+import { useTranslations } from 'next-intl'
 
 const capabilities = [
   {
     category: 'Brand Dev',
     number: '01',
     color: '#DA291C',
-    heading: 'Brand Dev',
+    headingKey: 'brandDev',
     abbr: 'BRND DEV',
     href: '/services/brand-development',
     tags: [
-      'Visual Identity',
-      'Packaging Design',
-      'Creative Advertising',
-      'Brand Strategy',
-      'Logo Design',
-      'Brand Guidelines',
+      'visualIdentity',
+      'packagingDesign',
+      'creativeAdvertising',
+      'brandStrategy',
+      'logoDesign',
+      'brandGuidelines',
     ],
-    description:
-      "We take what your brand is, what it wants to become, and how people should remember it, then turn that into an identity people can recognize, trust, and return to.",
+    descriptionKey: 'brandDevDesc',
     icon: (
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
         <path d="M20 4L4 14v12l16 10 16-10V14L20 4z" stroke="currentColor" strokeWidth="1.5" />
@@ -34,19 +34,18 @@ const capabilities = [
     category: 'Still & Motion',
     number: '02',
     color: '#f9b311',
-    heading: 'Still & Motion',
+    headingKey: 'stillMotion',
     abbr: 'STL & MTN',
     href: '/services/still-motion',
     tags: [
-      'Photography',
-      'Videography',
-      'Animation',
-      'Motion Graphics',
-      'Post-Production',
-      'Color Grading',
+      'photography',
+      'videography',
+      'animation',
+      'motionGraphics',
+      'postProduction',
+      'colorGrading',
     ],
-    description:
-      'Frames that hold the eye. Films that carry the feeling. Every shot, cut, and grade shaped with a clear creative point.',
+    descriptionKey: 'stillMotionDesc',
     icon: (
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
         <rect x="6" y="10" width="28" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
@@ -59,19 +58,18 @@ const capabilities = [
     category: 'Communications',
     number: '03',
     color: '#004c95',
-    heading: 'Comms',
+    headingKey: 'comms',
     abbr: 'COMMS',
     href: '/services/communication',
     tags: [
-      'Social Media',
-      'Digital Marketing',
-      'Public Relations',
-      'Content Strategy',
-      'Campaign Management',
-      'Media Planning',
+      'socialMedia',
+      'digitalMarketing',
+      'publicRelations',
+      'contentStrategy',
+      'campaignManagement',
+      'mediaPlanning',
     ],
-    description:
-      'Strategy, content, and distribution, orchestrated to reach the right audience at the right moment.',
+    descriptionKey: 'commsDesc',
     icon: (
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
         <path d="M8 12h24v16H22l-6 4v-4H8V12z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -84,6 +82,8 @@ const capabilities = [
 ]
 
 export default function ServiceCards() {
+  const t = useTranslations('Home')
+  const ts = useTranslations('Services')
   const containerRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const { open: openStartProject } = useStartProject()
@@ -167,7 +167,7 @@ export default function ServiceCards() {
             menu to the heading matches the gap below it (pb-6). */}
         <div className="flex items-center px-[var(--gutter)] pt-[6rem] pb-6">
           <p className="text-[0.75rem] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--zone-fg-half)' }}>
-            What We Do
+            {t('whatWeDo')}
           </p>
         </div>
 
@@ -200,10 +200,10 @@ export default function ServiceCards() {
                 {/* Top: heading + description */}
                 <div>
                   <h2 className="mb-4 font-display text-[clamp(2.5rem,5vw,5.5rem)] font-bold leading-[0.95] tracking-[-0.03em]" style={{ color: 'var(--zone-fg)' }}>
-                    {cap.heading}
+                    {t(cap.headingKey)}
                   </h2>
                   <p className="max-w-[320px] text-[0.85rem] leading-[1.6]" style={{ color: 'var(--zone-fg-muted)' }}>
-                    {cap.description}
+                    {t(cap.descriptionKey)}
                   </p>
                 </div>
 
@@ -234,7 +234,7 @@ export default function ServiceCards() {
                         e.currentTarget.style.color = 'var(--zone-fg-half)'
                       }}
                     >
-                      {tag}
+                      {ts(tag)}
                     </Link>
                   ))}
                 </div>
@@ -248,7 +248,7 @@ export default function ServiceCards() {
           <div className="relative flex h-full w-screen shrink-0 flex-col justify-between bg-[#0a0a0a] py-10 pl-[var(--gutter)] pr-[var(--gutter)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden] md:w-[33.333vw] md:min-w-[400px] md:px-[clamp(1.5rem,2vw,2.5rem)]">
             <div>
               <h2 className="mb-8 font-display text-[clamp(2.5rem,5vw,5.5rem)] font-bold leading-[0.95] tracking-[-0.03em] text-white">
-                Start a<br />Project
+                {t('startA')}<br />{t('project')}
               </h2>
             </div>
 
@@ -260,9 +260,7 @@ export default function ServiceCards() {
                 text). A separate, isolated layer can't be occluded by that tile. */}
             <div className="relative z-10 flex flex-col gap-6 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
               <p className="max-w-[320px] text-[0.85rem] leading-[1.7] text-white/80">
-                We live in the details. The pixels, the strategy, the
-                timing. If you&apos;re building something real, we&apos;ll
-                meet you there.
+                {t('serviceIntro')}
               </p>
               <button
                 type="button"
@@ -275,8 +273,8 @@ export default function ServiceCards() {
                     className="flex flex-col transition-transform duration-[0.5s] group-hover/chat:-translate-y-1/2"
                     style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}
                   >
-                    <span className="leading-[1.2]">Let&apos;s Chat</span>
-                    <span className="leading-[1.2]">Let&apos;s Chat</span>
+                    <span className="leading-[1.2]">{t('letsChat')}</span>
+                    <span className="leading-[1.2]">{t('letsChat')}</span>
                   </span>
                 </span>
                 <svg

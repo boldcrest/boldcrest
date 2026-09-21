@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
+import { useLocale, useTranslations } from 'next-intl'
 
 /* Desktop lines (md+) */
 const DESKTOP_LINES = [
@@ -44,6 +45,45 @@ const MOBILE_LINES = [
     { text: 'unseen', effect: 'unseen' },
   ],
 ]
+
+
+/* ── Hero copy per locale ───────────────────────────────────────────────────
+   English keeps the hand-tuned arrays above: they encode where the line breaks
+   fall at each breakpoint, which no amount of splitting can reproduce.
+
+   For every other language the lines are built from the translated sentences.
+   Four words carry a hover effect; translators supplied each one AS IT APPEARS
+   in their sentence (Albanian's "unseen" is the two-word "në hije"), so the
+   phrases are matched longest-first and kept as a single token. The trailing
+   full stop is dropped because the component draws its own accent dot. */
+type HeroWord = { text: string; effect: string | null }
+
+function splitWithEffects(
+  line: string,
+  effects: { phrase: string; effect: string }[],
+): HeroWord[] {
+  const ordered = [...effects].sort((a, b) => b.phrase.length - a.phrase.length)
+  const out: HeroWord[] = []
+  let rest = line.replace(/[.]\s*$/, '').trim()
+  while (rest.length > 0) {
+    const hit = ordered.find(
+      (e) => e.phrase && rest.toLowerCase().startsWith(e.phrase.toLowerCase()),
+    )
+    if (hit) {
+      out.push({ text: rest.slice(0, hit.phrase.length), effect: hit.effect })
+      rest = rest.slice(hit.phrase.length).trim()
+      continue
+    }
+    const next = rest.indexOf(' ')
+    if (next === -1) {
+      out.push({ text: rest, effect: null })
+      break
+    }
+    out.push({ text: rest.slice(0, next), effect: null })
+    rest = rest.slice(next + 1).trim()
+  }
+  return out
+}
 
 /* Entrance reveals LINE BY LINE (Apple "take a closer look." style), not word by
    word. The catch: the logical line arrays above are only a starting point — at
@@ -294,12 +334,29 @@ export default function Hero() {
   // Honor the OS "reduce motion" setting: the line slide becomes a gentle fade,
   // no transform. framer reads the same media query, so this stays in sync.
   const reduce = useReducedMotion() ?? false
+  const locale = useLocale()
+  const t = useTranslations('Home')
+
+  let desktopLines = DESKTOP_LINES as HeroWord[][]
+  let mobileLines = MOBILE_LINES as HeroWord[][]
+  if (locale !== 'en') {
+    const effects = [
+      { phrase: t('heroWordIdentities'), effect: 'identities' },
+      { phrase: t('heroWordPerceptions'), effect: 'perceptions' },
+      { phrase: t('heroWordBold'), effect: 'bold' },
+      { phrase: t('heroWordUnseen'), effect: 'unseen' },
+    ]
+    const one = splitWithEffects(t('heroLine1'), effects)
+    const two = splitWithEffects(t('heroLine2'), effects)
+    desktopLines = [one, two]
+    mobileLines = [one, two]
+  }
 
   return (
     <section className="px-[var(--gutter)] pt-[clamp(8rem,17vh,14rem)] pb-[var(--space-2xl)] landscape-short:pt-[5.5rem] landscape-short:pb-[var(--space-lg)]">
       {/* Desktop lines */}
       <AnimatedHeading
-        lines={DESKTOP_LINES}
+        lines={desktopLines}
         stagger={LINE_STAGGER_DESKTOP}
         reduce={reduce}
         className="hidden cursor-default select-none [-webkit-tap-highlight-color:transparent] font-display text-[clamp(3rem,8vw,7rem)] font-bold leading-[1.05] tracking-[-0.03em] md:block landscape-short:text-[2.75rem]"
@@ -307,7 +364,7 @@ export default function Hero() {
 
       {/* Mobile lines */}
       <AnimatedHeading
-        lines={MOBILE_LINES}
+        lines={mobileLines}
         stagger={LINE_STAGGER_MOBILE}
         reduce={reduce}
         className="cursor-default select-none [-webkit-tap-highlight-color:transparent] font-display text-[clamp(3rem,12vw,5rem)] font-bold leading-[1.05] tracking-[-0.03em] md:hidden"

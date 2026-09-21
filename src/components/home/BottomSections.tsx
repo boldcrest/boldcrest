@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useRef, useState, useEffect } from 'react'
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
@@ -71,6 +73,10 @@ function RevealWord({
 
 /* ── Team strip: stacked portraits (left 40%) + pull quote (right 60%) ── */
 function TeamStrip({ members }: { members: TeamMember[] }) {
+  const t = useTranslations('Home')
+  // Desktop headline carries a button INSIDE the sentence; translators marked
+  // its place with ⟦ ⟧ so word order can differ per language.
+  const [egosBefore, egosButton = '', egosAfter = ''] = t('noEgos').split(/⟦|⟧/)
   // A random 4 of the whole team, re-picked on each load (set in the mount
   // effect below) so the strip isn't always the same first four — over refreshes
   // everyone gets a turn. Empty until mounted, which also avoids a hydration
@@ -144,10 +150,9 @@ function TeamStrip({ members }: { members: TeamMember[] }) {
             className="mb-6 hidden font-display text-[clamp(2.5rem,6vw,6rem)] font-bold leading-[1.1] tracking-[-0.03em] md:block"
             style={{ color: 'var(--zone-fg, #EDEDED)' }}
           >
-            No egos<span className="text-accent">,</span><br />
-            just{' '}
-            <InlineButton href="/people" label="The Team" showArrow adaptive /><br />
-            behind the bold<span className="text-accent">.</span>
+            {egosBefore}
+            <InlineButton href="/people" label={egosButton} showArrow adaptive />
+            {egosAfter}
           </p>
 
           {/* Mobile — text + paragraph + full-width button */}
@@ -156,17 +161,13 @@ function TeamStrip({ members }: { members: TeamMember[] }) {
               className="font-display text-[clamp(2.5rem,10vw,4rem)] font-bold leading-[1.1] tracking-[-0.03em]"
               style={{ color: 'var(--zone-fg, #EDEDED)' }}
             >
-              No egos<span className="text-accent">,</span><br />
-              just the team<br />
-              behind the bold<span className="text-accent">.</span>
+              {t('noEgosMobile')}
             </p>
             <p
               className="mt-5 text-[1rem] leading-[1.75]"
               style={{ color: 'var(--zone-fg-muted, rgba(237,237,237,0.45))' }}
             >
-              Strategists, designers, filmmakers, and communicators who
-              care about the work as much as you do. No egos, just
-              craft and conviction.
+              {t('teamDesc')}
             </p>
             <Link
               href="/people"
@@ -179,7 +180,7 @@ function TeamStrip({ members }: { members: TeamMember[] }) {
               // the desktop "The Team" adaptive pill).
               style={{ backgroundColor: 'var(--zone-bg, #0a0a0a)', color: 'var(--zone-contrast, #EDEDED)', borderColor: 'var(--zone-contrast-faint, rgba(237,237,237,0.3))' }}
             >
-              Meet the People
+              {t('meetThePeople')}
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -191,9 +192,7 @@ function TeamStrip({ members }: { members: TeamMember[] }) {
             className="hidden max-w-[520px] text-[1.05rem] leading-[1.75] md:block"
             style={{ color: 'var(--zone-fg-muted, rgba(237,237,237,0.45))' }}
           >
-            Strategists, designers, filmmakers, and communicators who
-            care about the work as much as you do. No egos, just
-            craft and conviction.
+            {t('teamDesc')}
           </p>
         </motion.div>
 
@@ -396,6 +395,7 @@ function DiaryCardImage({ post, index }: { post: DiaryPost; index: number }) {
 }
 
 function DiarySection({ posts }: { posts: DiaryPost[] }) {
+  const t = useTranslations('Home')
   const entries = posts.length > 0 ? posts.slice(0, 4) : PLACEHOLDER_POSTS
   const isInView = useInView(useRef<HTMLDivElement>(null), { once: true, margin: '-100px' })
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -407,7 +407,7 @@ function DiarySection({ posts }: { posts: DiaryPost[] }) {
       <div className="px-[var(--gutter)]">
         <div className="mb-[var(--space-lg)] flex items-center justify-between">
           <h2 className="font-display text-[0.75rem] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--zone-fg-half)' }}>
-            The Diary
+            {t('theDiary')}
           </h2>
           <Link
             href="/diary"
@@ -416,8 +416,8 @@ function DiarySection({ posts }: { posts: DiaryPost[] }) {
           >
             <span className="inline-flex overflow-hidden" style={{ height: '1.2em' }}>
               <span className="flex flex-col transition-transform duration-[0.5s] group-hover/link:-translate-y-1/2" style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}>
-                <span className="leading-[1.2]">See All</span>
-                <span className="leading-[1.2]">See All</span>
+                <span className="leading-[1.2]">{t('seeAll')}</span>
+                <span className="leading-[1.2]">{t('seeAll')}</span>
               </span>
             </span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="transition-transform duration-[0.5s] group-hover/link:translate-x-1" style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}>
@@ -458,17 +458,19 @@ function PeopleSection() {
 
 /* ── 4. Coffee CTA ── */
 function CoffeeCTA() {
+  const t = useTranslations('Home')
+  const [cBefore, cButton = '', cAfter = ''] = t('coffee').split(/⟦|⟧/)
   return (
     <section className="border-t border-border px-[var(--gutter)] py-[var(--space-2xl)] md:py-[var(--space-3xl)]">
       <div className="mx-auto max-w-[var(--max-width)]">
         <div className="flex flex-col items-center text-center">
           <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary md:mb-6 md:text-[0.75rem]">
-            What are you waiting for?
+            {t('whatWaiting')}
           </p>
           <p className="font-display text-[clamp(2rem,8vw,8rem)] font-bold leading-[1.1] tracking-[-0.03em]">
-            Let&apos;s have{' '}
-            <InlineButton href="/contact" label="A Coffee" showArrow />{' '}
-            together<span className="text-accent">.</span>
+            {cBefore}
+            <InlineButton href="/contact" label={cButton} showArrow />
+            {cAfter}
           </p>
         </div>
       </div>

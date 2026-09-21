@@ -72,7 +72,7 @@
     "serviceIntro": "Nous vivons pour les détails. Les pixels, la stratégie, le bon moment. Si vous construisez quelque chose de réel, nous serons à vos côtés.",
     "letsChat": "Parlons-en",
     "stillMotionDesc": "Des images qui retiennent le regard. Des films qui transmettent une émotion. Chaque prise, chaque montage et chaque étalonnage suivent une intention créative claire.",
-    "comms": "Communication",
+    "comms": "Comm.",
     "commsDesc": "Stratégie, contenu et diffusion, coordonnés pour toucher le bon public au bon moment.",
     "noEgos": "Pas d’ego, juste ⟦l’équipe⟧ derrière l’audace.",
     "noEgosMobile": "Pas d’ego, juste l’équipe derrière l’audace.",
@@ -82,7 +82,10 @@
     "whatWaiting": "Qu’attendez-vous ?",
     "coffee": "Prenons ⟦un café⟧ ensemble.",
     "noEgosLabel": "Sans ego",
-    "go": "Osez"
+    "go": "Osez",
+    "brandDev": "Marque",
+    "stillMotion": "Photo & Vidéo",
+    "brandDevDesc": "Nous partons de ce qu’est votre marque, de ce qu’elle veut devenir et de la façon dont les gens devraient s’en souvenir, puis nous en faisons une identité qu’ils peuvent reconnaître, croire et retrouver."
   },
   "Services": {
     "visualIdentity": "Identité visuelle",
@@ -109,7 +112,8 @@
     "explore": "Découvrir",
     "exploreOther": "Découvrez nos autres services",
     "mediaPlanning": "Planification média",
-    "process": "Processus"
+    "process": "Processus",
+    "motionGraphics": "Motion design"
   },
   "People": {
     "eyebrow": "Équipe",
