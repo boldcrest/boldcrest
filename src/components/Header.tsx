@@ -2,19 +2,24 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import LocaleLink from './LocaleLink'
+import { useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import MobileMenu from './MobileMenu'
+import LanguageButton from './LanguageButton'
 import { useStartProject } from './start-project/StartProjectProvider'
 import { useFormEmbed } from '@/lib/embed'
 
+// `key` indexes the Nav namespace in messages/*.json; the visible label comes
+// from the catalogue so it follows the active locale.
 const navLinks = [
-  { href: '/work', label: 'Work' },
-  { href: '/services', label: 'Services' },
-  { href: '/people', label: 'People' },
-  { href: '/diary', label: 'Diary' },
-  { href: '/contact', label: 'Contact' },
-]
+  { href: '/work', key: 'work' },
+  { href: '/services', key: 'services' },
+  { href: '/people', key: 'people' },
+  { href: '/diary', key: 'diary' },
+  { href: '/contact', key: 'contact' },
+] as const
 
 export default function Header() {
   // Two independent scroll signals, OR'd together. Normal pages drive
@@ -28,6 +33,34 @@ export default function Header() {
   const scrolled = realScrolled || virtualScrolled
   const [mobileOpen, setMobileOpen] = useState(false)
   const [vw, setVw] = useState(0)
+  // The CTA's border is an inline style (it animates between the pill and the
+  // compact "+"), so :hover can't reach it — track hover here the same way the
+  // contact form's SEND pill does, and brighten the stroke to match the
+  // language button beside it.
+  const t = useTranslations('Nav')
+  const [ctaHover, setCtaHover] = useState(false)
+  // `auto` can be animated TO but not FROM, and it broke BOTH axes: collapsing,
+  // the width snapped shut while expanding tweened; expanding, the height
+  // snapped straight to the content height (35.2 -> 16.4px, since padding is
+  // still 0 at that instant) and then grew back, so the pill visibly shrank
+  // before reaching full size. Measure the label once and drive width AND
+  // height with real lengths in both states. Falls back to `auto` until
+  // measured, so SSR and first paint are unchanged.
+  const ctaLabelRef = useRef<HTMLSpanElement>(null)
+  const [ctaFull, setCtaFull] = useState<{ w: number; h: number } | null>(null)
+  useEffect(() => {
+    const measure = () => {
+      const el = ctaLabelRef.current
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      // label box + the pill's padding (1.4rem across, 0.6rem down) + 1px border
+      setCtaFull({ w: el.scrollWidth + 2 * 22.4 + 2, h: r.height + 2 * 9.6 + 2 })
+    }
+    measure()
+    document.fonts?.ready.then(measure).catch(() => {})
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
   const pathname = usePathname()
   const isStudio = pathname?.startsWith('/studio')
   const { open: openStartProject } = useStartProject()
@@ -195,9 +228,10 @@ export default function Header() {
           >
             {/* Logo — goes home; if already home, smooth-scrolls to the top
                 (and resets slide-deck pages) instead of doing nothing. */}
-            <Link
-              href={`${linkBase}/`}
-              aria-label="BoldCrest — home"
+            <LocaleLink
+              href="/"
+              base={linkBase}
+              aria-label={t('home')}
               className="z-10 flex items-center"
               // Anchors are natively draggable: a tap with a few px of finger/
               // mouse travel starts a link-drag and Chrome flashes its drag
@@ -235,15 +269,16 @@ export default function Header() {
                   d="M321.01,81.6v-2.75c-.93-.36-1.75-.71-2.59-.99-8.55-2.85-17.11-5.71-25.67-8.52-26.48-8.7-52.96-17.4-79.43-26.11h0s-2.56-.84-2.56-.84l-11.78-3.92-6.23-2.08-2.65.89s0,0,0,0c-2.13.72-4.26,1.43-6.39,2.14h0s-14.07,4.73-14.07,4.73h-.02c-27.79,9.32-55.59,18.64-83.38,27.95-6.55,2.19-13.08,4.42-19.69,6.66v2.61c0,45.43.01,90.86,0,136.28,0,13.38,2.79,26.12,8.44,38.25,8.64,18.55,22.04,33.2,37.91,45.71,22.54,17.77,47.81,30.42,74.74,39.82,1.51.53,6.13,2.14,6.13,2.14l5.03-1.78c.5-.17,1-.34,1.51-.52,1.29-.45,2.58-.91,3.87-1.38,14.85-5.43,29.16-12.08,42.9-19.98,18.41-10.59,35.35-23.05,49.24-39.32,16.32-19.11,24.99-40.88,24.78-66.35-.37-44.22-.1-88.44-.1-132.66ZM297.55,238.3c-17.69-24.61-35.31-49.27-52.91-73.95-6.98-9.78-15.27-9.84-22.23-.1-15.56,21.78-31.08,43.6-46.75,65.3-5.93,8.2-13.86,8.15-19.82.08-4.45-6.01-8.72-12.16-13.05-18.25-7.01-9.85-15.04-9.91-22.15-.04-8.87,12.31-17.56,24.76-26.56,36.98-.39-.78-.78-1.57-1.15-2.36-4.8-10.3-7.17-21.12-7.17-32.48.02-38.57,0-77.15,0-115.72v-2.22c5.61-1.9,11.16-3.79,16.72-5.65,21.05-7.06,42.1-14.11,63.15-21.17h0s25.8-8.61,25.8-8.61l1.47-.49,108.92,35.99v2.33c0,37.55-.23,75.1.09,112.65.08,9.86-1.41,19.06-4.36,27.7Z"
                 />
               </svg>
-            </Link>
+            </LocaleLink>
 
             {/* Desktop Nav — absolutely centered so the logo/CTA widths can't
                 pull it off-center */}
             <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 md:flex">
               {navLinks.map((link) => (
-                <Link
+                <LocaleLink
                   key={link.href}
-                  href={`${linkBase}${link.href}`}
+                  href={link.href}
+                  base={linkBase}
                   onClick={(e) => {
                     // Clicking the current page's nav item returns to the top
                     // (slide-deck pages reset their deck via the event).
@@ -269,30 +304,50 @@ export default function Header() {
                       className="flex flex-col transition-transform duration-[0.5s] group-hover:-translate-y-1/2"
                       style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}
                     >
-                      <span className="leading-[1.2]">{link.label}</span>
-                      <span className="leading-[1.2]">{link.label}</span>
+                      <span className="leading-[1.2]">{t(link.key)}</span>
+                      <span className="leading-[1.2]">{t(link.key)}</span>
                     </span>
                   </span>
-                </Link>
+                </LocaleLink>
               ))}
             </nav>
+
+            {/* Right cluster — language switcher + CTA. Grouped in one flex box
+                so the parent's justify-between still resolves to logo-left /
+                cluster-right; as separate children it would space them out. */}
+            <div className="hidden items-center gap-2 md:flex">
+              <LanguageButton compact={ctaCompact} />
 
             {/* CTA — full text when not scrolled, circle + when scrolled */}
             <button
               type="button"
               onClick={openStartProject}
-              className="group relative z-10 hidden cursor-pointer items-center justify-center overflow-hidden transition-all md:inline-flex"
+              onMouseEnter={() => setCtaHover(true)}
+              onMouseLeave={() => setCtaHover(false)}
+              className="group relative z-10 cursor-pointer inline-flex items-center justify-center overflow-hidden"
               style={{
-                width: ctaCompact ? '2.2rem' : 'auto',
-                height: ctaCompact ? '2.2rem' : 'auto',
+                width: ctaCompact ? '2.2rem' : ctaFull ? `${ctaFull.w}px` : 'auto',
+                height: ctaCompact ? '2.2rem' : ctaFull ? `${ctaFull.h}px` : 'auto',
                 padding: ctaCompact ? '0' : '0.6rem 1.4rem',
                 borderRadius: 'var(--radius-pill)',
                 borderWidth: '1px',
                 borderStyle: 'solid',
-                borderColor: ctaCompact ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.45)',
-                backgroundColor: ctaCompact ? 'rgba(255,255,255,0.08)' : '#000',
-                transitionDuration: '500ms',
-                transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
+                borderColor: ctaHover
+                  ? 'rgba(255,255,255,0.6)'
+                  : ctaCompact
+                    ? 'rgba(255,255,255,0.35)'
+                    : 'rgba(255,255,255,0.45)',
+                backgroundColor: ctaCompact ? 'transparent' : '#000',
+                // GEOMETRY MUST MATCH THE HEADER'S OWN 650ms. The cluster is
+                // pulled right as this button narrows and pushed left as the
+                // inner container's padding grows to 1.25rem; at 500ms vs
+                // 650ms the width finished first, so both buttons shot ~5px
+                // past their final position and drifted back — a visible
+                // wobble. Same duration and curve for both movements makes the
+                // combined travel monotonic. Colour stays at 500ms so hover
+                // still matches the language button beside it.
+                transition:
+                  'width 650ms cubic-bezier(0.23, 1, 0.32, 1), height 650ms cubic-bezier(0.23, 1, 0.32, 1), padding 650ms cubic-bezier(0.23, 1, 0.32, 1), border-color 500ms cubic-bezier(0.23, 1, 0.32, 1), background-color 500ms cubic-bezier(0.23, 1, 0.32, 1)',
               }}
             >
               <span
@@ -300,7 +355,13 @@ export default function Header() {
                 style={{
                   opacity: ctaCompact ? 1 : 0,
                   transform: ctaCompact ? 'scale(1)' : 'scale(0.5)',
-                  transitionDuration: '400ms',
+                  // Expanding, the + clears out fast and with no delay so it is
+                  // gone before the label arrives — the two used to cross-fade
+                  // on the same spot, leaving a ghost + over the emerging text.
+                  // Collapsing it waits for the label to go and the pill to
+                  // narrow before coming back.
+                  transitionDuration: ctaCompact ? '260ms' : '140ms',
+                  transitionDelay: ctaCompact ? '200ms' : '0ms',
                   transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
                 }}
               >
@@ -310,11 +371,27 @@ export default function Header() {
               </span>
 
               <span
-                className="relative z-10 inline-flex overflow-hidden text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-text-secondary transition-all group-hover:text-white"
+                ref={ctaLabelRef}
+                // whitespace-nowrap is load-bearing: the label is laid out at
+                // its full width inside the 35px collapsed button, so without it
+                // the text wraps to "Start" / "a Project" and the 1.2em clip
+                // shows only the first line — the label appeared to glitch
+                // through "Start" before snapping to the full words.
+                className="relative z-10 inline-flex overflow-hidden whitespace-nowrap text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-text-secondary transition-all group-hover:text-white"
                 style={{
-                  height: ctaCompact ? 0 : '1.2em',
+                  // Height stays put. Animating it 0 -> 1.2em made the words
+                  // unfold vertically while the pill was still narrow, so the
+                  // text was squashed AND clipped horizontally (it is laid out
+                  // at its full 131px from the first frame, inside a 35px
+                  // button, and reads as growing out of its own middle).
+                  height: '1.2em',
                   opacity: ctaCompact ? 0 : 1,
-                  transitionDuration: '400ms',
+                  // Delayed past the width curve — which is front-loaded, ~98%
+                  // done by 210ms — so the label only appears once there is a
+                  // pill to sit in. Collapsing, it leaves immediately.
+                  transitionProperty: 'opacity',
+                  transitionDuration: ctaCompact ? '120ms' : '300ms',
+                  transitionDelay: ctaCompact ? '0ms' : '200ms',
                   transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
                 }}
               >
@@ -322,11 +399,12 @@ export default function Header() {
                   className="flex flex-col transition-transform duration-[0.5s] group-hover:-translate-y-1/2"
                   style={{ transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)' }}
                 >
-                  <span className="leading-[1.2]">Start a Project</span>
-                  <span className="leading-[1.2]">Start a Project</span>
+                  <span className="leading-[1.2]">{t('startProject')}</span>
+                  <span className="leading-[1.2]">{t('startProject')}</span>
                 </span>
               </span>
             </button>
+            </div>
 
             {/* Mobile Hamburger ↔ X — ONE element that geometrically morphs (no
                 fade). Two centred strokes: the top is full width; the bottom is
@@ -339,7 +417,7 @@ export default function Header() {
             <button
               className="relative z-10 h-7 w-7 md:hidden"
               onClick={() => (mobileOpen ? closeMenu() : openMenu())}
-              aria-label={mobileOpen ? 'Close menu' : 'Toggle menu'}
+              aria-label={mobileOpen ? t('closeMenu') : t('toggleMenu')}
               style={{ marginRight: '7px' }}
             >
               <motion.span

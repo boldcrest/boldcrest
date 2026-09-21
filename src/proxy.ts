@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import createIntlMiddleware from 'next-intl/middleware'
+import { routing } from '@/i18n/routing'
+
+const intlMiddleware = createIntlMiddleware(routing)
 
 /**
  * Vanity subdomains that EMBED a ClickUp form inside the BoldCrest site.
@@ -67,7 +71,10 @@ export function proxy(req: NextRequest) {
   const embedPath = SUBDOMAIN_EMBEDS[host]
   if (embedPath) {
     const url = req.nextUrl.clone()
-    url.pathname = embedPath
+    // Prefixed with the default locale: this rewrite returns immediately and
+    // never reaches the i18n middleware below, and every route now lives under
+    // the [locale] segment — an unprefixed pathname would 404.
+    url.pathname = `/${routing.defaultLocale}${embedPath}`
     return NextResponse.rewrite(url)
   }
 
@@ -109,7 +116,12 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect('https://careers.boldcrest.com', 308)
   }
 
-  return NextResponse.next()
+  // Everything that reaches here is a real page on the canonical host, so hand
+  // it to the i18n middleware LAST — after the host-based rules above have had
+  // their say. ALL app routes now live under [locale] (including /studio and
+  // the embed targets), so nothing is excluded; with localePrefix 'as-needed'
+  // the public URLs are unchanged.
+  return intlMiddleware(req)
 }
 
 export const config = {

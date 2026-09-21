@@ -1,0 +1,790 @@
+'use client'
+
+import { useRef, useState, useEffect } from 'react'
+import { motion, useInView } from 'framer-motion'
+import Link from 'next/link'
+import Image from 'next/image'
+import { CTAButton } from '@/components/MagneticButton'
+import ServiceCTA from '@/components/services/ServiceCTA'
+import FAQSection from '@/components/services/FAQSection'
+import { urlFor } from '@/sanity/lib/image'
+
+interface Service {
+  _id: string
+  name: string
+  slug: { current: string }
+  category: string
+  order: number
+}
+
+interface CategoryGroup {
+  category: string
+  services: Service[]
+}
+
+interface FAQItem {
+  question: string
+  answer: string
+}
+
+interface Partner {
+  _id: string
+  name: string
+  logo?: { asset: { _ref: string } }
+}
+
+// Editable copy from Sanity (servicesPage singleton). All optional — falls
+// back to the constants/inline strings below so the page never breaks.
+export interface ServicesMainContent {
+  hero?: { eyebrow?: string; lines?: string[] }
+  disciplinesLabel?: string
+  disciplines?: {
+    number?: string
+    heading?: string
+    abbr?: string
+    ctaLabel?: string
+    tags?: string[]
+    description?: string
+  }[]
+  stats?: { projectsLabel?: string; partnersLabel?: string; daysLabel?: string }
+  clientLogosEyebrow?: string
+  processEyebrow?: string
+  processHeading?: string
+  processSteps?: { number: string; title: string; description: string }[]
+  ctaSection?: {
+    label?: string
+    heading?: string
+    description?: string
+    buttonLabel?: string
+  }
+}
+
+interface ServicesPageClientProps {
+  categories: CategoryGroup[]
+  faqItems?: FAQItem[]
+  partners?: Partner[]
+  content?: ServicesMainContent | null
+}
+
+const capabilities = [
+  {
+    category: 'Brand Dev',
+    number: '01',
+    color: '#DA291C',
+    heading: 'Brand\nDevelopment',
+    abbr: 'BRND DEV',
+    href: '/services/brand-development',
+    ctaLabel: 'Explore',
+    tags: [
+      'Visual Identity',
+      'Packaging Design',
+      'Creative Advertising',
+      'Brand Strategy',
+      'Logo Design',
+      'Brand Guidelines',
+    ],
+    description:
+      "We take what your brand is, what it wants to become, and how people should remember it, then turn that into an identity people can recognize, trust, and return to.",
+  },
+  {
+    category: 'Still & Motion',
+    number: '02',
+    color: '#f9b311',
+    heading: 'Still &\nMotion',
+    abbr: 'STL & MTN',
+    href: '/services/still-motion',
+    ctaLabel: 'Explore',
+    tags: [
+      'Photography',
+      'Videography',
+      'Animation',
+      'Motion Graphics',
+      'Post-Production',
+      'Color Grading',
+    ],
+    description:
+      'Frames that hold the eye. Films that carry the feeling. Every shot, cut, and grade shaped with a clear creative point.',
+  },
+  {
+    category: 'Communications',
+    number: '03',
+    color: '#004c95',
+    heading: 'Communications',
+    abbr: 'COMMS',
+    href: '/services/communication',
+    ctaLabel: 'Explore',
+    tags: [
+      'Social Media',
+      'Digital Marketing',
+      'Public Relations',
+      'Content Strategy',
+      'Campaign Management',
+      'Media Planning',
+    ],
+    description:
+      "A great brand in silence is a waste. We put yours where it belongs, in front of the right people, saying the right thing, at the right moment.",
+  },
+]
+
+/* ── Word-by-word reveal ── */
+function WordReveal({
+  text,
+  className,
+}: {
+  text: string
+  className?: string
+}) {
+  // Reveal the manifesto with an on-MOUNT word stagger. This is the hero (top of
+  // the page) and always in view, so we don't gate on scroll position (the old
+  // scroll-linked reveal never completed up here — the words just sat faint) or
+  // on an IntersectionObserver; framer's initial→animate runs on mount, so the
+  // stagger plays once and settles fully visible every time the page loads.
+  const words = text.split(' ')
+
+  return (
+    <span className={className}>
+      {words.map((word, i) => (
+        <WordItem key={i} word={word} delay={i * 0.05} />
+      ))}
+    </span>
+  )
+}
+
+function WordItem({
+  word,
+  delay,
+}: {
+  word: string
+  delay: number
+}) {
+  // Tint a trailing sentence period to match the muted accent dot used in the
+  // other page heroes. WordReveal only renders the services manifesto, so this
+  // only touches the lines that end in a full stop.
+  const hasDot = word.endsWith('.')
+  const base = hasDot ? word.slice(0, -1) : word
+
+  return (
+    <motion.span
+      initial={{ opacity: 0.15, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+      className="mr-[0.3em] inline-block"
+    >
+      {base}
+      {hasDot && <span className="text-accent">.</span>}
+    </motion.span>
+  )
+}
+
+/* ── Expandable Service Cards ── */
+function ServiceShowcase({
+  categories,
+  label,
+  disciplines,
+}: {
+  categories: CategoryGroup[]
+  label: string
+  disciplines: typeof capabilities
+}) {
+  const [active, setActive] = useState(0)
+  const ref = useRef<HTMLElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-50px' })
+
+  return (
+    <section
+      ref={ref}
+      className="px-[var(--gutter)] pt-8 pb-[72px] md:pt-10 md:pb-[120px]"
+    >
+      <div>
+      {/* Section header */}
+      <motion.p
+        className="mb-10 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
+        initial={{ opacity: 0 }}
+        animate={isInView ? { opacity: 1 } : {}}
+        transition={{ duration: 0.6 }}
+      >
+        {label}
+      </motion.p>
+
+      {/* Cards */}
+      <motion.div
+        className="flex h-[clamp(480px,72svh,620px)] gap-3 md:h-[640px]"
+        initial={{ opacity: 0, y: 30 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {disciplines.map((cap, i) => {
+          const isActive = active === i
+          const sanityServices =
+            categories.find((c) => c.category === cap.category)?.services || []
+          const tags =
+            sanityServices.length > 0
+              ? sanityServices.map((s) => s.name)
+              : cap.tags
+
+          const darkShade = `color-mix(in srgb, ${cap.color} 50%, black)`
+
+          return (
+            <motion.div
+              key={cap.category}
+              className="relative cursor-pointer overflow-hidden rounded-xl"
+              style={{ background: cap.color }}
+              animate={{ flex: isActive ? 5 : 0.85 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              onClick={() => setActive(i)}
+            >
+              {/* Collapsed state */}
+              <motion.div
+                className="absolute inset-0 flex flex-col"
+                animate={{ opacity: isActive ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
+                style={{ pointerEvents: isActive ? 'none' : 'auto' }}
+              >
+                <span className="sr-only">{cap.number}</span>
+                {/* pt-5 on mobile matches the expanded card's `p-5` so the
+                    collapsed vertical titles start at the SAME y as the open
+                    card's heading. Desktop keeps pt-12 = the expanded p-12. */}
+                <div className="flex flex-1 items-start justify-center pt-5 md:pt-12">
+                  <span
+                    className="font-display text-[clamp(1.3rem,1.9vw,1.9rem)] font-bold tracking-[-0.01em]"
+                    style={{
+                      writingMode: 'vertical-rl',
+                      whiteSpace: 'nowrap',
+                      color: darkShade,
+                    }}
+                  >
+                    {cap.category}
+                  </span>
+                </div>
+                <div
+                  className="flex h-[110px] items-center justify-center md:h-[130px]"
+                  style={{ background: darkShade }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 4v16M4 12h16" stroke={cap.color} strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </motion.div>
+
+              {/* Expanded state */}
+              <motion.div
+                className="absolute inset-0"
+                animate={{ opacity: isActive ? 1 : 0 }}
+                transition={{ duration: 0.4, delay: isActive ? 0.2 : 0 }}
+                style={{ pointerEvents: isActive ? 'auto' : 'none' }}
+              >
+                {/* Entire expanded card behaves as the link */}
+                <Link
+                  href={cap.href}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`${cap.category}, ${cap.ctaLabel}`}
+                  className="group flex h-full flex-col"
+                >
+                {/* Top body */}
+                <div className="flex flex-1 flex-col justify-between overflow-y-auto p-5 md:p-12">
+                  <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+                    <h3
+                      className="font-display text-[clamp(1.7rem,3.6vw,3.6rem)] font-bold leading-[0.95] tracking-[-0.02em]"
+                      style={{ color: darkShade, whiteSpace: 'pre-line' }}
+                    >
+                      {cap.heading}
+                    </h3>
+                    {/* Pills — smaller on mobile so several fit per row instead
+                        of stacking into a single column. */}
+                    <div className="flex flex-wrap gap-1.5 md:max-w-[55%] md:justify-end md:gap-2">
+                      {tags.slice(0, 6).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] md:px-3 md:py-1.5 md:text-[0.65rem] md:tracking-[0.08em]"
+                          style={{ borderColor: darkShade, color: darkShade }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Description hidden on mobile to avoid overcrowding the card */}
+                  <p
+                    className="hidden max-w-[520px] text-[0.9rem] leading-[1.7] md:block"
+                    style={{ color: darkShade }}
+                  >
+                    {cap.description}
+                  </p>
+                </div>
+
+                {/* Dark bottom bar — EXPLORE */}
+                <div
+                  className="flex h-[110px] items-center px-8 md:h-[130px] md:px-12"
+                  style={{ background: darkShade }}
+                >
+                  <span
+                    className="inline-flex items-center gap-3 text-[0.95rem] font-semibold uppercase tracking-[0.2em]"
+                    style={{ color: cap.color }}
+                  >
+                    <span>{cap.ctaLabel}</span>
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="transition-transform duration-300 group-hover:translate-x-1">
+                      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </div>
+                </Link>
+              </motion.div>
+            </motion.div>
+          )
+        })}
+      </motion.div>
+      </div>
+    </section>
+  )
+}
+
+/* ── Stats Bar + Editorial Testimonial ── */
+const ACTIVE_SINCE = new Date('2019-01-27T00:00:00')
+
+/* Auto-incrementing counters — anchored at a base date with base values, then
+   grown by real elapsed time: Projects +1 every 10 days, Partners +1 / month. */
+const COUNTER_BASE = new Date('2026-06-10T00:00:00')
+const BASE_PROJECTS = 248
+const BASE_PARTNERS = 92
+
+function daysSince(date: Date): number {
+  return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function monthsSince(date: Date): number {
+  const now = new Date()
+  let months =
+    (now.getFullYear() - date.getFullYear()) * 12 +
+    (now.getMonth() - date.getMonth())
+  if (now.getDate() < date.getDate()) months -= 1
+  return Math.max(0, months)
+}
+
+function CountUp({ to, active }: { to: number; active: boolean }) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    if (!active) return
+    let frame: number
+    const duration = 1800
+    const start = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setN(Math.round(eased * to))
+      if (p < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [active, to])
+  return <>{n.toLocaleString('en-US')}</>
+}
+
+function Stats({
+  labels,
+}: {
+  labels: { projectsLabel?: string; partnersLabel?: string; daysLabel?: string }
+}) {
+  const ref = useRef<HTMLElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const [counts, setCounts] = useState({
+    projects: BASE_PROJECTS,
+    partners: BASE_PARTNERS,
+    days: 0,
+  })
+
+  useEffect(() => {
+    const update = () =>
+      setCounts({
+        projects: BASE_PROJECTS + Math.floor(daysSince(COUNTER_BASE) / 10),
+        partners: BASE_PARTNERS + monthsSince(COUNTER_BASE),
+        days: daysSince(ACTIVE_SINCE),
+      })
+    update()
+    const id = setInterval(update, 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const stats = [
+    { value: counts.projects, label: labels.projectsLabel ?? 'Projects delivered', bg: '#1f1f1f' },
+    { value: counts.partners, label: labels.partnersLabel ?? 'Partners', bg: '#171717' },
+    { value: counts.days, label: labels.daysLabel ?? 'Days active', bg: '#0f0f0f' },
+  ]
+
+  return (
+    <section ref={ref} className="px-[var(--gutter)] pt-4 pb-12 md:pt-6 md:pb-16">
+      <div className="mx-auto max-w-[var(--max-width)]">
+        <motion.div
+          className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5"
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="flex flex-col justify-between gap-10 rounded-2xl p-8 md:p-10 md:min-h-[300px]"
+              style={{ background: s.bg }}
+            >
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
+                {s.label}
+              </p>
+              <div className="font-display text-[clamp(3.5rem,8vw,6.5rem)] font-bold leading-[0.95] tracking-[-0.04em]">
+                <CountUp to={s.value} active={isInView} />
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+/* ── Client Logos (homepage-style two-row marquee) ── */
+const CLIENT_NAMES = [
+  'Hako', 'JokaDent', 'AK Invest', 'Magniflex', 'Palma',
+  'Tepelene', 'LoriCaffe', 'Tirana Home Store', 'Fentimans', 'Diamond',
+  'Akses', 'ExpertCloud', 'Anmetal', 'Wienna', 'Baboon',
+  'Berdica', 'Perfect Fashion', 'Alisadudaj', 'Matrix', 'Red Bull',
+  'Allure Beauty', 'Primera', 'WECA', 'Plenty', 'Tierr',
+  'Noble Cigars', 'Bazhur', 'Borghese', 'Albita', 'Karrige Pogradeci',
+  'Ina\'s Farm', 'EOS Mezze', 'NFMA', 'Magniflex Albania',
+]
+
+function ClientLogos({ partners = [], eyebrow }: { partners?: Partner[]; eyebrow: string }) {
+  const ref = useRef<HTMLElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const [page, setPage] = useState(0)
+
+  const ROWS = 4
+  // Visible columns adapt to viewport so logos stay legible on small screens.
+  const [colsVisible, setColsVisible] = useState(5)
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth
+      setColsVisible(w < 640 ? 2 : w < 1024 ? 3 : 5)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  // Logos come from Sanity (servicesPartnersQuery), in order; fall back to
+  // plain names if none are published yet.
+  const items: Partner[] =
+    partners.length > 0
+      ? partners
+      : CLIENT_NAMES.map((name, i) => ({ _id: `name-${i}`, name }))
+
+  // Group into vertical columns of ROWS items each
+  const columns: Partner[][] = []
+  for (let i = 0; i < items.length; i += ROWS) {
+    columns.push(items.slice(i, i + ROWS))
+  }
+
+  // Page-based navigation: each Next/Prev swaps the ENTIRE visible set
+  // (colsVisible columns) for the next/previous group, adapting to the
+  // breakpoint. The last page is clamped so no empty cells ever show.
+  const maxOffset = Math.max(0, columns.length - colsVisible)
+  const pageCount = Math.max(1, Math.ceil(columns.length / colsVisible))
+  const currentPage = Math.min(page, pageCount - 1)
+  const colOffset = Math.min(currentPage * colsVisible, maxOffset)
+  const canPrev = currentPage > 0
+  const canNext = currentPage < pageCount - 1
+
+  const next = () => setPage(Math.min(currentPage + 1, pageCount - 1))
+  const prev = () => setPage(Math.max(currentPage - 1, 0))
+
+  // Touch swipe: horizontal drag pages the carousel (in addition to arrows).
+  const touchX = useRef<number | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchX.current
+    touchX.current = null
+    if (Math.abs(dx) < 40) return
+    if (dx < 0) next()
+    else prev()
+  }
+
+  return (
+    <section ref={ref} className="px-[var(--gutter)] pt-12 pb-12 md:pt-20">
+      <div className="mx-auto max-w-[var(--max-width)]">
+        <motion.div
+          className="mb-[var(--space-lg)]"
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
+            {eyebrow}<span className="text-accent">.</span>
+          </p>
+          <div className="h-px w-full bg-border" />
+        </motion.div>
+
+        {/* Slidable column track — viewport shows colsVisible columns; arrows
+            page by a full visible set at a time */}
+        <div
+          className="touch-pan-y overflow-hidden [--logos-gap:1.5rem] md:[--logos-gap:2.5rem]"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <div
+            className="flex transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            style={{
+              gap: 'var(--logos-gap)',
+              transform: `translateX(calc(-1 * ${colOffset} * ((100% - ${colsVisible - 1} * var(--logos-gap)) / ${colsVisible} + var(--logos-gap))))`,
+            }}
+          >
+            {columns.map((col, i) => (
+              <div
+                key={i}
+                className="flex shrink-0 flex-col gap-y-12 md:gap-y-16"
+                style={{ width: `calc((100% - ${colsVisible - 1} * var(--logos-gap)) / ${colsVisible})` }}
+              >
+                {col.map((p) => (
+                  <span
+                    key={p._id}
+                    className="flex items-center justify-center px-2 py-4 opacity-50"
+                  >
+                    {p.logo?.asset?._ref ? (
+                      <Image
+                        unoptimized
+                        src={urlFor(p.logo).url()}
+                        alt={p.name}
+                        width={200}
+                        height={100}
+                        className="h-[clamp(54px,7vw,90px)] w-auto max-w-[200px] object-contain"
+                        style={{ filter: 'brightness(0) invert(1)' }}
+                      />
+                    ) : (
+                      <span className="font-display text-[clamp(1.2rem,2vw,1.7rem)] font-semibold uppercase tracking-[0.08em]">
+                        {p.name}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Arrow controls — centered on mobile, right-aligned on desktop */}
+        <div className="mt-12 flex items-center justify-center gap-3 md:justify-end">
+          <button
+            onClick={prev}
+            aria-label="Previous logos"
+            disabled={!canPrev}
+            className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors duration-300 hover:border-white/40 disabled:cursor-default disabled:opacity-40 disabled:hover:border-[var(--border)]"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M13 8H3M7 4 3 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            onClick={next}
+            aria-label="Next logos"
+            disabled={!canNext}
+            className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors duration-300 hover:border-white/40 disabled:cursor-default disabled:opacity-40 disabled:hover:border-[var(--border)]"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Bottom hairline — mirrors the one above the grid */}
+        <div className="mt-[var(--space-lg)] h-px w-full bg-border" />
+      </div>
+    </section>
+  )
+}
+
+const PROCESS_STEPS = [
+  { number: '01', title: 'Discovery & Brief', description: 'We listen before we create. Deep immersion into your brand, audience, competitors, and goals to build a brief worth building from.' },
+  { number: '02', title: 'Strategy & Direction', description: 'Insights become a strategic foundation, positioning, messaging hierarchy, creative direction, and a clear plan of action.' },
+  { number: '03', title: 'Creative Development', description: 'Concepts, iterations, and refinement. We present, collaborate, and push until the work is something we\'re both proud of.' },
+  { number: '04', title: 'Production & Delivery', description: 'Pixel-perfect execution across every deliverable. Print, digital, motion, everything ships production-ready, on time.' },
+  { number: '05', title: 'Ongoing Partnership', description: 'Great brands evolve. We stay close to help you adapt, grow, and keep the work as sharp as the day it launched.' },
+]
+
+/* ── Editorial Vertical Process Timeline ── */
+function ProcessRow({ step, index }: { step: typeof PROCESS_STEPS[number]; index: number }) {
+  const rowRef = useRef<HTMLDivElement>(null)
+  const inView = useInView(rowRef, { once: true, margin: '-15%' })
+
+  return (
+    <motion.div
+      ref={rowRef}
+      className="grid grid-cols-12 items-start gap-6 border-t py-8 md:gap-10 md:py-16"
+      style={{ borderColor: 'var(--border)' }}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.05 * index }}
+    >
+      {/* Number — huge, accent-tinted */}
+      <div className="col-span-12 md:col-span-3">
+        <span
+          className="font-display text-[clamp(4rem,9vw,8rem)] font-bold leading-[0.9] tracking-[-0.04em] text-text-tertiary/30 transition-colors duration-500 group-hover:text-accent"
+        >
+          {step.number}
+        </span>
+      </div>
+
+      {/* Title + description */}
+      <div className="col-span-12 md:col-span-9 md:flex md:gap-12">
+        <h4 className="mb-4 font-display text-[clamp(1.4rem,2.4vw,2rem)] font-bold leading-[1.1] tracking-[-0.02em] md:mb-0 md:w-[40%] md:max-w-[320px]">
+          {step.title}
+        </h4>
+        <p className="text-[0.95rem] leading-[1.7] text-text-secondary md:w-[60%] md:max-w-[520px]">
+          {step.description}
+        </p>
+      </div>
+    </motion.div>
+  )
+}
+
+function ProcessSection({
+  eyebrow,
+  heading,
+  steps,
+}: {
+  eyebrow: string
+  heading: string
+  steps: typeof PROCESS_STEPS
+}) {
+  const ref = useRef<HTMLElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-100px' })
+
+  return (
+    <section ref={ref} className="px-[var(--gutter)] pt-12 pb-12 md:pt-16 md:pb-14">
+      <div className="mx-auto max-w-[var(--max-width)]">
+        <div className="mb-10 md:mb-20">
+          <motion.p
+            className="mb-6 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.6 }}
+          >
+            {eyebrow}
+          </motion.p>
+
+          <motion.h2
+            className="font-display text-[clamp(2.2rem,5vw,4rem)] font-bold leading-[1] tracking-[-0.03em]"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {heading}<span className="text-accent">.</span>
+          </motion.h2>
+        </div>
+
+        {/* Steps — vertical editorial rows with hairline dividers (no closing
+            bottom line; it read as redundant against the next section). */}
+        <div>
+          {steps.map((step, i) => (
+            <ProcessRow key={step.number} step={step} index={i} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default function ServicesPageClient({
+  categories,
+  faqItems,
+  partners = [],
+  content,
+}: ServicesPageClientProps) {
+  const heroEyebrow = content?.hero?.eyebrow ?? 'Services'
+  const heroLines = content?.hero?.lines?.length
+    ? content.hero.lines
+    : ['We craft brands', 'and tell stories', "that don't just inform.", 'They pull people in.']
+  const disciplinesLabel = content?.disciplinesLabel ?? 'Disciplines'
+  const disciplines = capabilities.map((cap, i) => {
+    const d = content?.disciplines?.[i]
+    return {
+      ...cap,
+      number: d?.number ?? cap.number,
+      heading: d?.heading ?? cap.heading,
+      abbr: d?.abbr ?? cap.abbr,
+      ctaLabel: d?.ctaLabel ?? cap.ctaLabel,
+      tags: d?.tags?.length ? d.tags : cap.tags,
+      description: d?.description ?? cap.description,
+    }
+  })
+  const processSteps = content?.processSteps?.length ? content.processSteps : PROCESS_STEPS
+
+  return (
+    <main className="relative">
+      {/* ── Hero (Manifesto) ── */}
+      <section className="flex flex-col px-[var(--gutter)] pt-[120px] pb-0 landscape-short:pt-[5.5rem]">
+        <div>
+          <motion.p
+            className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {heroEyebrow}
+          </motion.p>
+          <motion.h1
+            className="font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.05] tracking-[-0.03em] landscape-short:text-[1.9rem]"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {heroLines.map((line, i) => (
+              <span key={i} className="block">
+                <WordReveal text={line} />
+              </span>
+            ))}
+          </motion.h1>
+        </div>
+        {/* Divider */}
+        <div className="mt-10 md:mt-12 lg:mt-16 landscape-short:mt-5">
+          <div className="h-px w-full bg-border" />
+        </div>
+      </section>
+
+      {/* ── Service Showcase Cards ── */}
+      <ServiceShowcase categories={categories} label={disciplinesLabel} disciplines={disciplines} />
+
+      {/* ── Process Timeline ── */}
+      <ProcessSection
+        eyebrow={content?.processEyebrow ?? 'Process'}
+        heading={content?.processHeading ?? 'How every BoldCrest project works'}
+        steps={processSteps}
+      />
+
+      {/* ── Stats + Testimonial ── */}
+      <Stats labels={content?.stats ?? {}} />
+
+      {/* ── Client Logos ── */}
+      <ClientLogos partners={partners} eyebrow={content?.clientLogosEyebrow ?? 'Trusted by the ambitious'} />
+
+      {/* ── CTA (before the FAQ, matching the single service pages) ── */}
+      <ServiceCTA
+        label={content?.ctaSection?.label ?? undefined}
+        heading={content?.ctaSection?.heading ?? 'Not sure which service you need?'}
+        description={
+          content?.ctaSection?.description ??
+          'Tell us the problem, not the deliverable. We\u2019ll tell you what the work actually needs and come back with a clear scope, a timeline and a price. No obligation.'
+        }
+        buttonLabel={content?.ctaSection?.buttonLabel ?? undefined}
+      />
+
+      {/* ── FAQ ── */}
+      {faqItems && faqItems.length > 0 && (
+        <FAQSection
+          heading="Questions We Hear Most"
+          items={faqItems}
+          noTopBorder
+          grayBg
+        />
+      )}
+    </main>
+  )
+}

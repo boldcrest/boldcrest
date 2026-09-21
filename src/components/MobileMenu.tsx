@@ -1,17 +1,20 @@
 'use client'
 
-import Link from 'next/link'
+import LocaleLink from './LocaleLink'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStartProject } from './start-project/StartProjectProvider'
+import { useLocale, useTranslations } from 'next-intl'
+import { usePathname, useRouter } from '@/i18n/navigation'
+import { LOCALES, type Locale } from './LanguageButton'
 import { useFormEmbed } from '@/lib/embed'
 
 const navLinks = [
-  { href: '/work', label: 'Work' },
-  { href: '/services', label: 'Services' },
-  { href: '/people', label: 'People' },
-  { href: '/diary', label: 'Diary' },
-  { href: '/contact', label: 'Contact' },
-]
+  { href: '/work', key: 'work' },
+  { href: '/services', key: 'services' },
+  { href: '/people', key: 'people' },
+  { href: '/diary', key: 'diary' },
+  { href: '/contact', key: 'contact' },
+] as const
 
 interface MobileMenuProps {
   open: boolean
@@ -29,6 +32,26 @@ interface MobileMenuProps {
 
 export default function MobileMenu({ open, onClose, scrolled = false, onExitComplete }: MobileMenuProps) {
   const { open: openStartProject } = useStartProject()
+  // Reads the ACTIVE locale from the router, exactly as the header switcher
+  // does — no local state, so the two can never disagree.
+  const t = useTranslations('Nav')
+  const activeLocale = useLocale()
+  const lang: Locale = LOCALES.find((l) => l.code === activeLocale) ?? LOCALES[0]
+  const router = useRouter()
+  const pathname = usePathname()
+
+  // Same path, different locale — the visitor stays where they are.
+  const switchTo = (next: Locale) => {
+    // Read straight off the browser rather than useSearchParams(): the hook
+    // forces a Suspense boundary in every statically prerendered page, and the
+    // switcher renders in the header on all of them. We only need the query at
+    // click time anyway.
+    const { search, hash } = typeof window !== 'undefined'
+      ? window.location
+      : { search: '', hash: '' }
+    router.replace(`${pathname}${search}${hash}`, { locale: next.code })
+    onClose()
+  }
   // On a vanity form subdomain, point links at the absolute canonical site so
   // they escape the form (relative paths get rewritten back to it).
   const { linkBase } = useFormEmbed()
@@ -108,13 +131,14 @@ export default function MobileMenu({ open, onClose, scrolled = false, onExitComp
                     ease: [0.16, 1, 0.3, 1],
                   }}
                 >
-                  <Link
-                    href={`${linkBase}${link.href}`}
+                  <LocaleLink
+                    href={link.href}
+                    base={linkBase}
                     onClick={onClose}
                     className="block py-0.5 font-display text-[1.85rem] font-normal leading-[1.2] text-white/60 transition-colors duration-200 hover:text-white"
                   >
-                    {link.label}
-                  </Link>
+                    {t(link.key)}
+                  </LocaleLink>
                 </motion.li>
               ))}
 
@@ -129,13 +153,53 @@ export default function MobileMenu({ open, onClose, scrolled = false, onExitComp
                   onClick={() => { onClose(); openStartProject() }}
                   className="flex w-full items-center justify-between gap-3 py-0.5 text-left font-display text-[1.85rem] font-normal leading-[1.2] text-white transition-colors duration-200 hover:text-accent"
                 >
-                  Start a Project
+                  {t('startProject')}
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/35">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                     </svg>
                   </span>
                 </button>
+              </motion.li>
+
+              {/* Language — a segmented pill rather than the header's dropdown.
+                  There is room here, and a popup inside a panel that is itself
+                  animating its height is fragile. Ruled off as a utility control
+                  so it doesn't read as a sixth navigation item. */}
+              <motion.li
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.08 + (navLinks.length + 1) * 0.045, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-5 border-t pt-5"
+                style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+              >
+                <div
+                  role="group"
+                  aria-label="Language"
+                  className="inline-flex h-9 items-center rounded-full border border-white/35 p-[3px]"
+                >
+                  {LOCALES.map((l) => {
+                    const active = l.code === lang.code
+                    return (
+                      <button
+                        key={l.code}
+                        type="button"
+                        onClick={() => switchTo(l)}
+                        aria-pressed={active}
+                        aria-label={l.name}
+                        lang={l.code}
+                        className="flex h-[28px] min-w-[42px] items-center justify-center rounded-full px-2 text-[0.7rem] font-semibold uppercase transition-colors duration-200"
+                        style={{
+                          letterSpacing: '0.06em',
+                          backgroundColor: active ? 'rgba(255,255,255,0.12)' : 'transparent',
+                          color: active ? '#fff' : 'rgba(255,255,255,0.55)',
+                        }}
+                      >
+                        <span translate="no">{l.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </motion.li>
             </ul>
           </motion.nav>

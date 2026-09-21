@@ -83,8 +83,11 @@ export default function ProjectHero({
           )}
         </div>
 
-        {/* Divider */}
-        <div className="mt-[var(--space-xl)] border-t border-border" />
+        {/* Divider — desktop only. Hidden on mobile, and because a `hidden`
+            element contributes no layout its mt-[var(--space-xl)] collapses out
+            too: the slides below move up by exactly that 4rem and start where
+            the line used to sit, with no other change needed. */}
+        <div className="hidden border-t border-border md:mt-[var(--space-xl)] md:block" />
       </div>
     </section>
   )

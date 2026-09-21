@@ -22,16 +22,25 @@ interface RelatedProject {
 export default function RelatedProjects({
   projects,
   heading = 'More Work',
+  noTopBorder = false,
 }: {
   projects?: RelatedProject[]
   heading?: string
+  /** Suppress the divider when the preceding section already draws one. */
+  noTopBorder?: boolean
 }) {
   if (!projects || projects.length === 0) return null
 
   return (
-    <section className="border-t border-border px-[var(--gutter)] py-[var(--space-2xl)]">
+    <section
+      className={`px-[var(--gutter)] pb-[var(--space-2xl)] ${
+        noTopBorder
+          ? 'pt-[var(--space-md)]'
+          : 'border-t border-border pt-[var(--space-2xl)]'
+      }`}
+    >
       <div className="w-full">
-        <h2 className="mb-[var(--space-lg)] text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
+        <h2 className="mb-[var(--space-sm)] text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
           {heading}
         </h2>
 

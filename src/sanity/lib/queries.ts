@@ -114,6 +114,7 @@ export const servicesPageQuery = defineQuery(
     processEyebrow,
     processHeading,
     processSteps,
+    ctaSection,
     faqs
   }`
 )
@@ -131,6 +132,7 @@ export const serviceDetailPageQuery = defineQuery(
     whyUsHeading,
     whyUsItems,
     otherServices,
+    ctaSection,
     faqs
   }`
 )

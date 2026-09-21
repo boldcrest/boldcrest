@@ -36,7 +36,7 @@ export default function ProjectDetails({
   if (cols.length === 0) return null
 
   return (
-    <section className="px-[var(--gutter)] pb-[var(--space-2xl)] pt-[var(--space-lg)] md:pt-[var(--space-xl)]">
+    <section className="px-[var(--gutter)] pb-[var(--space-lg)] pt-[var(--space-lg)] md:pt-[var(--space-xl)]">
       <div className="grid w-full gap-[var(--space-xl)] md:grid-cols-3">
         {cols}
       </div>

@@ -133,6 +133,17 @@ export const serviceDetailPage = defineType({
       validation: (rule) => rule.max(2),
     }),
     defineField({
+      name: 'ctaSection',
+      title: 'CTA section (above the FAQ)',
+      type: 'object',
+      fields: [
+        defineField({ name: 'label', title: 'Eyebrow label', type: 'string' }),
+        defineField({ name: 'heading', title: 'Heading', type: 'text', rows: 2 }),
+        defineField({ name: 'description', title: 'Description', type: 'text', rows: 3 }),
+        defineField({ name: 'buttonLabel', title: 'Button label', type: 'string' }),
+      ],
+    }),
+    defineField({
       name: 'faqs',
       title: 'FAQs',
       type: 'array',

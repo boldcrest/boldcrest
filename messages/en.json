@@ -1,0 +1,52 @@
+{
+  "Nav": {
+    "work": "Work",
+    "services": "Services",
+    "people": "People",
+    "diary": "Diary",
+    "contact": "Contact",
+    "startProject": "Start a Project",
+    "home": "BoldCrest — home",
+    "toggleMenu": "Toggle menu",
+    "closeMenu": "Close menu"
+  },
+  "Language": {
+    "label": "Language",
+    "change": "Change language",
+    "en": "English",
+    "sq": "Shqip",
+    "it": "Italiano"
+  },
+  "Work": {
+    "eyebrow": "Our Work",
+    "title": "Bold Builds Brands.",
+    "intro": "This is where the thinking becomes visible. The names, the worlds, the campaigns, the packaging, the details people notice before they know why. Every project here started as a business challenge and became something with a face, a voice, and a place in the market.",
+    "filterServices": "Services",
+    "filterIndustry": "Industry",
+    "empty": "No projects match these filters.",
+    "overview": "Overview",
+    "challenge": "Challenge",
+    "solution": "Solution",
+    "moreWork": "More Work"
+  },
+  "Contact": {
+    "eyebrow": "Contact",
+    "titleLine1": "Start with a Hello.",
+    "titleLine2": "We'll take it from there.",
+    "intro": "Let's Talk. It doesn't matter how big your business is or weird your questions are, they're worth asking, and we will get back to you shortly.",
+    "email": "Email",
+    "location": "Location",
+    "followUs": "Follow Us",
+    "other": "Other",
+    "careers": "Careers",
+    "fullName": "Full Name*",
+    "emailField": "Email*",
+    "company": "Company",
+    "message": "Message*",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Sent",
+    "sendAnother": "Send another message",
+    "verificationFailed": "Verification failed — please try again."
+  }
+}
