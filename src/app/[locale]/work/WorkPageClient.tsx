@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -348,6 +350,8 @@ function InlineFilter({
   allServices: string[]
   allIndustries: string[]
 }) {
+  const t = useTranslations('Work')
+  const tp = useTranslations('Portfolio')
   const labelClass =
     'text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-text-secondary cursor-pointer transition-colors duration-200 hover:text-[#a3a3a3]'
   const itemClass =
@@ -436,7 +440,7 @@ function InlineFilter({
                 onClick={() => setOpenFilter('services')}
                 className={`${labelClass} flex items-center gap-2`}
               >
-                Services
+                {t('filterServices')}
                 {serviceFilter !== 'All' && (
                   <span className="text-[#a3a3a3]">{serviceFilter}</span>
                 )}
@@ -444,7 +448,7 @@ function InlineFilter({
               {serviceFilter !== 'All' && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setServiceFilter('All') }}
-                  aria-label="Clear services filter"
+                  aria-label={tp('clearFilter')}
                   className="-ml-1 inline-flex items-center justify-center text-[#a3a3a3] transition-colors duration-200 hover:text-white"
                 >
                   <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -463,7 +467,7 @@ function InlineFilter({
                 onClick={() => setOpenFilter('industry')}
                 className={`${labelClass} flex items-center gap-2`}
               >
-                Industry
+                {t('filterIndustry')}
                 {industryFilter !== 'All' && (
                   <span className="text-[#a3a3a3]">{industryFilter}</span>
                 )}
@@ -471,7 +475,7 @@ function InlineFilter({
               {industryFilter !== 'All' && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setIndustryFilter('All') }}
-                  aria-label="Clear industry filter"
+                  aria-label={tp('clearFilter')}
                   className="-ml-1 inline-flex items-center justify-center text-[#a3a3a3] transition-colors duration-200 hover:text-white"
                 >
                   <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -554,6 +558,12 @@ function InlineFilter({
 }
 
 export default function WorkPageClient({ projects, initialService, initialIndustry }: WorkPageClientProps) {
+  const t = useTranslations('Work')
+  const tp = useTranslations('Portfolio')
+  // The h1 is a stacked word-per-line lockup with the final dot in accent.
+  // Splitting the translated title keeps that shape in every language rather
+  // than hard-coding three English words.
+  const titleWords = t('title').replace(/[.]$/, '').split(' ')
   const [serviceFilter, setServiceFilter] = useState(initialService || 'All')
   const [industryFilter, setIndustryFilter] = useState(initialIndustry || 'All')
   const [openFilter, setOpenFilter] = useState<'services' | 'industry' | null>(null)
@@ -612,7 +622,7 @@ export default function WorkPageClient({ projects, initialService, initialIndust
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            Our Work
+            {t('eyebrow')}
           </motion.p>
 
           {/* Title row — h1 left, description right-aligned to bottom of h1 */}
@@ -623,9 +633,13 @@ export default function WorkPageClient({ projects, initialService, initialIndust
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-              Bold<br />
-              Builds<br />
-              Brands<span className="text-accent">.</span>
+              {titleWords.map((w, i) => (
+                <span key={i}>
+                  {w}
+                  {i < titleWords.length - 1 && <br />}
+                </span>
+              ))}
+              <span className="text-accent">.</span>
             </motion.h1>
 
             <motion.p
@@ -634,7 +648,7 @@ export default function WorkPageClient({ projects, initialService, initialIndust
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
-              This is where the thinking becomes visible. The names, the worlds, the campaigns, the packaging, the details people notice before they know why. Every project here started as a business challenge and became something with a face, a voice, and a place in the market.
+              {t('intro')}
             </motion.p>
           </div>
 
@@ -662,7 +676,7 @@ export default function WorkPageClient({ projects, initialService, initialIndust
               <button
                 onClick={() => setViewMode('grid')}
                 className={`transition-colors duration-200 ${viewMode === 'grid' ? 'text-white' : 'text-text-tertiary hover:text-white'}`}
-                aria-label="Grid view"
+                aria-label={tp('gridView')}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                   <rect x="0.5" y="0.5" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.2" />
@@ -674,7 +688,7 @@ export default function WorkPageClient({ projects, initialService, initialIndust
               <button
                 onClick={() => setViewMode('list')}
                 className={`transition-colors duration-200 ${viewMode === 'list' ? 'text-white' : 'text-text-tertiary hover:text-white'}`}
-                aria-label="List view"
+                aria-label={tp('listView')}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                   <line x1="0" y1="2" x2="18" y2="2" stroke="currentColor" strokeWidth="1.2" />
@@ -721,7 +735,7 @@ export default function WorkPageClient({ projects, initialService, initialIndust
 
         {filtered.length === 0 && (
           <div className="py-20 text-center text-text-tertiary">
-            No projects match the selected filters.
+            {t('empty')}
           </div>
         )}
       </section>

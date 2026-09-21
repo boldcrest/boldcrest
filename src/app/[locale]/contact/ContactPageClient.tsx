@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useActionState, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import Script from 'next/script'
 import { submitContactForm } from './actions'
@@ -47,6 +48,7 @@ export default function ContactPageClient({
   // The global `button { … }` reset (globals.css) strips border/colour utilities
   // from <button> elements, so the SEND pill is styled inline and its hover
   // state is driven here to mirror the site's CTA pill ("Start a Project").
+  const t = useTranslations('Contact')
   const [sendHover, setSendHover] = useState(false)
   const [refreshHover, setRefreshHover] = useState(false)
   // Uncontrolled form: reset() clears the fields when the visitor chooses to
@@ -102,15 +104,13 @@ export default function ContactPageClient({
           {/* Headline left, intro right-aligned to its bottom */}
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <h1 className="font-display text-[clamp(2.5rem,6.5vw,6rem)] font-bold leading-[1.05] tracking-[-0.02em] text-white landscape-short:text-[2.4rem]">
-              Start with a Hello<span className="text-accent">.</span>
+              {t('titleLine1')}<span className="text-accent">.</span>
               <br />
-              We&apos;ll take it from there<span className="text-accent">.</span>
+              {t('titleLine2')}<span className="text-accent">.</span>
             </h1>
 
             <p className="max-w-[440px] text-[0.95rem] leading-[1.7] text-text-secondary md:text-right">
-              Let&apos;s Talk. It doesn&apos;t matter how big your business is or
-              weird your questions are, they&apos;re worth asking, and we will get
-              back to you shortly.
+              {t('intro')}
             </p>
           </div>
 
@@ -129,14 +129,14 @@ export default function ContactPageClient({
               level with the bottom of the SEND button. */}
           <div className="flex flex-col gap-[var(--space-lg)] md:col-span-4 md:col-start-3 md:h-full md:justify-between md:gap-[var(--space-md)]">
             <div>
-              <p className={LABEL}>Email</p>
+              <p className={LABEL}>{t('email')}</p>
               <a href={`mailto:${email}`} className={VALUE}>
                 {email}
               </a>
             </div>
 
             <div>
-              <p className={LABEL}>Location</p>
+              <p className={LABEL}>{t('location')}</p>
               <a
                 href="https://g.page/boldcrest"
                 target="_blank"
@@ -158,7 +158,7 @@ export default function ContactPageClient({
             </div>
 
             <div>
-              <p className={LABEL}>Follow Us</p>
+              <p className={LABEL}>{t('followUs')}</p>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
                 {socials.map((s) => (
                   <a
@@ -175,9 +175,9 @@ export default function ContactPageClient({
             </div>
 
             <div>
-              <p className={LABEL}>Other</p>
+              <p className={LABEL}>{t('other')}</p>
               <a href="https://careers.boldcrest.com" className={VALUE}>
-                Careers
+                {t('careers')}
               </a>
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function ContactPageClient({
                 type="text"
                 required
                 disabled={submitted}
-                placeholder="Full Name*"
+                placeholder={t('fullName')}
                 aria-label="Full name"
                 className={FIELD}
               />
@@ -204,16 +204,16 @@ export default function ContactPageClient({
                 type="email"
                 required
                 disabled={submitted}
-                placeholder="Email*"
-                aria-label="Email address"
+                placeholder={t('emailField')}
+                aria-label={t('emailAddress')}
                 className={FIELD}
               />
               <input
                 name="company"
                 type="text"
                 disabled={submitted}
-                placeholder="Company"
-                aria-label="Company"
+                placeholder={t('company')}
+                aria-label={t('company')}
                 className={FIELD}
               />
               <textarea
@@ -221,8 +221,8 @@ export default function ContactPageClient({
                 required
                 disabled={submitted}
                 rows={4}
-                placeholder="Message*"
-                aria-label="Message"
+                placeholder={t('message')}
+                aria-label={t('message')}
                 className={`${FIELD} resize-none`}
               />
 
@@ -267,15 +267,15 @@ export default function ContactPageClient({
                     transitionTimingFunction: 'cubic-bezier(0.645, 0.045, 0.355, 1)',
                   }}
                 >
-                  {isPending ? 'Sending…' : submitted ? 'Sent' : 'Send'}
+                  {isPending ? t('sending') : submitted ? t('sent') : t('send')}
                 </button>
 
                 {submitted && (
                   <button
                     type="button"
                     onClick={handleReset}
-                    aria-label="Send another message"
-                    title="Send another message"
+                    aria-label={t('sendAnother')}
+                    title={t('sendAnother')}
                     onMouseEnter={() => setRefreshHover(true)}
                     onMouseLeave={() => setRefreshHover(false)}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-[0.5s]"

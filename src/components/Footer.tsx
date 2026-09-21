@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { useFormEmbed } from '@/lib/embed'
 
 // Link the footer "Services" column at the real, indexable service pages
@@ -10,18 +11,18 @@ import { useFormEmbed } from '@/lib/embed'
 // URLs that Google leaves un-indexed. This gives those pages the internal-link
 // weight they need to surface as sitelinks.
 const serviceLinks = [
-  { label: 'Brand Development', href: '/services/brand-development' },
-  { label: 'Still & Motion', href: '/services/still-motion' },
-  { label: 'Communication', href: '/services/communication' },
-  { label: 'All Services', href: '/services' },
+  { key: 'brandDevelopment', href: '/services/brand-development' },
+  { key: 'stillMotion', href: '/services/still-motion' },
+  { key: 'communication', href: '/services/communication' },
+  { key: 'allServices', href: '/services' },
 ]
 
 const companyLinks = [
-  { label: 'Work', href: '/work' },
-  { label: 'Services', href: '/services' },
-  { label: 'People', href: '/people' },
-  { label: 'Diary', href: '/diary' },
-  { label: 'Contact', href: '/contact' },
+  { key: 'work', href: '/work' },
+  { key: 'services', href: '/services' },
+  { key: 'people', href: '/people' },
+  { key: 'diary', href: '/diary' },
+  { key: 'contact', href: '/contact' },
 ]
 
 const socialLinks = [
@@ -42,6 +43,8 @@ function scrollToTop() {
 }
 
 export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
+  const t = useTranslations('Footer')
+  const tn = useTranslations('Nav')
   const pathname = usePathname()
   const { isEmbed } = useFormEmbed()
   const footerRef = useRef<HTMLElement>(null)
@@ -110,44 +113,44 @@ export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
           <div className="relative grid grid-cols-2 gap-y-10 gap-x-8 md:grid-cols-[1.2fr_1fr_1.2fr_1fr_0.8fr]">
             {/* Services */}
             <div className="md:col-span-1">
-              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">Services</h3>
+              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">{t('services')}</h3>
               {serviceLinks.map((link) => (
                 <Link key={link.href} href={link.href} className={linkClass}>
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               ))}
             </div>
 
             {/* Company */}
             <div className="md:col-span-1">
-              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">Company</h3>
+              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">{t('company')}</h3>
               {companyLinks.map((link) => (
                 <Link key={link.href} href={link.href} className={linkClass}>
-                  {link.label}
+                  {tn(link.key)}
                 </Link>
               ))}
             </div>
 
             {/* Contact */}
             <div className="md:col-span-1">
-              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">Contact</h3>
+              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">{t('contact')}</h3>
               <p className="py-1.5 text-[0.85rem] text-black/50">
-                Talk to us or ask us anything.
+                {t('talkToUs')}
               </p>
               <a href="mailto:info@boldcrest.com" className={linkClass}>
                 &#8250; info@boldcrest.com
               </a>
               <Link href="/contact" className={linkClass}>
-                &#8250; Contact Us
+                &#8250; {t('contactUs')}
               </Link>
               <a href="https://careers.boldcrest.com" className={linkClass}>
-                &#8250; Careers
+                &#8250; {tn('careers')}
               </a>
             </div>
 
             {/* Social */}
             <div className="md:col-span-1">
-              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">Social</h3>
+              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">{t('social')}</h3>
               {socialLinks.map((link) => (
                 <a
                   key={link.label}
@@ -163,12 +166,12 @@ export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
 
             {/* Legal */}
             <div className="md:col-span-1">
-              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">Legal</h3>
+              <h3 className="mb-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-black/30">{t('legal')}</h3>
               <Link href="/privacy-notice" className={linkClass}>
-                Privacy Notice
+                {t('privacy')}
               </Link>
               <Link href="/cookie-policy" className={linkClass}>
-                Cookie Policy
+                {t('cookies')}
               </Link>
             </div>
 
@@ -176,7 +179,7 @@ export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
             <button
               onClick={scrollToTop}
               className="absolute right-0 top-0 h-[46px] w-[46px] transition-opacity duration-300 hover:opacity-70"
-              aria-label="Back to top"
+              aria-label={t('backToTop')}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/go-up.svg" alt="" width={46} height={46} />

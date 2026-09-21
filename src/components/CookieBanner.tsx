@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useFormEmbed } from '@/lib/embed'
 
@@ -47,6 +48,7 @@ function persistConsent(value: string) {
 }
 
 export default function CookieBanner() {
+  const tc = useTranslations('Cookie')
   const [visible, setVisible] = useState(false)
   // On a vanity form subdomain, policy links must be absolute to the canonical
   // site (relative paths get rewritten back to the embedded form).
@@ -78,7 +80,7 @@ export default function CookieBanner() {
       {visible && (
         <motion.div
           role="dialog"
-          aria-label="Cookie consent"
+          aria-label={tc('consent')}
           aria-live="polite"
           className="pointer-events-none fixed inset-x-0 bottom-0 z-[1800] px-[var(--gutter)] pb-[var(--gutter)]"
           initial={{ opacity: 0, y: 24 }}
@@ -97,10 +99,10 @@ export default function CookieBanner() {
             {/* Left: copy + policy links */}
             <div className="min-w-0">
               <h2 className="font-display text-[clamp(1.7rem,3.2vw,2.4rem)] font-bold leading-[1.05] tracking-[-0.01em] text-white">
-                One cookie a day ?
+                {tc('line1')}
               </h2>
               <p className="mt-1 text-[clamp(1rem,1.6vw,1.25rem)] leading-[1.4] text-text-secondary">
-                Keeps the glitches away.
+                {tc('line2')}
               </p>
               <div className="mt-5 flex items-center gap-3 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-text-tertiary">
                 <a
@@ -109,7 +111,7 @@ export default function CookieBanner() {
                   rel="noopener noreferrer"
                   className="transition-colors duration-300 hover:text-white"
                 >
-                  Privacy Notice
+                  {tc('privacy')}
                 </a>
                 <span aria-hidden className="text-text-tertiary">
                   |
@@ -120,7 +122,7 @@ export default function CookieBanner() {
                   rel="noopener noreferrer"
                   className="transition-colors duration-300 hover:text-white"
                 >
-                  Cookie Policy
+                  {tc('cookies')}
                 </a>
               </div>
             </div>
@@ -133,7 +135,7 @@ export default function CookieBanner() {
                 className="rounded-[var(--radius-pill)] px-9 py-2.5 text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-white transition-colors duration-300"
                 style={{ backgroundColor: '#3a3a3a' }}
               >
-                Accept
+                {tc('accept')}
               </button>
               <button
                 type="button"
@@ -141,7 +143,7 @@ export default function CookieBanner() {
                 className="rounded-[var(--radius-pill)] border px-9 py-2.5 text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-text-secondary transition-colors duration-300 hover:text-white"
                 style={{ borderColor: 'rgba(255,255,255,0.45)', backgroundColor: 'transparent' }}
               >
-                Deny
+                {tc('deny')}
               </button>
             </div>
           </div>
