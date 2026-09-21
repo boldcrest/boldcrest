@@ -6,7 +6,7 @@ import StillMotionClient from './StillMotionClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Photography, Video & Animation Production | Still & Motion | BoldCrest',
+  title: { absolute: 'Photography, Video & Animation Production | Still & Motion | BoldCrest' },
   description:
     'In-house photography, videography, animation, motion graphics, and post-production from Tirana. 22+ active brands, full in-house team. Production that matches your brand\'s ambition.',
   keywords: ['product photography Tirana', 'video production', 'TVC production', 'animation agency', 'motion graphics', 'content production'],
@@ -36,7 +36,7 @@ export default async function StillMotionPage({ params }: { params: Promise<{ lo
     locale,
     serviceNames: ['Photography', 'Videography'],
   })
-  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'still-motion' })
+  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'still-motion', locale })
   const faqItems = content?.faqs?.length ? content.faqs : FAQ_ITEMS
 
   return (

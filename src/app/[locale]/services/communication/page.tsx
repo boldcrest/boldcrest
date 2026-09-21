@@ -6,7 +6,7 @@ import CommunicationClient from './CommunicationClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Social Media & Communication Agency | Strategy, Content & Campaigns | BoldCrest',
+  title: { absolute: 'Social Media & Communication Agency | Strategy, Content & Campaigns | BoldCrest' },
   description:
     'Full-service social media management, digital marketing, PR, and campaign management from Tirana. 22+ active brands managed. Strategy, production, and reporting, all in-house.',
   keywords: ['social media management Tirana', 'digital marketing', 'creative advertising campaigns', 'content strategy', 'campaign management'],
@@ -37,7 +37,7 @@ export default async function CommunicationPage({ params }: { params: Promise<{ 
     locale,
     serviceNames: ['Social Media Management', 'Ads Management'],
   })
-  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'communication' })
+  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'communication', locale })
   const faqItems = content?.faqs?.length ? content.faqs : FAQ_ITEMS
 
   return (

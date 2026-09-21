@@ -106,34 +106,79 @@ export const allServicesByCategoryQuery = defineQuery(
 // Editable copy for the main /services page (singleton).
 export const servicesPageQuery = defineQuery(
   `*[_type == "servicesPage"][0] {
-    hero,
-    disciplinesLabel,
-    disciplines,
+    "hero": {
+      "eyebrow": coalesce(select($locale == "sq" => i18n.sq.heroEyebrow, $locale == "it" => i18n.it.heroEyebrow, $locale == "fr" => i18n.fr.heroEyebrow), hero.eyebrow),
+      "lines": coalesce(select($locale == "sq" => i18n.sq.heroLines, $locale == "it" => i18n.it.heroLines, $locale == "fr" => i18n.fr.heroLines), hero.lines)
+    },
+    "disciplinesLabel": coalesce(select($locale == "sq" => i18n.sq.disciplinesLabel, $locale == "it" => i18n.it.disciplinesLabel, $locale == "fr" => i18n.fr.disciplinesLabel), disciplinesLabel),
+    "disciplines": disciplines[]{
+      ...,
+      "heading": coalesce(select($locale == "sq" => ^.i18n.sq.disciplines[@._key == ^._key][0].heading, $locale == "it" => ^.i18n.it.disciplines[@._key == ^._key][0].heading, $locale == "fr" => ^.i18n.fr.disciplines[@._key == ^._key][0].heading), heading),
+      "description": coalesce(select($locale == "sq" => ^.i18n.sq.disciplines[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.disciplines[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.disciplines[@._key == ^._key][0].description), description),
+      "tags": coalesce(select($locale == "sq" => ^.i18n.sq.disciplines[@._key == ^._key][0].tags, $locale == "it" => ^.i18n.it.disciplines[@._key == ^._key][0].tags, $locale == "fr" => ^.i18n.fr.disciplines[@._key == ^._key][0].tags), tags)
+    },
     stats,
-    clientLogosEyebrow,
-    processEyebrow,
-    processHeading,
-    processSteps,
+    "clientLogosEyebrow": coalesce(select($locale == "sq" => i18n.sq.clientLogosEyebrow, $locale == "it" => i18n.it.clientLogosEyebrow, $locale == "fr" => i18n.fr.clientLogosEyebrow), clientLogosEyebrow),
+    "processEyebrow": coalesce(select($locale == "sq" => i18n.sq.processEyebrow, $locale == "it" => i18n.it.processEyebrow, $locale == "fr" => i18n.fr.processEyebrow), processEyebrow),
+    "processHeading": coalesce(select($locale == "sq" => i18n.sq.processHeading, $locale == "it" => i18n.it.processHeading, $locale == "fr" => i18n.fr.processHeading), processHeading),
+    "processSteps": processSteps[]{
+      ...,
+      "title": coalesce(select($locale == "sq" => ^.i18n.sq.processSteps[@._key == ^._key][0].title, $locale == "it" => ^.i18n.it.processSteps[@._key == ^._key][0].title, $locale == "fr" => ^.i18n.fr.processSteps[@._key == ^._key][0].title), title),
+      "description": coalesce(select($locale == "sq" => ^.i18n.sq.processSteps[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.processSteps[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.processSteps[@._key == ^._key][0].description), description)
+    },
     ctaSection,
-    faqs
+    "faqs": faqs[]{
+      ...,
+      "question": coalesce(select($locale == "sq" => ^.i18n.sq.faqs[@._key == ^._key][0].question, $locale == "it" => ^.i18n.it.faqs[@._key == ^._key][0].question, $locale == "fr" => ^.i18n.fr.faqs[@._key == ^._key][0].question), question),
+      "answer": coalesce(select($locale == "sq" => ^.i18n.sq.faqs[@._key == ^._key][0].answer, $locale == "it" => ^.i18n.it.faqs[@._key == ^._key][0].answer, $locale == "fr" => ^.i18n.fr.faqs[@._key == ^._key][0].answer), answer)
+    }
   }`
 )
 
 // Editable copy for a single service detail page (by fixed pageKey).
 export const serviceDetailPageQuery = defineQuery(
   `*[_type == "serviceDetailPage" && pageKey == $pageKey][0] {
-    hero,
-    outcomesHeading,
-    outcomes,
-    capabilitiesHeading,
-    capabilities,
-    processHeading,
-    processSteps,
-    whyUsHeading,
-    whyUsItems,
-    otherServices,
+    "hero": {
+      "label": coalesce(select($locale == "sq" => i18n.sq.heroEyebrow, $locale == "it" => i18n.it.heroEyebrow, $locale == "fr" => i18n.fr.heroEyebrow), hero.label),
+      "title": coalesce(select($locale == "sq" => i18n.sq.heroTitle, $locale == "it" => i18n.it.heroTitle, $locale == "fr" => i18n.fr.heroTitle), hero.title),
+      "subtitle": coalesce(select($locale == "sq" => i18n.sq.heroSubtitle, $locale == "it" => i18n.it.heroSubtitle, $locale == "fr" => i18n.fr.heroSubtitle), hero.subtitle),
+      "ctaLabel": coalesce(select($locale == "sq" => i18n.sq.heroCtaLabel, $locale == "it" => i18n.it.heroCtaLabel, $locale == "fr" => i18n.fr.heroCtaLabel), hero.ctaLabel)
+    },
+    "outcomesHeading": coalesce(select($locale == "sq" => i18n.sq.outcomesHeading, $locale == "it" => i18n.it.outcomesHeading, $locale == "fr" => i18n.fr.outcomesHeading), outcomesHeading),
+    "outcomes": outcomes[]{
+      ...,
+      "title": coalesce(select($locale == "sq" => ^.i18n.sq.outcomes[@._key == ^._key][0].title, $locale == "it" => ^.i18n.it.outcomes[@._key == ^._key][0].title, $locale == "fr" => ^.i18n.fr.outcomes[@._key == ^._key][0].title), title),
+      "description": coalesce(select($locale == "sq" => ^.i18n.sq.outcomes[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.outcomes[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.outcomes[@._key == ^._key][0].description), description)
+    },
+    "capabilitiesHeading": coalesce(select($locale == "sq" => i18n.sq.capabilitiesHeading, $locale == "it" => i18n.it.capabilitiesHeading, $locale == "fr" => i18n.fr.capabilitiesHeading), capabilitiesHeading),
+    "capabilities": capabilities[]{
+      ...,
+      "title": coalesce(select($locale == "sq" => ^.i18n.sq.capabilities[@._key == ^._key][0].title, $locale == "it" => ^.i18n.it.capabilities[@._key == ^._key][0].title, $locale == "fr" => ^.i18n.fr.capabilities[@._key == ^._key][0].title), title),
+      "description": coalesce(select($locale == "sq" => ^.i18n.sq.capabilities[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.capabilities[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.capabilities[@._key == ^._key][0].description), description)
+    },
+    "processHeading": coalesce(select($locale == "sq" => i18n.sq.processHeading, $locale == "it" => i18n.it.processHeading, $locale == "fr" => i18n.fr.processHeading), processHeading),
+    "processSteps": processSteps[]{
+      ...,
+      "title": coalesce(select($locale == "sq" => ^.i18n.sq.processSteps[@._key == ^._key][0].title, $locale == "it" => ^.i18n.it.processSteps[@._key == ^._key][0].title, $locale == "fr" => ^.i18n.fr.processSteps[@._key == ^._key][0].title), title),
+      "description": coalesce(select($locale == "sq" => ^.i18n.sq.processSteps[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.processSteps[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.processSteps[@._key == ^._key][0].description), description)
+    },
+    "whyUsHeading": coalesce(select($locale == "sq" => i18n.sq.whyUsHeading, $locale == "it" => i18n.it.whyUsHeading, $locale == "fr" => i18n.fr.whyUsHeading), whyUsHeading),
+    "whyUsItems": whyUsItems[]{
+      ...,
+      "title": coalesce(select($locale == "sq" => ^.i18n.sq.whyUsItems[@._key == ^._key][0].title, $locale == "it" => ^.i18n.it.whyUsItems[@._key == ^._key][0].title, $locale == "fr" => ^.i18n.fr.whyUsItems[@._key == ^._key][0].title), title),
+      "description": coalesce(select($locale == "sq" => ^.i18n.sq.whyUsItems[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.whyUsItems[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.whyUsItems[@._key == ^._key][0].description), description)
+    },
+    "otherServices": otherServices[]{
+      ...,
+      "name": coalesce(select($locale == "sq" => ^.i18n.sq.otherServices[@._key == ^._key][0].name, $locale == "it" => ^.i18n.it.otherServices[@._key == ^._key][0].name, $locale == "fr" => ^.i18n.fr.otherServices[@._key == ^._key][0].name), name),
+      "description": coalesce(select($locale == "sq" => ^.i18n.sq.otherServices[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.otherServices[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.otherServices[@._key == ^._key][0].description), description)
+    },
     ctaSection,
-    faqs
+    "faqs": faqs[]{
+      ...,
+      "question": coalesce(select($locale == "sq" => ^.i18n.sq.faqs[@._key == ^._key][0].question, $locale == "it" => ^.i18n.it.faqs[@._key == ^._key][0].question, $locale == "fr" => ^.i18n.fr.faqs[@._key == ^._key][0].question), question),
+      "answer": coalesce(select($locale == "sq" => ^.i18n.sq.faqs[@._key == ^._key][0].answer, $locale == "it" => ^.i18n.it.faqs[@._key == ^._key][0].answer, $locale == "fr" => ^.i18n.fr.faqs[@._key == ^._key][0].answer), answer)
+    }
   }`
 )
 

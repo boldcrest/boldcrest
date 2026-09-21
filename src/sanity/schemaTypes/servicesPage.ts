@@ -120,6 +120,178 @@ export const servicesPage = defineType({
         },
       ],
     }),
+    defineField({
+      name: 'i18n',
+      title: 'Translations',
+      description:
+        'Per-language overrides. Arrays must stay in the SAME ORDER as the English ones above — they are matched by position. Anything left empty falls back to English.',
+      type: 'object',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'sq',
+          title: 'Albanian (shqip)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: 'heroEyebrow', title: 'Hero eyebrow', type: 'string' }),
+            defineField({ name: 'heroLines', title: 'Hero lines', type: 'array', of: [{ type: 'string' }] }),
+            defineField({ name: 'disciplinesLabel', title: 'Disciplines label', type: 'string' }),
+            defineField({
+              name: 'disciplines',
+              title: 'Disciplines (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'heading', title: 'Heading', type: 'string' }),
+                  defineField({ name: 'description', title: 'Description', type: 'text', rows: 4 }),
+                  defineField({ name: 'tags', title: 'Tags', type: 'array', of: [{ type: 'string' }] }),
+                ],
+                preview: { select: { title: 'heading' } },
+              }],
+            }),
+            defineField({ name: 'clientLogosEyebrow', title: 'Client logos eyebrow', type: 'string' }),
+            defineField({ name: 'processEyebrow', title: 'Process eyebrow', type: 'string' }),
+            defineField({ name: 'processHeading', title: 'Process heading', type: 'string' }),
+            defineField({
+              name: 'processSteps',
+              title: 'Process steps (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'title', title: 'Title', type: 'string' }),
+                  defineField({ name: 'description', title: 'Description', type: 'text', rows: 3 }),
+                ],
+                preview: { select: { title: 'title' } },
+              }],
+            }),
+            defineField({
+              name: 'faqs',
+              title: 'FAQs (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'question', title: 'Question', type: 'string' }),
+                  defineField({ name: 'answer', title: 'Answer', type: 'text', rows: 4 }),
+                ],
+                preview: { select: { title: 'question' } },
+              }],
+            }),
+          ],
+        }),
+        defineField({
+          name: 'it',
+          title: 'Italian (italiano)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: 'heroEyebrow', title: 'Hero eyebrow', type: 'string' }),
+            defineField({ name: 'heroLines', title: 'Hero lines', type: 'array', of: [{ type: 'string' }] }),
+            defineField({ name: 'disciplinesLabel', title: 'Disciplines label', type: 'string' }),
+            defineField({
+              name: 'disciplines',
+              title: 'Disciplines (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'heading', title: 'Heading', type: 'string' }),
+                  defineField({ name: 'description', title: 'Description', type: 'text', rows: 4 }),
+                  defineField({ name: 'tags', title: 'Tags', type: 'array', of: [{ type: 'string' }] }),
+                ],
+                preview: { select: { title: 'heading' } },
+              }],
+            }),
+            defineField({ name: 'clientLogosEyebrow', title: 'Client logos eyebrow', type: 'string' }),
+            defineField({ name: 'processEyebrow', title: 'Process eyebrow', type: 'string' }),
+            defineField({ name: 'processHeading', title: 'Process heading', type: 'string' }),
+            defineField({
+              name: 'processSteps',
+              title: 'Process steps (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'title', title: 'Title', type: 'string' }),
+                  defineField({ name: 'description', title: 'Description', type: 'text', rows: 3 }),
+                ],
+                preview: { select: { title: 'title' } },
+              }],
+            }),
+            defineField({
+              name: 'faqs',
+              title: 'FAQs (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'question', title: 'Question', type: 'string' }),
+                  defineField({ name: 'answer', title: 'Answer', type: 'text', rows: 4 }),
+                ],
+                preview: { select: { title: 'question' } },
+              }],
+            }),
+          ],
+        }),
+        defineField({
+          name: 'fr',
+          title: 'French (français)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: 'heroEyebrow', title: 'Hero eyebrow', type: 'string' }),
+            defineField({ name: 'heroLines', title: 'Hero lines', type: 'array', of: [{ type: 'string' }] }),
+            defineField({ name: 'disciplinesLabel', title: 'Disciplines label', type: 'string' }),
+            defineField({
+              name: 'disciplines',
+              title: 'Disciplines (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'heading', title: 'Heading', type: 'string' }),
+                  defineField({ name: 'description', title: 'Description', type: 'text', rows: 4 }),
+                  defineField({ name: 'tags', title: 'Tags', type: 'array', of: [{ type: 'string' }] }),
+                ],
+                preview: { select: { title: 'heading' } },
+              }],
+            }),
+            defineField({ name: 'clientLogosEyebrow', title: 'Client logos eyebrow', type: 'string' }),
+            defineField({ name: 'processEyebrow', title: 'Process eyebrow', type: 'string' }),
+            defineField({ name: 'processHeading', title: 'Process heading', type: 'string' }),
+            defineField({
+              name: 'processSteps',
+              title: 'Process steps (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'title', title: 'Title', type: 'string' }),
+                  defineField({ name: 'description', title: 'Description', type: 'text', rows: 3 }),
+                ],
+                preview: { select: { title: 'title' } },
+              }],
+            }),
+            defineField({
+              name: 'faqs',
+              title: 'FAQs (same order as above)',
+              type: 'array',
+              of: [{
+                type: 'object',
+                fields: [
+                  defineField({ name: 'question', title: 'Question', type: 'string' }),
+                  defineField({ name: 'answer', title: 'Answer', type: 'text', rows: 4 }),
+                ],
+                preview: { select: { title: 'question' } },
+              }],
+            }),
+          ],
+        }),
+      ],
+    }),
   ],
   preview: {
     prepare() {

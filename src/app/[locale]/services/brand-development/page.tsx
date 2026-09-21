@@ -6,7 +6,7 @@ import BrandDevelopmentClient from './BrandDevelopmentClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Brand Development Agency | Visual Identity, Logo & Packaging Design | BoldCrest',
+  title: { absolute: 'Brand Development Agency | Visual Identity, Logo & Packaging Design | BoldCrest' },
   description:
     'Strategic brand development from Tirana. Logo design, visual identity systems, brand guidelines, packaging design, and creative advertising. 300+ projects across 11 industries. Go bold or go unseen.',
   keywords: ['branding agency', 'logo design', 'brand identity design', 'visual identity', 'packaging design', 'brandbook design'],
@@ -37,7 +37,7 @@ export default async function BrandDevelopmentPage({ params }: { params: Promise
     locale,
     serviceNames: ['Branding', 'Creative Advertising', 'Packaging'],
   })
-  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'brand-development' })
+  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'brand-development', locale })
   const faqItems = content?.faqs?.length ? content.faqs : FAQ_ITEMS
 
   return (

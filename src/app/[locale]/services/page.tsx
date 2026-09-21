@@ -74,7 +74,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
   const [{ data: services }, { data: partners }, { data: content }] = await Promise.all([
     sanityFetch({ query: allServicesByCategoryQuery }),
     sanityFetch({ query: servicesPartnersQuery }),
-    sanityFetch({ query: servicesPageQuery }),
+    sanityFetch({ query: servicesPageQuery, params: { locale } }),
   ])
 
   const categories = ['Brand Dev', 'Still & Motion', 'Communications']
