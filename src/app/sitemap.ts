@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { client } from '@/sanity/lib/client'
 import { allProjectsQuery, allDiaryPostsQuery } from '@/sanity/lib/queries'
+import { routing } from '@/i18n/routing'
 import { sitemapImageFrom } from '@/lib/seo'
 
 const BASE_URL = 'https://www.boldcrest.com'
@@ -27,7 +28,7 @@ interface DiaryRow {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [projects, posts] = await Promise.all([
-    client.fetch(allProjectsQuery) as Promise<ProjectRow[]>,
+    client.fetch(allProjectsQuery, { locale: routing.defaultLocale }) as Promise<ProjectRow[]>,
     client.fetch(allDiaryPostsQuery) as Promise<DiaryRow[]>,
   ])
 

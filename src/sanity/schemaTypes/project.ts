@@ -93,6 +93,42 @@ export const project = defineType({
       of: [{ type: 'block' }],
     }),
     defineField({
+      name: 'i18n',
+      title: 'Translations',
+      description:
+        'Per-language overrides. Anything left empty falls back to the English field above, so a partially translated project still renders.',
+      type: 'object',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'sq',
+          title: 'Albanian (shqip)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: 'name', title: 'Name', type: 'string' }),
+            defineField({ name: 'tagline', title: 'Tagline', type: 'string' }),
+            defineField({ name: 'overview', title: 'Overview', type: 'array', of: [{ type: 'block' }] }),
+            defineField({ name: 'challenge', title: 'Challenge', type: 'array', of: [{ type: 'block' }] }),
+            defineField({ name: 'solution', title: 'Solution', type: 'array', of: [{ type: 'block' }] }),
+          ],
+        }),
+        defineField({
+          name: 'it',
+          title: 'Italian (italiano)',
+          type: 'object',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: 'name', title: 'Name', type: 'string' }),
+            defineField({ name: 'tagline', title: 'Tagline', type: 'string' }),
+            defineField({ name: 'overview', title: 'Overview', type: 'array', of: [{ type: 'block' }] }),
+            defineField({ name: 'challenge', title: 'Challenge', type: 'array', of: [{ type: 'block' }] }),
+            defineField({ name: 'solution', title: 'Solution', type: 'array', of: [{ type: 'block' }] }),
+          ],
+        }),
+      ],
+    }),
+    defineField({
       name: 'solution',
       title: 'Solution',
       type: 'array',

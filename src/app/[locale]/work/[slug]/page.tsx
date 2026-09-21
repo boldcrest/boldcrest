@@ -24,7 +24,7 @@ import {
 } from '@/lib/seo'
 
 export async function generateStaticParams() {
-  const projects = await client.fetch(allProjectsQuery)
+  const projects = await client.fetch(allProjectsQuery, { locale: routing.defaultLocale })
   // Cross product with the locales: returning slugs alone leaves the `locale`
   // segment unresolved, and Next silently drops the whole route to dynamic
   // rendering instead of prerendering it.
@@ -45,7 +45,7 @@ export async function generateMetadata({
   setRequestLocale(locale)
   const { data: project } = await sanityFetch({
     query: projectBySlugQuery,
-    params: { slug },
+    params: { slug, locale },
   })
 
   if (!project) return { title: 'Project' }
@@ -85,10 +85,10 @@ export default async function ProjectPage({
 }: {
   params: Promise<{ locale: string; slug: string }>
 }) {
-  const { slug } = await params
+  const { locale, slug } = await params
   const { data: project } = await sanityFetch({
     query: projectBySlugQuery,
-    params: { slug },
+    params: { slug, locale },
   })
 
   if (!project) notFound()
@@ -121,13 +121,13 @@ export default async function ProjectPage({
   // always fill the row.
   const { data: relatedData } = await sanityFetch({
     query: relatedProjectsQuery,
-    params: { slug, serviceNames: project.services ?? [] },
+    params: { slug, serviceNames: project.services ?? [], locale },
   })
   const related = [...(relatedData ?? [])]
   if (related.length < 5) {
     const { data: more } = await sanityFetch({
       query: moreProjectsQuery,
-      params: { slug },
+      params: { slug, locale },
     })
     const seen = new Set(related.map((p) => p._id))
     for (const p of more ?? []) {

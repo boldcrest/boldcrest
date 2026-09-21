@@ -34,6 +34,7 @@ export default async function BrandDevelopmentPage({ params }: { params: Promise
   setRequestLocale(locale)
 
   const projects = await client.fetch(projectsByServicesQuery, {
+    locale,
     serviceNames: ['Branding', 'Creative Advertising', 'Packaging'],
   })
   const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'brand-development' })

@@ -26,7 +26,7 @@ export default async function WorkPage({
   const { locale } = await params
   setRequestLocale(locale)
   const [{ data: rawProjects }, filters] = await Promise.all([
-    sanityFetch({ query: allProjectsQuery }),
+    sanityFetch({ query: allProjectsQuery, params: { locale } }),
     searchParams,
   ])
 

@@ -1,1 +1,49 @@
-{}
+{
+  "Nav": {
+    "work": "Projekte",
+    "services": "Shërbime",
+    "people": "Ekipi",
+    "diary": "Ditari",
+    "contact": "Kontakt",
+    "startProject": "Nis një Projekt",
+    "home": "BoldCrest — kryefaqja",
+    "toggleMenu": "Hap ose mbyll menunë",
+    "closeMenu": "Mbyll menunë"
+  },
+  "Language": {
+    "label": "Gjuha",
+    "change": "Ndrysho gjuhën"
+  },
+  "Work": {
+    "eyebrow": "Projektet Tona",
+    "title": "Guximi Ndërton Marka",
+    "intro": "Këtu mendimi merr formë. Emrat, botët që krijojmë, fushatat, ambalazhet, detajet që njerëzit vënë re pa e kuptuar ende pse. Çdo projekt këtu nisi si një sfidë biznesi dhe mori një fytyrë, një zë dhe një vend në treg.",
+    "filterServices": "Shërbime",
+    "filterIndustry": "Industri",
+    "empty": "Nuk ka projekte me këto filtra.",
+    "overview": "Përmbledhje",
+    "challenge": "Sfida",
+    "solution": "Zgjidhja",
+    "moreWork": "Projekte të Tjera"
+  },
+  "Contact": {
+    "eyebrow": "Kontakt",
+    "titleLine1": "Nise me një Përshëndetje",
+    "titleLine2": "Pjesën Tjetër e Marrim Ne Përsipër",
+    "intro": "Le të flasim. Pavarësisht sa i madh është biznesi yt apo sa të pazakonta janë pyetjet që ke, ia vlen t’i bësh. Do të të përgjigjemi së shpejti.",
+    "email": "Email",
+    "location": "Adresa",
+    "followUs": "Na ndiq",
+    "other": "Të tjera",
+    "careers": "Karriera",
+    "fullName": "Emër dhe mbiemër*",
+    "emailField": "Email*",
+    "company": "Kompania",
+    "message": "Mesazhi*",
+    "send": "Dërgo",
+    "sending": "Po dërgohet…",
+    "sent": "U dërgua",
+    "sendAnother": "Dërgo një mesazh tjetër",
+    "verificationFailed": "Verifikimi dështoi. Provo përsëri."
+  }
+}

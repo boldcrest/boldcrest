@@ -33,6 +33,7 @@ export default async function StillMotionPage({ params }: { params: Promise<{ lo
   setRequestLocale(locale)
 
   const projects = await client.fetch(projectsByServicesQuery, {
+    locale,
     serviceNames: ['Photography', 'Videography'],
   })
   const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'still-motion' })
