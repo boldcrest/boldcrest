@@ -1,19 +1,31 @@
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
+import { routing } from '@/i18n/routing'
 import { sanityFetch } from '@/sanity/lib/live'
 import { allProjectsQuery } from '@/sanity/lib/queries'
 import { getVimeoMeta } from '@/lib/vimeo'
 import WorkPageClient from './WorkPageClient'
 
-export const metadata: Metadata = {
-  title: 'Work',
-  alternates: { canonical: '/work' },
-  description: 'Our creations, skillfully forged through the years.',
-  openGraph: {
-    title: 'Work — BoldCrest',
-    description: 'Our creations, skillfully forged through the years.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'Seo' })
+  const tn = await getTranslations({ locale, namespace: 'Nav' })
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`
+
+  return {
+    title: tn('work'),
+    alternates: { canonical: `${prefix}/work` },
+    description: t('workDescription'),
+    openGraph: {
+      title: t('workTitle'),
+      description: t('workDescription'),
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
+  }
 }
 
 export default async function WorkPage({

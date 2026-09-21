@@ -1,20 +1,30 @@
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
+import { routing } from '@/i18n/routing'
 import { sanityFetch } from '@/sanity/lib/live'
 import { allTeamMembersQuery, allYearPhotosQuery } from '@/sanity/lib/queries'
 import PeoplePageClient from './PeoplePageClient'
 
-export const metadata: Metadata = {
-  title: 'People',
-  alternates: { canonical: '/people' },
-  description:
-    "It's not about us, it's about you. Meet the team behind BoldCrest.",
-  openGraph: {
-    title: 'People — BoldCrest',
-    description:
-      "It's not about us, it's about you. Meet the team behind BoldCrest.",
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'Seo' })
+  const tn = await getTranslations({ locale, namespace: 'Nav' })
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`
+
+  return {
+    title: tn('people'),
+    alternates: { canonical: `${prefix}/people` },
+    description: t('peopleDescription'),
+    openGraph: {
+      title: t('peopleTitle'),
+      description: t('peopleDescription'),
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
+  }
 }
 
 export default async function PeoplePage({ params }: { params: Promise<{ locale: string }> }) {
