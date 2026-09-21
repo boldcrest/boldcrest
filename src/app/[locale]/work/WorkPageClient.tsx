@@ -1,9 +1,10 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { routing } from '@/i18n/routing'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -575,17 +576,24 @@ export default function WorkPageClient({ projects, initialService, initialIndust
   // state). replace (not push) keeps the back button going to the project list
   // once, not through every filter tweak; a fresh /work visit has no query, so
   // filters start clean and never get permanently stuck.
+  //
+  // The target MUST carry the active locale. Hard-coding `/work` meant that on
+  // /fr/work this effect fired on mount and replaced the URL with the English
+  // one — switching language on this page appeared to do nothing, because the
+  // switch landed and was then immediately undone.
   const router = useRouter()
+  const locale = useLocale()
   useEffect(() => {
     const params = new URLSearchParams()
     if (serviceFilter !== 'All') params.set('service', serviceFilter)
     if (industryFilter !== 'All') params.set('industry', industryFilter)
     const qs = params.toString()
-    const target = qs ? `/work?${qs}` : '/work'
+    const base = locale === routing.defaultLocale ? '/work' : `/${locale}/work`
+    const target = qs ? `${base}?${qs}` : base
     if (window.location.pathname + window.location.search !== target) {
       router.replace(target, { scroll: false })
     }
-  }, [serviceFilter, industryFilter, router])
+  }, [serviceFilter, industryFilter, router, locale])
 
   const allServices = useMemo(() => {
     const set = new Set<string>()

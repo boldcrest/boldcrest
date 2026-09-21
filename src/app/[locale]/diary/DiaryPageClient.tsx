@@ -1,9 +1,10 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { routing } from '@/i18n/routing'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -120,16 +121,20 @@ export default function DiaryPageClient({ posts, initialCategory }: DiaryPageCli
   // the history entry so the browser Back button from a post restores it; a
   // native replaceState is dropped on back). A fresh /diary visit has no query,
   // so the filter starts clean and never gets permanently stuck.
+  // The target MUST carry the active locale — see the same fix in
+  // WorkPageClient: a hard-coded `/diary` undid a language switch on mount.
   const router = useRouter()
+  const locale = useLocale()
   useEffect(() => {
+    const base = locale === routing.defaultLocale ? '/diary' : `/${locale}/diary`
     const target =
       activeFilter !== 'All'
-        ? `/diary?category=${encodeURIComponent(activeFilter)}`
-        : '/diary'
+        ? `${base}?category=${encodeURIComponent(activeFilter)}`
+        : base
     if (window.location.pathname + window.location.search !== target) {
       router.replace(target, { scroll: false })
     }
-  }, [activeFilter, router])
+  }, [activeFilter, router, locale])
 
   const categories = useMemo(() => {
     const set = new Set<string>()
