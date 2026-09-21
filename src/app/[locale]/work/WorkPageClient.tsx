@@ -91,8 +91,13 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             video-thumbnail projects its square corners showed through the
             card's rounded ones as pale arcs. Forcing the card onto its own
             layer makes the rounded clip apply to composited children too.
-            Image cards never showed it, which is what pointed at the iframe. */}
-        <div className="relative aspect-[1.28/1] overflow-hidden rounded-xl bg-bg-card [transform:translate3d(0,0,0)] md:rounded-2xl">
+            Image cards never showed it, which is what pointed at the iframe.
+            group-hover:bg-[#0a0a0a] removes the remaining risk: the resting
+            --bg-card is #161616, far lighter than the hover panel's #0a0a0a,
+            so ANY sub-pixel sliver the rounded clip leaves at a corner shows up
+            as a pale arc. Matching the two colours while hovered means a sliver
+            has nothing to reveal. */}
+        <div className="relative aspect-[1.28/1] overflow-hidden rounded-xl bg-bg-card [transform:translate3d(0,0,0)] md:rounded-2xl md:group-hover:bg-[#0a0a0a]">
           {/* Image — translates UP on hover (desktop only) */}
           {project.thumbnailType === 'video' && project.thumbnailVideo ? (
             <iframe
@@ -129,12 +134,14 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               fractional, and at fractional device pixels this composited
               scaleY layer otherwise leaves a hairline of the cover showing.
               Height follows its CONTENT, so a project with two services gets a
-              shorter panel than one with five. rounded-b-2xl matches the card's
-              own radius: with square corners the panel's fill stopped short of
-              the card's rounded clip and the curve read as a pale arc at each
-              bottom corner. */}
+              shorter panel than one with five. Corners stay SQUARE on purpose:
+              the card's own overflow-hidden + radius does the rounding. Giving
+              the panel its own rounded-b-2xl looked right but left a crescent
+              between its curve and the card's (the panel sits 1px lower), and
+              --bg-card (#161616) is much lighter than this #0a0a0a fill, so
+              that crescent read as a pale arc at each bottom corner. */}
           <div
-            className="absolute -bottom-px left-0 z-20 hidden w-full origin-bottom scale-y-0 rounded-b-2xl bg-[#0a0a0a] px-5 pt-4 pb-[calc(1rem+1px)] transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-y-100 md:block"
+            className="absolute -bottom-px left-0 z-20 hidden w-full origin-bottom scale-y-0 bg-[#0a0a0a] px-5 pt-4 pb-[calc(1rem+1px)] transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-y-100 md:block"
           >
             {project.client && (
               <span className="block text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-text-tertiary">
