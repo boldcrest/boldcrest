@@ -346,10 +346,18 @@ export default function Hero() {
       { phrase: t('heroWordBold'), effect: 'bold' },
       { phrase: t('heroWordUnseen'), effect: 'unseen' },
     ]
-    const one = splitWithEffects(t('heroLine1'), effects)
-    const two = splitWithEffects(t('heroLine2'), effects)
-    desktopLines = [one, two]
-    mobileLines = [one, two]
+    // A translated sentence can carry `|` to force a row break, the same
+    // control the English arrays have. Without it the browser picks the wrap,
+    // which can strand a word that belongs with the one before it.
+    const rows = (line: string) =>
+      line
+        .split('|')
+        .map((part) => splitWithEffects(part.trim(), effects))
+        .filter((r) => r.length > 0)
+    const one = rows(t('heroLine1'))
+    const two = rows(t('heroLine2'))
+    desktopLines = [...one, ...two]
+    mobileLines = [...one, ...two]
   }
 
   return (
