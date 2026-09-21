@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -109,6 +111,7 @@ function DiaryCard({
 }
 
 export default function DiaryPageClient({ posts, initialCategory }: DiaryPageClientProps) {
+  const t = useTranslations('Diary')
   const [activeFilter, setActiveFilter] = useState(
     initialCategory && initialCategory !== 'All' ? initialCategory : 'All'
   )
@@ -159,7 +162,7 @@ export default function DiaryPageClient({ posts, initialCategory }: DiaryPageCli
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            Diary
+            {t('eyebrow')}
           </motion.p>
 
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -169,9 +172,9 @@ export default function DiaryPageClient({ posts, initialCategory }: DiaryPageCli
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-              The Latest<br />
-              From Our<br />
-              World<span className="text-accent">.</span>
+              {t('theLatest')}<br />
+              {t('fromOur')}<br />
+              {t('world')}<span className="text-accent">.</span>
             </motion.h1>
 
             <motion.p
@@ -180,7 +183,7 @@ export default function DiaryPageClient({ posts, initialCategory }: DiaryPageCli
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
-              Read deeper into what we do, think, and create at BoldCrest.
+              {t('intro')}
             </motion.p>
           </div>
         </div>
@@ -224,7 +227,7 @@ export default function DiaryPageClient({ posts, initialCategory }: DiaryPageCli
               transition={{ duration: 0.3 }}
             >
               <p className="text-[1rem] text-text-tertiary">
-                No posts yet. Check back soon.
+                {t('empty')}
               </p>
             </motion.div>
           ) : (

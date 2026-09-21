@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { useRef, useState, useEffect, useCallback, useMemo, memo } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -276,6 +278,7 @@ type FaceItem = {
 
 /* ── Faces gallery — two rows, looping auto-scroll + drag (item-recycling) ── */
 const FacesGallery = memo(function FacesGallery({ team }: { team: FaceItem[] }) {
+  const tp = useTranslations('People')
   const scrollerRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   // `pos` = tiny sub-pixel shift; columns are RECYCLED (head → tail) so it never makes
@@ -417,7 +420,7 @@ const FacesGallery = memo(function FacesGallery({ team }: { team: FaceItem[] }) 
   }, [apply, team.length])
 
   if (!team.length) {
-    return <p className="py-20 text-center text-text-tertiary">Team members coming soon.</p>
+    return <p className="py-20 text-center text-text-tertiary">{tp('comingSoon')}</p>
   }
 
   return (
@@ -500,6 +503,7 @@ export default function PeoplePageClient({
   members,
   yearPhotos = [],
 }: PeoplePageClientProps) {
+  const t = useTranslations('People')
   // Year-photo strip: managed Sanity photos (People → Year Photo) if any, else
   // the bundled static set so the strip is never empty.
   const stripPhotos: StripPhoto[] = useMemo(
@@ -994,7 +998,7 @@ export default function PeoplePageClient({
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                People
+                {t('eyebrow')}
               </motion.p>
 
               <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -1006,11 +1010,7 @@ export default function PeoplePageClient({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    Two earthquakes<span className="text-accent">,</span>{' '}
-                    <br className="hidden md:block" />
-                    a pandemic<span className="text-accent">,</span> and{' '}
-                    <br className="hidden md:block" />
-                    a decision<span className="text-accent">.</span>
+                    {t('hero')}
                   </motion.h1>
 
                   <motion.p
@@ -1019,7 +1019,7 @@ export default function PeoplePageClient({
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                   >
-                    Est. 2019, Tirana, Albania
+                    {t('est')}
                   </motion.p>
                 </div>
 
@@ -1033,7 +1033,7 @@ export default function PeoplePageClient({
                   transition={{ duration: 0.8, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <p className="text-[0.95rem] leading-[1.7] text-text-secondary">
-                    The ground shook twice. The world shut down. And somewhere in the middle of all of that, two 22-year-olds decided it was a good time to build an agency.
+                    {t('intro')}
                   </p>
                 </motion.div>
               </div>
@@ -1064,22 +1064,22 @@ export default function PeoplePageClient({
           <div className="mx-auto w-full max-w-[var(--max-width)] text-center">
             <FadeUp active={active(1)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                Our motto
+                {t('motto')}
               </p>
             </FadeUp>
 
-            <BigStatement text="Climbing Mountains Together." active={active(1)} className="text-center" />
+            <BigStatement text={t('climbing')} active={active(1)} className="text-center" />
 
             <div className="mx-auto mt-[var(--space-xl)] flex max-w-[640px] flex-col gap-[var(--space-md)]">
               <FadeUp delay={0.1} active={active(1)}>
                 <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.6]">
-                  It means we do not stand at the bottom and point to the peak. We climb with you. We enter the work fully. The meetings, the pressure, the decisions, the parts no one sees. We learn how your business moves before we decide how your brand should move.
+                  {t('motto1')}
                 </p>
               </FadeUp>
 
               <FadeUp delay={0.15} active={active(1)}>
                 <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.6]">
-                  We do not disappear after the delivery. We stay close, challenge what needs to be challenged, and take responsibility for the path we recommend. Because real partnership is not agreement at every step. It is trust, honesty, endurance, and the will to reach the top together.
+                  {t('motto2')}
                 </p>
               </FadeUp>
             </div>
@@ -1090,9 +1090,9 @@ export default function PeoplePageClient({
                   small phones; the shorter second line then matches automatically
                   (same <p>). Desktop unchanged via md:. */}
               <p className="mx-auto mt-[var(--space-2xl)] max-w-[900px] font-display text-[clamp(0.9rem,4.6vw,1.4rem)] font-bold leading-[1.25] tracking-[-0.01em] text-text-primary md:text-[clamp(1.4rem,2.8vw,2.4rem)]">
-                &ldquo;We&apos;ve been told we&apos;re too involved.&rdquo;
+                {t('quote')}
                 <br />
-                <span className="text-text-tertiary">We consider that a compliment.</span>
+                <span className="text-text-tertiary">{t('compliment')}</span>
               </p>
             </FadeUp>
           </div>
@@ -1130,19 +1130,19 @@ export default function PeoplePageClient({
               <div className="flex flex-col gap-[var(--space-sm)] md:gap-[var(--space-md)]">
                 <FadeUp active={active(2)}>
                   <p className="text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                    The equation
+                    {t('equation')}
                   </p>
                 </FadeUp>
 
                 <FadeUp delay={0.1} active={active(2)}>
                   <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.6]">
-                    BoldCrest began where two different strengths met. Xhulio brought the visual discipline, the instinct for form, and the ability to turn ideas into images with character. Aldo brought the relationships, the conversations, and the trust needed to turn one project into a long-term partnership.
+                    {t('equation1')}
                   </p>
                 </FadeUp>
 
                 <FadeUp delay={0.15} active={active(2)}>
                   <p className="text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.6]">
-                    The equation was simple, but powerful. Creative vision on one side. Business understanding on the other. Together, they became the foundation for what BoldCrest would grow into. We were 22, building our first team from the same university halls we were still walking through, driven by clear instinct, strong work ethic, and the belief that the market was ready for something sharper.
+                    {t('equation2')}
                   </p>
                 </FadeUp>
               </div>
@@ -1160,27 +1160,27 @@ export default function PeoplePageClient({
               <div className="min-w-0">
                 <FadeUp active={active(3)}>
                   <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                    The team
+                    {t('team')}
                   </p>
                 </FadeUp>
 
-                <BigStatement text="Every person has a glitch in their system." active={active(3)} />
+                <BigStatement text={t('glitch')} active={active(3)} />
 
                 <FadeUp delay={0.1} active={active(3)}>
                   <p className="mt-[var(--space-lg)] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.6]">
-                    Something slightly off, slightly unusual, slightly theirs. And that&apos;s exactly what makes them belong here. We are different people who are somehow made of the same thing.
+                    {t('team1')}
                   </p>
                 </FadeUp>
 
                 <FadeUp delay={0.15} active={active(3)}>
                   <p className="mt-[var(--space-md)] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.6]">
-                    We bully each other. We cook together. We have traditions that make no sense to anyone outside this room. And when someone is sick, we show up.
+                    {t('team2')}
                   </p>
                 </FadeUp>
 
                 <FadeUp delay={0.2} active={active(3)}>
                   <p className="mt-[var(--space-md)] text-[1.05rem] font-semibold leading-[1.7] text-text-primary">
-                    It is, honestly, harder to find someone who won&apos;t disturb our peace than someone who has a great portfolio.
+                    {t('team3')}
                   </p>
                 </FadeUp>
               </div>
@@ -1201,27 +1201,27 @@ export default function PeoplePageClient({
             <div className="mx-auto max-w-[700px] text-center">
               <FadeUp active={active(4)}>
                 <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                  The work
+                  {t('work')}
                 </p>
               </FadeUp>
 
-              <BigStatement text="The work we're most proud of, most people will never know we made." active={active(4)} className="text-center" />
+              <BigStatement text={t('workStatement')} active={active(4)} className="text-center" />
 
               <FadeUp delay={0.15} active={active(4)}>
                 <p className="mt-[var(--space-lg)] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.6]">
-                  That&apos;s not false modesty. That&apos;s the goal. When a brand becomes so real, so lived-in, so theirs; when people carry it, wear it, post it, and believe in it without a second thought; the agency behind it disappears. And it should.
+                  {t('work1')}
                 </p>
               </FadeUp>
 
               <FadeUp delay={0.2} active={active(4)}>
                 <p className="mt-[var(--space-md)] text-[1.1rem] font-semibold leading-[1.7] text-text-primary">
-                  The best thing we can do is make something bigger than ourselves, then step back and watch it belong to the world.
+                  {t('work2')}
                 </p>
               </FadeUp>
 
               <FadeUp delay={0.25} active={active(4)}>
                 <p className="mt-[var(--space-sm)] text-[0.95rem] text-text-tertiary italic">
-                  That&apos;s why we exist.
+                  {t('work3')}
                 </p>
               </FadeUp>
             </div>
@@ -1236,16 +1236,16 @@ export default function PeoplePageClient({
           <div className="mx-auto w-full max-w-[var(--max-width)]">
             <FadeUp active={active(5)}>
               <p className="mb-[var(--space-md)] text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-text-tertiary">
-                Before you go
+                {t('beforeYouGo')}
               </p>
             </FadeUp>
 
             <div className="max-w-[820px]">
-              <BigStatement text="If you've read this far, we hope you felt something." active={active(5)} />
+              <BigStatement text={t('felt')} active={active(5)} />
 
               <FadeUp delay={0.2} active={active(5)}>
                 <p className="mt-[var(--space-lg)] max-w-[600px] text-[0.875rem] leading-[1.6] text-text-secondary md:text-[1rem] md:leading-[1.6]">
-                  A small warmth. A little confidence. Maybe a smile at the chaos of two kids building something real in a country still figuring out what &ldquo;brand&rdquo; means.
+                  {t('felt1')}
                 </p>
               </FadeUp>
             </div>
@@ -1265,7 +1265,7 @@ export default function PeoplePageClient({
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          Want to join our team?
+          {t('join')}
         </motion.h2>
 
         <motion.div
@@ -1290,7 +1290,7 @@ export default function PeoplePageClient({
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          Want to join our team?
+          {t('join')}
         </motion.h2>
 
         <motion.div
@@ -1303,7 +1303,7 @@ export default function PeoplePageClient({
             href="https://careers.boldcrest.com"
             className="mt-8 flex w-1/2 items-center justify-between gap-2 whitespace-nowrap rounded-full border border-white/25 px-5 py-4 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-text-secondary"
           >
-            Visit Careers
+            {t('visitCareers')}
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
