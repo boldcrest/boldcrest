@@ -30,8 +30,8 @@
     "coffee": "Prendiamo ⟦un caffè⟧ insieme.",
     "noEgosLabel": "Niente ego",
     "go": "Osa",
-    "brandDev": "Brand Dev",
-    "stillMotion": "Still & Motion",
+    "brandDev": "Marchio",
+    "stillMotion": "Foto e video",
     "brandDevDesc": "Partiamo da ciò che è il tuo brand, da ciò che vuole diventare e da come le persone dovrebbero ricordarlo, poi lo trasformiamo in un’identità che possano riconoscere, di cui fidarsi e a cui tornare."
   },
   "Services": {
@@ -125,8 +125,8 @@
     "allServices": "Tutti i servizi",
     "work": "Lavori",
     "backToTop": "Torna su",
-    "brandDevelopment": "Brand Development",
-    "stillMotion": "Still & Motion"
+    "brandDevelopment": "Sviluppo del marchio",
+    "stillMotion": "Foto e video"
   },
   "Contact": {
     "titleLine1": "Cominciamo con un ciao",
@@ -259,7 +259,7 @@
     "catchYouSoonName": "A presto, {name} 🤝",
     "untilNextTimeName": "Alla prossima, {name} 🤝",
     "thanksName": "Grazie {name}.",
-    "founder": "Founder",
+    "founder": "Fondatore",
     "buildABrandThatDoesntFadeWithTheTr": "costruire un brand che non svanisca con il cambiare delle tendenze.",
     "google": "Google",
     "acmeCo": "Acme Co.",
