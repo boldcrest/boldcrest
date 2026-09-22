@@ -4,7 +4,7 @@ import { OrderableListWithStatusFilter } from './components/OrderableListWithSta
 
 // These types are drag-and-drop orderable in the Studio list (their site order
 // follows the list order via `orderRank`).
-const ORDERABLE = ['project', 'teamMember', 'partner', 'diaryPost', 'yearPhoto']
+const ORDERABLE = ['project', 'teamMember', 'partner', 'diaryPost', 'caseStudy', 'yearPhoto']
 
 // Types handled explicitly below, so they don't also appear in the catch-all.
 const HANDLED = [
@@ -43,6 +43,7 @@ export const structure: StructureResolver = (S, context) => {
     .items([
       filterableList('project', 'Project'),
       filterableList('diaryPost', 'Diary Post'),
+      filterableList('caseStudy', 'Case Study'),
       // People → Team Members + Year Photo (yearly group photos for the /people strip)
       S.listItem()
         .title('People')

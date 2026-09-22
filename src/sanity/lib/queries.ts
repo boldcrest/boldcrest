@@ -339,3 +339,56 @@ export const moreProjectsQuery = defineQuery(
     thumbnailVideo
   }`
 )
+
+/* ── Case studies ────────────────────────────────────────────────────────
+ * `unlisted` keeps a published case study out of the index and the sitemap
+ * while leaving /case-studies/<slug> reachable by direct link (the page also
+ * serves `noindex` for those). `!unlisted` is deliberate rather than
+ * `unlisted == false`: documents created before the field existed have no
+ * `unlisted` at all, and GROQ treats missing as null — `!null` is true, so they
+ * still list instead of silently vanishing.
+ */
+export const allCaseStudiesQuery = defineQuery(
+  `*[_type == "caseStudy" && !unlisted] | order(orderRank) {
+    _id,
+    _updatedAt,
+    "title": coalesce(select($locale == "sq" => i18n.sq.title, $locale == "it" => i18n.it.title, $locale == "fr" => i18n.fr.title), title),
+    slug,
+    client,
+    "excerpt": coalesce(select($locale == "sq" => i18n.sq.excerpt, $locale == "it" => i18n.it.excerpt, $locale == "fr" => i18n.fr.excerpt), excerpt),
+    coverImage,
+    "kpi": {
+      "value": kpi.value,
+      "label": coalesce(select($locale == "sq" => i18n.sq.kpiLabel, $locale == "it" => i18n.it.kpiLabel, $locale == "fr" => i18n.fr.kpiLabel), kpi.label)
+    },
+    publishedAt
+  }`
+)
+
+/** Slugs for generateStaticParams — includes unlisted ones so a direct link
+ *  still prerenders rather than falling through to a 404. */
+export const allCaseStudySlugsQuery = defineQuery(
+  `*[_type == "caseStudy" && defined(slug.current)]{ slug }`
+)
+
+export const caseStudyBySlugQuery = defineQuery(
+  `*[_type == "caseStudy" && slug.current == $slug][0] {
+    _id,
+    "title": coalesce(select($locale == "sq" => i18n.sq.title, $locale == "it" => i18n.it.title, $locale == "fr" => i18n.fr.title), title),
+    slug,
+    client,
+    "excerpt": coalesce(select($locale == "sq" => i18n.sq.excerpt, $locale == "it" => i18n.it.excerpt, $locale == "fr" => i18n.fr.excerpt), excerpt),
+    coverImage,
+    unlisted,
+    "kpi": {
+      "value": kpi.value,
+      "label": coalesce(select($locale == "sq" => i18n.sq.kpiLabel, $locale == "it" => i18n.it.kpiLabel, $locale == "fr" => i18n.fr.kpiLabel), kpi.label),
+      "context": coalesce(select($locale == "sq" => i18n.sq.kpiContext, $locale == "it" => i18n.it.kpiContext, $locale == "fr" => i18n.fr.kpiContext), kpi.context)
+    },
+    stats[]{ value, label },
+    "explanation": coalesce(select($locale == "sq" => i18n.sq.explanation, $locale == "it" => i18n.it.explanation, $locale == "fr" => i18n.fr.explanation), explanation),
+    reels[]{ vimeoUrl, aspectRatio, caption },
+    feed[]{ ..., "alt": alt },
+    publishedAt
+  }`
+)

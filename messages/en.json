@@ -356,5 +356,16 @@
     "exploreOther": "Explore Our Other Services",
     "explore": "Explore",
     "faq": "FAQ"
+  },
+  "CaseStudy": {
+    "eyebrow": "Case Study",
+    "indexTitle": "Case Studies",
+    "indexHeading": "Numbers we moved",
+    "indexDescription": "Campaign results from BoldCrest — the number, the work behind it, and the feed it produced.",
+    "empty": "Case studies are on the way.",
+    "reels": "Reels",
+    "reelsHint": "Drag / tap to play",
+    "close": "Close",
+    "feed": "The Feed"
   }
 }

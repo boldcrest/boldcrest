@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { client } from '@/sanity/lib/client'
-import { allProjectsQuery, allDiaryPostsQuery } from '@/sanity/lib/queries'
+import { allProjectsQuery, allDiaryPostsQuery, allCaseStudiesQuery } from '@/sanity/lib/queries'
 import { routing } from '@/i18n/routing'
 import { sitemapImageFrom } from '@/lib/seo'
 
@@ -56,9 +56,12 @@ function localized(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [projects, posts] = await Promise.all([
+  const [projects, posts, studies] = await Promise.all([
     client.fetch(allProjectsQuery, { locale: routing.defaultLocale }) as Promise<ProjectRow[]>,
     client.fetch(allDiaryPostsQuery, { locale: routing.defaultLocale }) as Promise<DiaryRow[]>,
+    // allCaseStudiesQuery already filters out `unlisted` documents, so an
+    // in-progress case study is never advertised to search engines.
+    client.fetch(allCaseStudiesQuery, { locale: routing.defaultLocale }) as Promise<DiaryRow[]>,
   ])
 
   const projectUrls: MetadataRoute.Sitemap = (projects ?? []).flatMap((p) => {
@@ -81,6 +84,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   })
 
+  const caseStudyUrls: MetadataRoute.Sitemap = (studies ?? []).flatMap((c) => {
+    const img = sitemapImageFrom(c.coverImage)
+    return localized(`/case-studies/${c.slug.current}`, {
+      lastModified: new Date(c._updatedAt || c.publishedAt || Date.now()),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+      ...(img ? { images: [img] } : {}),
+    })
+  })
+
   const staticUrls: MetadataRoute.Sitemap = [
     ...localized('', { changeFrequency: 'weekly', priority: 1 }),
     ...localized('/work', { changeFrequency: 'weekly', priority: 0.9 }),
@@ -90,6 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localized('/services/communication', { changeFrequency: 'monthly', priority: 0.8 }),
     ...localized('/people', { changeFrequency: 'monthly', priority: 0.7 }),
     ...localized('/diary', { changeFrequency: 'weekly', priority: 0.7 }),
+    ...localized('/case-studies', { changeFrequency: 'weekly', priority: 0.8 }),
     ...localized('/contact', { changeFrequency: 'yearly', priority: 0.6 }),
     // /careers is intentionally NOT listed: the public careers URL is
     // careers.boldcrest.com (a separate host), and boldcrest.com/careers
@@ -99,5 +113,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/cookie-policy`, changeFrequency: 'yearly', priority: 0.3 },
   ]
 
-  return [...staticUrls, ...projectUrls, ...diaryUrls]
+  return [...staticUrls, ...projectUrls, ...diaryUrls, ...caseStudyUrls]
 }
