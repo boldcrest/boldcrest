@@ -18,6 +18,7 @@ import { ConfirmationBadge, FollowUpBadge, StatusBadge } from "@/components/stat
 import { AppointmentSheet } from "@/components/appointment-sheet";
 import { WhatsAppComposer, useWhatsAppComposer } from "@/components/whatsapp-composer";
 import { useDemo, useSelectors } from "@/lib/demo/store";
+import { Can } from "@/components/guard";
 import { formatTime } from "@clinic/i18n";
 import { reminderTemplateFor } from "@clinic/core";
 import { daysUntilDue, isDue, isOverdue, followUpPriority } from "@clinic/core";
@@ -356,6 +357,7 @@ export default function DashboardPage() {
             )}
           </Card>
 
+          <Can needs="patients.read">
           <Card>
             <CardHeader title={t.dashboard.recentVisits} />
             {recentVisits.length === 0 ? (
@@ -383,6 +385,7 @@ export default function DashboardPage() {
               </ul>
             )}
           </Card>
+          </Can>
         </FadeIn>
 
         <FadeIn delay={0.18} className="flex min-w-0 flex-col gap-4 lg:col-span-5">

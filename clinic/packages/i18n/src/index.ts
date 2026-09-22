@@ -261,6 +261,11 @@ const sq = {
     confirmed: "Konfirmuar",
     reschedule: "Kërkon shtyrje",
   },
+  access: {
+    denied: "Nuk keni akses në këtë pjesë",
+    hint: (role: string) => `Roli "${role}" nuk e sheh këtë seksion. Ndryshoje te Baza, ose shiko si dikush tjetër.`,
+    hiddenForRole: "Disa të dhëna nuk shfaqen për këtë rol.",
+  },
   rec: {
     proposed: "I propozuar",
     accepted: "I pranuar",
@@ -561,6 +566,11 @@ const en: typeof sq = {
     sent: "Sent",
     confirmed: "Confirmed",
     reschedule: "Wants to move",
+  },
+  access: {
+    denied: "You do not have access to this",
+    hint: (role: string) => `The "${role}" role does not see this section. Change it under Database, or view as someone else.`,
+    hiddenForRole: "Some information is hidden for this role.",
   },
   rec: {
     proposed: "Proposed",

@@ -9,8 +9,10 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, Database, Warning, XCircle } from "@phosphor-icons/react";
-import { Card, CardHeader, Field, Pill, Select, Skeleton } from "@clinic/ui";
+import { Button, Card, CardHeader, Field, Pill, Select, Skeleton } from "@clinic/ui";
+import { PERMISSIONS as ALL_PERMISSIONS, ROLES as ALL_ROLES, ROLE_PERMISSIONS, type Permission, type Role as StaffRole } from "@clinic/core";
 import { FadeIn, PageHeader } from "@/components/shell";
+import { useDemo } from "@/lib/demo/store";
 import { getDatabase, queryAs, type BootReport, type Claims } from "@/lib/db/browser";
 
 /** Every permission key the role map knows about. */
@@ -187,6 +189,10 @@ export default function DatabasePage() {
         </FadeIn>
 
         <FadeIn delay={0.1}>
+          <RoleDesigner />
+        </FadeIn>
+
+        <FadeIn delay={0.15}>
           <Card>
             <CardHeader title="Çfarë provon kjo faqe" />
             <div className="flex flex-col gap-2 px-6 pb-5 text-[13px] leading-relaxed text-ink-2">
@@ -205,5 +211,96 @@ export default function DatabasePage() {
         </FadeIn>
       </div>
     </>
+  );
+}
+
+/* ------------------------------------------------------------ role designer */
+
+/**
+ * The role map, as something to move rather than read.
+ *
+ * Deciding what reception should see is a judgement about how a clinic runs,
+ * and it is far easier to make by ticking a box and looking at the screens
+ * than by reasoning in the abstract. So: tick here, then use the "viewing as"
+ * switcher in the header and go look.
+ *
+ * These are proposals. The database's own map is shown alongside and does not
+ * move — changing that for real is a migration, which is the point: the rule
+ * that enforces anything should be hard to change by accident.
+ */
+function RoleDesigner() {
+  const { state, actions } = useDemo();
+
+  const effective = (role: StaffRole): Permission[] =>
+    state.permissionOverrides[role] ?? ROLE_PERMISSIONS[role];
+
+  function toggle(role: StaffRole, permission: Permission) {
+    const current = effective(role);
+    actions.setRolePermissions(
+      role,
+      current.includes(permission)
+        ? current.filter((p) => p !== permission)
+        : [...current, permission],
+    );
+  }
+
+  const changed = ALL_ROLES.filter((role) => {
+    const override = state.permissionOverrides[role];
+    if (!override) return false;
+    const base = ROLE_PERMISSIONS[role];
+    return override.length !== base.length || override.some((p) => !base.includes(p));
+  });
+
+  return (
+    <Card>
+      <CardHeader
+        title="Rregullat e aksesit"
+        hint="Ndrysho çfarë sheh secili rol, pastaj përdor 'Po sheh si' lart për ta parë. Ndryshimet janë propozime — rregulli i vërtetë ndryshohet me një migrim."
+        action={
+          changed.length > 0 ? (
+            <Button size="sm" onClick={() => actions.resetPermissions()}>
+              Kthe si në bazë
+            </Button>
+          ) : null
+        }
+      />
+      <div className="overflow-x-auto px-6 pb-5">
+        <table className="w-full min-w-[560px] border-collapse text-[13px]">
+          <thead>
+            <tr>
+              <th className="pb-2 text-left font-medium text-ink-3">&nbsp;</th>
+              {ALL_ROLES.map((role) => (
+                <th key={role} className="pb-2 text-center font-medium text-ink-2">
+                  {role}
+                  {changed.includes(role) ? (
+                    <span className="ml-1 text-warn" title="ndryshuar">
+                      •
+                    </span>
+                  ) : null}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {ALL_PERMISSIONS.map((permission) => (
+              <tr key={permission} className="border-t border-line">
+                <td className="py-1.5 pr-4 text-ink-2">{permission}</td>
+                {ALL_ROLES.map((role) => (
+                  <td key={role} className="py-1.5 text-center">
+                    <input
+                      type="checkbox"
+                      checked={effective(role).includes(permission)}
+                      onChange={() => toggle(role, permission)}
+                      aria-label={`${role} ${permission}`}
+                      className="size-4 cursor-pointer accent-[var(--accent)]"
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }

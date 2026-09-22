@@ -29,6 +29,7 @@ import {
 } from "@/components/patient-record";
 import { Modal } from "@clinic/ui";
 import { useDemo, useSelectors } from "@/lib/demo/store";
+import { Can, RequirePermission } from "@/components/guard";
 import { formatDate, formatTime } from "@clinic/i18n";
 import { ageOn, daysUntilBirthday, reminderTemplateFor } from "@clinic/core";
 
@@ -45,8 +46,16 @@ type TimelineItem = {
 const BIRTHDAY_WINDOW_DAYS = 7;
 
 export default function PatientDetailPage() {
+  return (
+    <RequirePermission needs="patients.read">
+      <PatientDetail />
+    </RequirePermission>
+  );
+}
+
+function PatientDetail() {
   const params = useParams<{ id: string }>();
-  const { t, state, now } = useDemo();
+  const { t, state, now, can } = useDemo();
   const s = useSelectors();
 
   const [booking, setBooking] = useState(false);
@@ -64,8 +73,10 @@ export default function PatientDetailPage() {
         id: visit.id,
         at: visit.date,
         kind: "visit",
+        // Reception needs to know the patient came and what for; the
+        // clinician's note about it is a different thing.
         title: s.treatmentNames(visit.treatmentIds).join(", "),
-        body: visit.note,
+        body: can("clinical.read") ? visit.note : undefined,
       });
     }
 
@@ -104,7 +115,9 @@ export default function PatientDetailPage() {
       });
     }
 
-    for (const recommendation of s.recommendationsForPatient(patient.id)) {
+    for (const recommendation of can("clinical.read")
+      ? s.recommendationsForPatient(patient.id)
+      : []) {
       items.push({
         id: recommendation.id,
         at: `${recommendation.createdAt}T09:00:00.000Z`,
@@ -135,7 +148,7 @@ export default function PatientDetailPage() {
     }
 
     return items.sort((a, b) => b.at.localeCompare(a.at));
-  }, [patient, state, s, t]);
+  }, [patient, state, s, t, can]);
 
   if (!patient) {
     return (
@@ -176,27 +189,33 @@ export default function PatientDetailPage() {
         action={
           <div className="flex flex-wrap gap-2">
             {patient.contactConsent && nextAppointment ? (
-              <Button
-                onClick={() =>
-                  composer.open({
-                    patientId: patient.id,
-                    template: reminderTemplateFor(nextAppointment, now),
-                    appointmentId: nextAppointment.id,
-                  })
-                }
-              >
-                <WhatsappLogo size={16} weight="fill" />
-                WhatsApp
-              </Button>
+              <Can needs="messaging.send">
+                <Button
+                  onClick={() =>
+                    composer.open({
+                      patientId: patient.id,
+                      template: reminderTemplateFor(nextAppointment, now),
+                      appointmentId: nextAppointment.id,
+                    })
+                  }
+                >
+                  <WhatsappLogo size={16} weight="fill" />
+                  WhatsApp
+                </Button>
+              </Can>
             ) : null}
-            <Button onClick={() => setLoggingVisit(true)}>
-              <ClipboardText size={15} weight="bold" />
-              {t.patients.logVisit}
-            </Button>
-            <Button variant="primary" onClick={() => setBooking(true)}>
-              <CalendarPlus size={15} weight="bold" />
-              {t.patients.book}
-            </Button>
+            <Can needs="clinical.write">
+              <Button onClick={() => setLoggingVisit(true)}>
+                <ClipboardText size={15} weight="bold" />
+                {t.patients.logVisit}
+              </Button>
+            </Can>
+            <Can needs="schedule.write">
+              <Button variant="primary" onClick={() => setBooking(true)}>
+                <CalendarPlus size={15} weight="bold" />
+                {t.patients.book}
+              </Button>
+            </Can>
           </div>
         }
       >
@@ -204,6 +223,9 @@ export default function PatientDetailPage() {
           <p className="nums text-sm text-ink-3">
             {patient.phone} · {patient.city} · {t.patients.age(ageOn(patient.birthDate, now))}
           </p>
+          {!can("clinical.read") ? (
+            <Pill tone="neutral">{t.access.hiddenForRole}</Pill>
+          ) : null}
           {untilBirthday <= BIRTHDAY_WINDOW_DAYS ? (
             <Pill tone="lime">
               {untilBirthday === 0
@@ -215,9 +237,11 @@ export default function PatientDetailPage() {
       </PageHeader>
 
       <div className="flex flex-col gap-4">
-        <FadeIn>
-          <AllergyPanel patient={patient} />
-        </FadeIn>
+        <Can needs="clinical.read">
+          <FadeIn>
+            <AllergyPanel patient={patient} />
+          </FadeIn>
+        </Can>
 
         <FadeIn delay={0.05} className="grid gap-4 lg:grid-cols-3">
           <Card>
@@ -248,13 +272,19 @@ export default function PatientDetailPage() {
             </dl>
           </Card>
 
-          <FollowUpSeriesCard patient={patient} />
-          <RecommendationsCard patient={patient} />
+          <Can needs="recall.manage">
+            <FollowUpSeriesCard patient={patient} />
+          </Can>
+          <Can needs="clinical.read">
+            <RecommendationsCard patient={patient} />
+          </Can>
         </FadeIn>
 
         <FadeIn delay={0.1} className="grid gap-4 lg:grid-cols-2">
           <BenefitsCard patient={patient} />
-          <NotesCard patient={patient} />
+          <Can needs="clinical.read">
+            <NotesCard patient={patient} />
+          </Can>
         </FadeIn>
 
         <FadeIn delay={0.15}>

@@ -45,6 +45,7 @@ import {
   type Recommendation,
 } from "@clinic/core";
 import { useDemo, useSelectors } from "@/lib/demo/store";
+import { Can } from "@/components/guard";
 import { BookAppointmentModal, type BookingPrefill } from "@/components/book-appointment";
 import { FollowUpBadge } from "@/components/status";
 
@@ -80,7 +81,11 @@ export function AllergyPanel({ patient }: { patient: Patient }) {
               {t.patients.allergies}
             </span>
           }
-          action={<AddAction label={t.patients.editAllergies} onClick={() => setEditing(true)} />}
+          action={
+            <Can needs="clinical.write">
+              <AddAction label={t.patients.editAllergies} onClick={() => setEditing(true)} />
+            </Can>
+          }
         />
         <div className="px-6 pb-5">
           {has ? (
@@ -207,7 +212,7 @@ export const RECOMMENDATION_TONE: Record<Recommendation["status"], Tone> = {
 };
 
 export function RecommendationsCard({ patient }: { patient: Patient }) {
-  const { t, state, actions } = useDemo();
+  const { t, state, actions, can } = useDemo();
   const s = useSelectors();
   const toast = useToast();
   const [adding, setAdding] = useState(false);
@@ -220,7 +225,11 @@ export function RecommendationsCard({ patient }: { patient: Patient }) {
       <Card>
         <CardHeader
           title={t.patients.recommendations}
-          action={<AddAction label={t.actions.add} onClick={() => setAdding(true)} />}
+          action={
+            <Can needs="clinical.write">
+              <AddAction label={t.actions.add} onClick={() => setAdding(true)} />
+            </Can>
+          }
         />
         {recommendations.length === 0 ? (
           <EmptyState icon={<Lightbulb size={22} />} title={t.patients.noRecommendations} />
@@ -247,7 +256,7 @@ export function RecommendationsCard({ patient }: { patient: Patient }) {
                   {formatDate(recommendation.createdAt, state.lang)}
                 </p>
 
-                {recommendation.status === "proposed" ? (
+                {recommendation.status === "proposed" && can("clinical.write") ? (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <Button
                       size="sm"
@@ -273,7 +282,7 @@ export function RecommendationsCard({ patient }: { patient: Patient }) {
                   </div>
                 ) : null}
 
-                {recommendation.status === "accepted" ? (
+                {recommendation.status === "accepted" && can("schedule.write") ? (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <Button
                       size="sm"
@@ -419,7 +428,11 @@ export function BenefitsCard({ patient }: { patient: Patient }) {
         <CardHeader
           title={t.patients.benefits}
           hint={t.patients.benefitsHint}
-          action={<AddAction label={t.actions.add} onClick={() => setAdding(true)} />}
+          action={
+            <Can needs="patients.write">
+              <AddAction label={t.actions.add} onClick={() => setAdding(true)} />
+            </Can>
+          }
         />
         {benefits.length === 0 ? (
           <EmptyState icon={<Gift size={22} />} title={t.patients.noBenefits} />
@@ -457,16 +470,18 @@ export function BenefitsCard({ patient }: { patient: Patient }) {
                       {benefitValue(benefit, state.lang)}
                     </span>
                     {open ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          actions.markBenefitUsed(benefit.id);
-                          toast.push(t.toast.benefitUsed);
-                        }}
-                      >
-                        {t.patients.markUsed}
-                      </Button>
+                      <Can needs="patients.write">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            actions.markBenefitUsed(benefit.id);
+                            toast.push(t.toast.benefitUsed);
+                          }}
+                        >
+                          {t.patients.markUsed}
+                        </Button>
+                      </Can>
                     ) : null}
                   </div>
                 </li>
@@ -589,7 +604,7 @@ function BenefitModal({ patient, onClose }: { patient: Patient; onClose: () => v
 /* ----------------------------------------------------------------- notes */
 
 export function NotesCard({ patient }: { patient: Patient }) {
-  const { t, state, actions } = useDemo();
+  const { t, state, actions, can } = useDemo();
   const s = useSelectors();
   const [adding, setAdding] = useState(false);
   const notes = sortNotes(patient.notes);
@@ -599,7 +614,11 @@ export function NotesCard({ patient }: { patient: Patient }) {
       <Card>
         <CardHeader
           title={t.patients.notes}
-          action={<AddAction label={t.patients.addNote} onClick={() => setAdding(true)} />}
+          action={
+            <Can needs="clinical.write">
+              <AddAction label={t.patients.addNote} onClick={() => setAdding(true)} />
+            </Can>
+          }
         />
         {notes.length === 0 ? (
           <EmptyState title={t.patients.noNotes} />
@@ -620,24 +639,26 @@ export function NotesCard({ patient }: { patient: Patient }) {
                     {formatDate(note.createdAt, state.lang)}
                   </p>
                 </div>
-                <div className="flex shrink-0 gap-1">
-                  <IconButton
-                    tone="ghost"
-                    title={t.form.pinNote}
-                    aria-label={t.form.pinNote}
-                    onClick={() => actions.toggleNotePin(patient.id, note.id)}
-                  >
-                    <PushPin size={14} weight={note.pinned ? "fill" : "bold"} />
-                  </IconButton>
-                  <IconButton
-                    tone="ghost"
-                    title={t.actions.delete}
-                    aria-label={t.actions.delete}
-                    onClick={() => actions.removeNote(patient.id, note.id)}
-                  >
-                    <Trash size={14} weight="bold" />
-                  </IconButton>
-                </div>
+                {can("clinical.write") ? (
+                  <div className="flex shrink-0 gap-1">
+                    <IconButton
+                      tone="ghost"
+                      title={t.form.pinNote}
+                      aria-label={t.form.pinNote}
+                      onClick={() => actions.toggleNotePin(patient.id, note.id)}
+                    >
+                      <PushPin size={14} weight={note.pinned ? "fill" : "bold"} />
+                    </IconButton>
+                    <IconButton
+                      tone="ghost"
+                      title={t.actions.delete}
+                      aria-label={t.actions.delete}
+                      onClick={() => actions.removeNote(patient.id, note.id)}
+                    >
+                      <Trash size={14} weight="bold" />
+                    </IconButton>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

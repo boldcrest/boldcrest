@@ -18,6 +18,7 @@ import {
 } from "@clinic/ui";
 import { FadeIn, PageHeader } from "@/components/shell";
 import { useDemo } from "@/lib/demo/store";
+import { RequirePermission } from "@/components/guard";
 import { capitalizeFirst, formatCadence, formatMoney } from "@clinic/i18n";
 import { stepInterval, stepOccurrences, type Protocol, type Treatment } from "@clinic/core";
 
@@ -25,6 +26,14 @@ const TABS = ["treatments", "protocols", "templates", "providers"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function SettingsPage() {
+  return (
+    <RequirePermission needs="settings.manage">
+      <Settings />
+    </RequirePermission>
+  );
+}
+
+function Settings() {
   const { t, state } = useDemo();
   const [tab, setTab] = useState<Tab>("treatments");
   const [creating, setCreating] = useState(false);

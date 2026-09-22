@@ -3,6 +3,7 @@ import { followUpsForVisit } from "@clinic/core";
 import type {
   Appointment,
   Benefit,
+  StaffMember,
   DemoState,
   FollowUp,
   MessageTemplate,
@@ -48,6 +49,20 @@ const providers: Provider[] = [
     tint: "amber",
     hours: WEEKDAYS_FULL.map((weekday) => ({ weekday, start: "10:00", end: "18:00" })),
   },
+];
+
+/**
+ * Everyone who works here, not only the clinicians. Reception and the
+ * accountant never appear in the calendar but they use the product every day,
+ * and they are the two roles whose view is easiest to get wrong.
+ */
+const staff: StaffMember[] = [
+  { id: "st-zeqiri", name: "Dr. Ilir Zeqiri", title: "Pronar dhe stomatolog", role: "owner", providerId: "prov-zeqiri" },
+  { id: "st-nushi", name: "Dr. Elda Nushi", title: "Dermatologe", role: "practitioner", providerId: "prov-nushi" },
+  { id: "st-tafani", name: "Dr. Rea Tafani", title: "Stomatologe", role: "practitioner", providerId: "prov-tafani" },
+  { id: "st-mira", name: "Mira Leka", title: "Recepsion", role: "reception" },
+  { id: "st-ergi", name: "Ergi Doda", title: "Asistent", role: "assistant" },
+  { id: "st-vera", name: "Vera Kota", title: "Financa", role: "accountant" },
 ];
 
 const treatments: Treatment[] = [
@@ -328,6 +343,9 @@ export function buildSeed(base: Date): DemoState {
   return {
     now: base.toISOString(),
     lang: "sq",
+    staff,
+    currentStaffId: "st-zeqiri",
+    permissionOverrides: {},
     clinic: {
       name: "Klinika Arnika",
       address: "Rr. Sami Frashëri 24, Tiranë",
@@ -348,4 +366,4 @@ export function buildSeed(base: Date): DemoState {
   };
 }
 
-export { providers, treatments, protocols, buildPatients };
+export { providers, staff, treatments, protocols, buildPatients };

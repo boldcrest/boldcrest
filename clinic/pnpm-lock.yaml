@@ -254,6 +254,10 @@ importers:
         version: 5.0.1(@types/node@22.20.4)(vite@8.3.0(@types/node@22.20.4)(jiti@2.7.0))
 
   packages/db:
+    dependencies:
+      '@clinic/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@electric-sql/pglite':
         specifier: ^0.2.17

@@ -8,6 +8,7 @@ import { FadeIn, PageHeader } from "@/components/shell";
 import { ConfirmationBadge } from "@/components/status";
 import { AppointmentSheet } from "@/components/appointment-sheet";
 import { BookAppointmentModal } from "@/components/book-appointment";
+import { Can, RequirePermission } from "@/components/guard";
 import { WhatsAppComposer, useWhatsAppComposer } from "@/components/whatsapp-composer";
 import { useDemo, useSelectors } from "@/lib/demo/store";
 import { capitalizeFirst, formatDate, formatTime, formatWeekday } from "@clinic/i18n";
@@ -28,6 +29,14 @@ const TINT_HEX: Record<string, string> = {
 const tintOf = (key: string) => TINT_HEX[key] ?? TINT_HEX.teal;
 
 export default function SchedulePage() {
+  return (
+    <RequirePermission needs="schedule.read">
+      <Schedule />
+    </RequirePermission>
+  );
+}
+
+function Schedule() {
   const { t, state, now } = useDemo();
 
   const [view, setView] = useState<"day" | "week">("day");
@@ -59,10 +68,12 @@ export default function SchedulePage() {
       <PageHeader
         title={t.schedule.title}
         action={
-          <Button variant="primary" onClick={() => setBooking(true)}>
-            <CalendarPlus size={15} weight="bold" />
-            {t.schedule.newAppointment}
-          </Button>
+          <Can needs="schedule.write">
+            <Button variant="primary" onClick={() => setBooking(true)}>
+              <CalendarPlus size={15} weight="bold" />
+              {t.schedule.newAppointment}
+            </Button>
+          </Can>
         }
       >
         <p className="mt-1 text-sm text-ink-3">

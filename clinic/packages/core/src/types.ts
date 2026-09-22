@@ -1,6 +1,7 @@
+import type { Permission, Role } from "./permissions";
+
 export type Lang = "sq" | "en";
 export type Vertical = "dental" | "aesthetic";
-export type StaffRole = "owner" | "clinician" | "reception";
 
 export type AppointmentStatus =
   | "scheduled"
@@ -23,6 +24,21 @@ export type FollowUpStatus =
   | "snoozed";
 
 export type TokenPurpose = "appointment" | "followup";
+
+/**
+ * Someone who works at the clinic. Distinct from Provider: every clinician is
+ * staff, but reception and the accountant are staff too and never appear in
+ * the calendar. The role is what the interface and the database both read to
+ * decide what this person may do.
+ */
+export interface StaffMember {
+  id: string;
+  name: string;
+  role: Role;
+  /** set when this person also takes appointments */
+  providerId?: string;
+  title: string;
+}
 
 export interface WorkingHours {
   /** 1 = Monday ... 7 = Sunday (ISO) */
@@ -243,6 +259,16 @@ export interface DemoState {
   now: string;
   lang: Lang;
   clinic: Clinic;
+  staff: StaffMember[];
+  /** who the demo is currently being viewed as */
+  currentStaffId: string;
+  /**
+   * Edits to the role map made while designing. The demo reads these; the
+   * database does not, and never will — a real change is a migration. They are
+   * here so the question "what should reception be able to see?" can be
+   * answered by looking rather than by imagining.
+   */
+  permissionOverrides: Partial<Record<Role, Permission[]>>;
   providers: Provider[];
   patients: Patient[];
   treatments: Treatment[];

@@ -14,7 +14,9 @@ import { addDays, addMinutes, startOfDay } from "date-fns";
 import { buildSeed } from "./seed";
 import {
   followUpsForVisit,
+  hasPermission,
   makeToken,
+  ROLE_PERMISSIONS,
   type Appointment,
   type Benefit,
   type DemoState,
@@ -23,20 +25,22 @@ import {
   type Message,
   type Patient,
   type PatientNote,
+  type Permission,
+  type Role,
   type Protocol,
   type ProtocolStep,
   type Recommendation,
+  type StaffMember,
   type TemplateKey,
   type Treatment,
   type Visit,
 } from "@clinic/core";
 import { dictionaries, type Dict } from "@clinic/i18n";
 
-// v2: patients gained a full birth date, allergies and a notes list, and the
-// state gained recommendations and benefits. A v1 payload would hydrate into
-// the new UI missing all of them, so the key changes rather than the shape
-// being patched on read — a demo has no data worth migrating.
-const STORAGE_KEY = "arnika.demo.v2";
+// v3: the state gained staff, the person currently being viewed as, and the
+// working copy of the role map. As before the key changes rather than the
+// shape being patched on read — a demo has no data worth migrating.
+const STORAGE_KEY = "arnika.demo.v3";
 
 type Action =
   | { type: "hydrate"; state: DemoState }
@@ -56,6 +60,9 @@ type Action =
   | { type: "addBenefit"; benefit: Benefit }
   | { type: "patchBenefit"; id: string; patch: Partial<Benefit> }
   | { type: "addTreatment"; treatment: Treatment; protocol?: Protocol }
+  | { type: "setCurrentStaff"; staffId: string }
+  | { type: "setRolePermissions"; role: Role; permissions: Permission[] }
+  | { type: "resetPermissions" }
   | { type: "useToken"; token: string; outcome: "confirmed" | "reschedule" };
 
 function reducer(state: DemoState, action: Action): DemoState {
@@ -134,6 +141,18 @@ function reducer(state: DemoState, action: Action): DemoState {
         treatments: [...state.treatments, action.treatment],
         protocols: action.protocol ? [...state.protocols, action.protocol] : state.protocols,
       };
+    case "setCurrentStaff":
+      return { ...state, currentStaffId: action.staffId };
+    case "setRolePermissions":
+      return {
+        ...state,
+        permissionOverrides: {
+          ...state.permissionOverrides,
+          [action.role]: action.permissions,
+        },
+      };
+    case "resetPermissions":
+      return { ...state, permissionOverrides: {} };
     case "useToken": {
       const token = state.tokens.find((t) => t.token === action.token);
       if (!token || token.usedAt) return state;
@@ -191,6 +210,14 @@ interface DemoContextValue {
   ready: boolean;
   now: Date;
   t: Dict;
+  /** the staff member the demo is being viewed as */
+  me: StaffMember;
+  /**
+   * Whether the current person may do this. The interface uses it to decide
+   * what to draw; in the real product the database decides what is allowed and
+   * this only spares people buttons that would be refused.
+   */
+  can: (permission: Permission) => boolean;
   dispatch: (action: Action) => void;
   actions: ReturnType<typeof buildActions>;
 }
@@ -202,6 +229,10 @@ function buildActions(state: DemoState, dispatch: (a: Action) => void) {
 
   return {
     setLang: (lang: Lang) => dispatch({ type: "setLang", lang }),
+    setCurrentStaff: (staffId: string) => dispatch({ type: "setCurrentStaff", staffId }),
+    setRolePermissions: (role: Role, permissions: Permission[]) =>
+      dispatch({ type: "setRolePermissions", role, permissions }),
+    resetPermissions: () => dispatch({ type: "resetPermissions" }),
     advanceDays: (days: number) => dispatch({ type: "advanceDays", days }),
     reset: () => dispatch({ type: "reset" }),
 
@@ -549,16 +580,33 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const actions = useMemo(() => buildActions(state, dispatch), [state]);
+
+  const me = useMemo(
+    () => state.staff.find((s) => s.id === state.currentStaffId) ?? state.staff[0],
+    [state.staff, state.currentStaffId],
+  );
+
+  const can = useMemo(() => {
+    // An override replaces that role's list wholesale, so unticking everything
+    // really does mean "this role can do nothing" rather than falling back.
+    const override = state.permissionOverrides[me.role];
+    const allowed = override ?? ROLE_PERMISSIONS[me.role];
+    return (permission: Permission) =>
+      override ? allowed.includes(permission) : hasPermission(me.role, permission);
+  }, [me.role, state.permissionOverrides]);
+
   const value = useMemo<DemoContextValue>(
     () => ({
       state,
       ready,
       now: new Date(state.now),
       t: dictionaries[state.lang],
+      me,
+      can,
       dispatch,
       actions,
     }),
-    [state, ready, actions],
+    [state, ready, actions, me, can],
   );
 
   return <DemoContext.Provider value={value}>{children}</DemoContext.Provider>;
@@ -576,6 +624,7 @@ export function useSelectors() {
 
   return useMemo(() => {
     const patientById = (id: string) => state.patients.find((p) => p.id === id);
+    const staffById = (id: string) => state.staff.find((s) => s.id === id);
     const providerById = (id: string) => state.providers.find((p) => p.id === id);
     const treatmentById = (id: string) => state.treatments.find((t) => t.id === id);
     const protocolById = (id: string) => state.protocols.find((p) => p.id === id);
@@ -583,6 +632,7 @@ export function useSelectors() {
 
     return {
       patientById,
+      staffById,
       providerById,
       treatmentById,
       protocolById,

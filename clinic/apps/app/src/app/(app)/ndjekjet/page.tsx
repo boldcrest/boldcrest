@@ -15,6 +15,7 @@ import { FollowUpBadge } from "@/components/status";
 import { WhatsAppComposer, useWhatsAppComposer } from "@/components/whatsapp-composer";
 import { BookAppointmentModal, type BookingPrefill } from "@/components/book-appointment";
 import { useDemo, useSelectors } from "@/lib/demo/store";
+import { Can, RequirePermission } from "@/components/guard";
 import { formatCadence, formatDate } from "@clinic/i18n";
 import {
   daysUntilDue,
@@ -37,7 +38,15 @@ function bucketOf(days: number): Bucket {
 }
 
 export default function FollowUpsPage() {
-  const { t, state, now, actions } = useDemo();
+  return (
+    <RequirePermission needs="recall.manage">
+      <FollowUps />
+    </RequirePermission>
+  );
+}
+
+function FollowUps() {
+  const { t, state, now, actions, can } = useDemo();
   const s = useSelectors();
   const toast = useToast();
   const composer = useWhatsAppComposer();
@@ -135,7 +144,7 @@ export default function FollowUpsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {head.status === "confirmed" ? (
+          {head.status === "confirmed" && can("schedule.write") ? (
             <Button
               size="sm"
               variant="primary"
@@ -151,7 +160,7 @@ export default function FollowUpsPage() {
               <CalendarPlus size={14} weight="bold" />
               {t.followups.book}
             </Button>
-          ) : patient?.contactConsent ? (
+          ) : patient?.contactConsent && can("messaging.send") ? (
             <Button
               size="sm"
               onClick={() =>

@@ -18,5 +18,8 @@
   },
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@clinic/core": "workspace:*"
   }
 }

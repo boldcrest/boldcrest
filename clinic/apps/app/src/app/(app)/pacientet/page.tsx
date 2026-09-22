@@ -6,9 +6,18 @@ import { MagnifyingGlass, UserPlus, Users } from "@phosphor-icons/react";
 import { Button, Card, Checkbox, EmptyState, Field, Input, Modal, Pill, Select, Textarea, useToast } from "@clinic/ui";
 import { FadeIn, PageHeader } from "@/components/shell";
 import { useDemo } from "@/lib/demo/store";
+import { Can, RequirePermission } from "@/components/guard";
 import { formatDate } from "@clinic/i18n";
 
 export default function PatientsPage() {
+  return (
+    <RequirePermission needs="patients.read">
+      <PatientsList />
+    </RequirePermission>
+  );
+}
+
+function PatientsList() {
   const { t, state, now } = useDemo();
 
   const [query, setQuery] = useState("");
@@ -30,10 +39,12 @@ export default function PatientsPage() {
       <PageHeader
         title={t.patients.title}
         action={
-          <Button variant="primary" onClick={() => setCreating(true)}>
-            <UserPlus size={15} weight="bold" />
-            {t.patients.new}
-          </Button>
+          <Can needs="patients.write">
+            <Button variant="primary" onClick={() => setCreating(true)}>
+              <UserPlus size={15} weight="bold" />
+              {t.patients.new}
+            </Button>
+          </Can>
         }
       >
         <p className="mt-1 text-sm text-ink-3">{t.patients.count(state.patients.length)}</p>

@@ -4,7 +4,7 @@ The single place that says where the product is, what changed, and why. Updated 
 
 **Plan:** `v1-product-build-plan.md` (currently v1.2)
 **Branch:** `claude/clinic-app-market-research-682su6` (ahead of `main`, never pushed without Aldo's go)
-**App version:** `0.4.0` (`clinic/apps/app/package.json` — the workspace root carries its own version and is not the app's)
+**App version:** `0.5.0` (`clinic/apps/app/package.json` — the workspace root carries its own version and is not the app's)
 
 ---
 
@@ -14,10 +14,10 @@ The single place that says where the product is, what changed, and why. Updated 
 |---|---|
 | Phase | **1, platform spine.** Phase 0 still open on D1 and D4, which block nothing in phase 1 |
 | Last session | 22 September 2026 |
-| Working tree | Clean. App 0.4.0 committed 22 September, not pushed |
-| Checks at last run | All green. `tsc` 5/5 packages, `eslint` clean, `vitest` 87/87 (27 core, 21 app, 33 db, 6 i18n), `build` green |
+| Working tree | Clean. App 0.5.0 committed 22 September, not pushed |
+| Checks at last run | All green. `tsc` 5/5, `eslint` clean, `vitest` 89/89 (27 core, 21 app, 35 db, 6 i18n), `build` green |
 | Blocking | D1 (which finance app) and D4 (name and domain). Neither blocks phase 1 |
-| Next action | Domain C: patients, allergies, notes, recommendations, benefits — as tables with RLS, then port the patient screens off the fake store |
+| Next action | **Aldo's call: finish the demo's functionality first, then the database.** Next: agree the demo feature list, and keep adding domains underneath at one domain behind |
 | Needs Aldo | Vercel root directory must change from `clinic` to `clinic/apps/app` or nothing deploys. Supabase Frankfurt project (0.4) needs his account and a signed DPA |
 
 ---
@@ -101,6 +101,18 @@ Steps inside phases 2 to 9 get their own rows here when the phase starts.
 ---
 
 ## Changelog
+
+### 2026-09-22 · app 0.5.0 · viewing as, and the role map as something you can move
+
+**Why:** Aldo, deciding the order of work: finish the demo's functionality first, then the infrastructure, "cause while I look at it, I get ideas on functionality and what one user can see or not". The switcher he asked for is also the thing that closes the gap recorded two entries ago — three features had been designed with no permission boundary because the demo had no concept of a user.
+
+**One role map, two readers.** `packages/core/permissions.ts` now holds it, and `packages/db` has a test that reads `app.role_permissions()` out of Postgres and fails if the two ever disagree. A second copy of a security rule is a liability; a test that compares them is the cheapest way to keep it honest.
+
+**Viewing as.** Six staff members seeded — owner, two practitioners, reception, assistant, accountant — and a switcher in the header. Every screen honours it: the sidebar drops what the person cannot reach, the patient record hides allergies, notes and recommendations without `clinical.read`, visit notes vanish from the timeline while the visit itself stays, and actions disappear without the permission behind them. A page reached by URL that the role cannot open says so instead of rendering.
+
+**The role map is editable.** `/baza` gained a roles × permissions grid. Tick a box, switch person in the header, look. It is labelled as proposals — the database's own map does not move, because a rule that enforces something should be hard to change by accident. Whatever Aldo settles on becomes a migration.
+
+**Worth looking at, now that it is visible:** the accountant currently sees only the schedule, so the patient list and every record are closed to them. That may be right, or it may be too strict once invoicing exists. It is exactly the kind of question this was built to surface.
 
 ### 2026-09-22 · domain A · clinics, memberships, and the wall
 

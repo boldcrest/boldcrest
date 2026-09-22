@@ -17,18 +17,34 @@ import {
   Users,
 } from "@phosphor-icons/react";
 import { IconButton, cx, useToast } from "@clinic/ui";
+import type { Icon } from "@phosphor-icons/react";
+import type { Permission } from "@clinic/core";
+import type { Dict } from "@clinic/i18n";
 import { useDemo } from "@/lib/demo/store";
 import { capitalizeFirst, formatDate, formatWeekday } from "@clinic/i18n";
 
+// `needs` is the permission that puts an item in the sidebar. The dashboard has
+// none because everyone starts somewhere, and it shows only what its reader is
+// allowed to see. /baza is our build-time view, not a clinic feature.
 const NAV = [
-  { href: "/paneli", key: "dashboard", Icon: SquaresFour },
-  { href: "/orari", key: "schedule", Icon: CalendarBlank },
-  { href: "/pacientet", key: "patients", Icon: Users },
-  { href: "/ndjekjet", key: "followups", Icon: Repeat },
-  { href: "/cilesimet", key: "settings", Icon: Gear },
-  // Build-time view: the real database, and who it lets see what. Not for clinics.
-  { href: "/baza", key: "database", Icon: Database },
-] as const;
+  { href: "/paneli", key: "dashboard", Icon: SquaresFour, needs: null },
+  { href: "/orari", key: "schedule", Icon: CalendarBlank, needs: "schedule.read" },
+  { href: "/pacientet", key: "patients", Icon: Users, needs: "patients.read" },
+  { href: "/ndjekjet", key: "followups", Icon: Repeat, needs: "recall.manage" },
+  { href: "/cilesimet", key: "settings", Icon: Gear, needs: "settings.manage" },
+  { href: "/baza", key: "database", Icon: Database, needs: null },
+] as const satisfies ReadonlyArray<{
+  href: string;
+  key: keyof Dict["nav"];
+  Icon: Icon;
+  needs: Permission | null;
+}>;
+
+/** The sidebar a given person actually gets. */
+function useVisibleNav() {
+  const { can } = useDemo();
+  return NAV.filter((item) => item.needs === null || can(item.needs));
+}
 
 /* -------------------------------------------------------------- app mark */
 
@@ -54,6 +70,7 @@ export function AppMark({ className }: { className?: string }) {
 export function Sidebar() {
   const pathname = usePathname();
   const { t, state } = useDemo();
+  const nav = useVisibleNav();
 
   return (
     <aside className="hidden w-[248px] shrink-0 flex-col px-4 py-5 lg:flex">
@@ -68,7 +85,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 pt-7">
-        {NAV.map(({ href, key, Icon }) => {
+        {nav.map(({ href, key, Icon }) => {
           const active = pathname.startsWith(href);
           return (
             <Link
@@ -98,9 +115,10 @@ export function Sidebar() {
 export function MobileNav() {
   const pathname = usePathname();
   const { t } = useDemo();
+  const nav = useVisibleNav();
   return (
     <nav className="flex gap-1.5 overflow-x-auto px-4 pb-1 pt-1 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {NAV.map(({ href, key, Icon }) => {
+      {nav.map(({ href, key, Icon }) => {
         const active = pathname.startsWith(href);
         return (
           <Link
@@ -186,6 +204,8 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        <ViewAs />
+
         {/* The demo clock: one capsule holding both jumps and the reset. */}
         <div className="flex items-center gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)] dark:hairline">
           <button
@@ -233,6 +253,40 @@ export function Topbar() {
         <ThemeToggle />
       </div>
     </header>
+  );
+}
+
+/* ---------------------------------------------------------------- view as */
+
+/**
+ * Who the demo is being viewed as.
+ *
+ * A build-time control, not a clinic feature — in the real product you are who
+ * you signed in as. It is here because the question "what should reception be
+ * able to see?" is answered far better by looking than by imagining, and every
+ * screen honours it.
+ */
+function ViewAs() {
+  const { state, me, actions } = useDemo();
+
+  return (
+    <label className="flex items-center gap-2 rounded-full bg-surface py-1 pl-3 pr-1 shadow-[var(--shadow-card)] dark:hairline">
+      <span className="hidden text-[11px] font-medium text-ink-3 sm:inline">
+        {state.lang === "sq" ? "Po sheh si" : "Viewing as"}
+      </span>
+      <select
+        value={me.id}
+        onChange={(e) => actions.setCurrentStaff(e.target.value)}
+        aria-label={state.lang === "sq" ? "Po sheh si" : "Viewing as"}
+        className="h-7 cursor-pointer rounded-full bg-surface-2 px-2.5 text-[12px] font-medium text-ink focus:outline-none"
+      >
+        {state.staff.map((member) => (
+          <option key={member.id} value={member.id}>
+            {member.name} · {member.title}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
