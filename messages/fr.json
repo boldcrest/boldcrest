@@ -429,6 +429,9 @@
     "homeAppliances": "Maison et électroménager",
     "ngo": "ONG",
     "services": "Services",
-    "tech": "Tech"
+    "tech": "Tech",
+    "socialMediaManagementShort": "Réseaux sociaux",
+    "televisionCommercialsShort": "Spots TV",
+    "creativeAdvertisingShort": "Publicité"
   }
 }

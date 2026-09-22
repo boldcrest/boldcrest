@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { routing } from '@/i18n/routing'
-import { useTaxonomyLabel } from '@/lib/taxonomy'
+import { useTaxonomyLabel, useTaxonomyShortLabel } from '@/lib/taxonomy'
 import { Link } from '@/i18n/navigation'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -66,12 +66,9 @@ function useInViewOnce(margin = '-50px') {
  * fit on a single line there. This is display text, not data — the Sanity value
  * and every filter/query still use the full name, so nothing downstream breaks.
  */
-const SHORT_SERVICE: Record<string, string> = {
-  'Social Media Management': 'Social Media',
-}
-
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const tax = useTaxonomyLabel()
+  const taxShort = useTaxonomyShortLabel()
   const { ref, isVisible } = useInViewOnce()
 
   return (
@@ -208,7 +205,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                     // same corner curvature as the rest.
                     className="rounded-[10px] border border-border px-2 py-0.5 text-[0.55rem] font-medium uppercase tracking-[0.06em] text-text-tertiary"
                   >
-                    {SHORT_SERVICE[service] ?? service}
+                    {taxShort(service)}
                   </span>
                 ))}
               </div>

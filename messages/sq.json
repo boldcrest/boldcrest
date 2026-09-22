@@ -429,6 +429,9 @@
     "homeAppliances": "Shtëpi dhe pajisje",
     "ngo": "OJF",
     "services": "Shërbime",
-    "tech": "Teknologji"
+    "tech": "Teknologji",
+    "socialMediaManagementShort": "Rrjete sociale",
+    "televisionCommercialsShort": "Reklama TV",
+    "creativeAdvertisingShort": "Reklamë"
   }
 }

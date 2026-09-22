@@ -31,3 +31,20 @@ export function useTaxonomyLabel() {
   const labels = messages.Taxonomy ?? {}
   return (value?: string | null) => labelFor(labels, value)
 }
+
+/**
+ * Narrow surfaces (the phone-width project card) want a shorter label. Falls
+ * back to the full label, then to the raw value.
+ */
+export function shortLabelFor(labels: Labels, value?: string | null): string {
+  if (!value) return ''
+  const key = taxonomyKey(value)
+  return labels[`${key}Short`] ?? labels[key] ?? value
+}
+
+/** Client components: returns a `(value) => short label` function. */
+export function useTaxonomyShortLabel() {
+  const messages = useMessages() as unknown as Record<string, Labels>
+  const labels = messages.Taxonomy ?? {}
+  return (value?: string | null) => shortLabelFor(labels, value)
+}

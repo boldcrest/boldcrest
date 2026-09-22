@@ -429,6 +429,9 @@
     "homeAppliances": "Home & Appliances",
     "ngo": "NGO",
     "services": "Services",
-    "tech": "Tech"
+    "tech": "Tech",
+    "socialMediaManagementShort": "Social Media",
+    "televisionCommercialsShort": "TV Commercials",
+    "creativeAdvertisingShort": "Advertising"
   }
 }
