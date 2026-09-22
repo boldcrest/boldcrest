@@ -562,9 +562,16 @@ function InlineFilter({
 export default function WorkPageClient({ projects, initialService, initialIndustry }: WorkPageClientProps) {
   const t = useTranslations('Work')
   const tp = useTranslations('Portfolio')
-  // The h1 is a stacked word-per-line lockup with the final dot in accent.
-  // Splitting the translated title keeps that shape in every language rather
-  // than hard-coding three English words.
+  // The h1 is a stacked word-per-line lockup with the final dot in accent:
+  // every word gets its own hard <br/>, so the split below decides the shape.
+  // Splitting the translated title keeps it in every language rather than
+  // hard-coding three English words.
+  //
+  // Languages that need an article where English does not would otherwise put
+  // it alone on a line ("L'audacia / costruisce / i / brand."), and Albanian
+  // stranded a one-letter particle across five lines. The translations join
+  // those to the word they belong with using a NON-BREAKING space, which this
+  // split leaves intact — keep that convention when editing Work.title.
   const titleWords = t('title').replace(/[.]$/, '').split(' ')
   const [serviceFilter, setServiceFilter] = useState(initialService || 'All')
   const [industryFilter, setIndustryFilter] = useState(initialIndustry || 'All')
