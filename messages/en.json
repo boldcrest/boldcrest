@@ -114,7 +114,13 @@
     "exploreOther": "Explore Our Other Services",
     "mediaPlanning": "Media Planning",
     "process": "Process",
-    "motionGraphics": "Motion Graphics"
+    "motionGraphics": "Motion Graphics",
+    "faqBrand": "Brand Development Questions Answered",
+    "faqComms": "Communication Questions Answered",
+    "faqProduction": "Production Questions Answered",
+    "statProjects": "Projects delivered",
+    "statPartners": "Partners",
+    "statDays": "Days active"
   },
   "People": {
     "eyebrow": "People",
@@ -356,6 +362,9 @@
     "requestAssistance": "Request Assistance",
     "exploreOther": "Explore Our Other Services",
     "explore": "Explore",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "workLabel": "Your turn",
+    "workHeading": "What are we shaping next?",
+    "workBody": "Tell us what you have in mind. It can be a clear brief or just the start of an idea. We’ll help shape the next steps and keep everything simple from there."
   }
 }

@@ -1,5 +1,5 @@
 import { routing } from '@/i18n/routing'
-import { setRequestLocale } from 'next-intl/server'
+import { setRequestLocale, getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { sanityFetch } from '@/sanity/lib/live'
 import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
@@ -86,6 +86,7 @@ export default async function ProjectPage({
   params: Promise<{ locale: string; slug: string }>
 }) {
   const { locale, slug } = await params
+  const tCta = await getTranslations({ locale, namespace: 'Cta' })
   const { data: project } = await sanityFetch({
     query: projectBySlugQuery,
     params: { slug, locale },
@@ -211,9 +212,9 @@ export default async function ProjectPage({
       <ServiceCTA
         topBorder
         fullWidth
-        label="Your turn"
-        heading="What are we shaping next?"
-        description="Tell us what you have in mind. It can be a clear brief or just the start of an idea. We’ll help shape the next steps and keep everything simple from there."
+        label={tCta('workLabel')}
+        heading={tCta('workHeading')}
+        description={tCta('workBody')}
       />
 
       {/* Related projects — four cards in the same category */}

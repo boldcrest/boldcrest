@@ -114,7 +114,13 @@
     "exploreOther": "Zbulo shërbimet tona të tjera",
     "mediaPlanning": "Planifikim mediatik",
     "process": "Procesi",
-    "motionGraphics": "Grafikë e animuar"
+    "motionGraphics": "Grafikë e animuar",
+    "faqBrand": "Pyetjet më të shpeshta për zhvillimin e markës",
+    "faqComms": "Pyetjet më të shpeshta për komunikimin",
+    "faqProduction": "Pyetjet më të shpeshta për produksionin",
+    "statProjects": "Projekte të realizuara",
+    "statPartners": "Partnerë",
+    "statDays": "Ditë aktive"
   },
   "People": {
     "eyebrow": "Ekipi",
@@ -356,6 +362,9 @@
     "requestAssistance": "Kërko ndihmë",
     "exploreOther": "Zbulo shërbimet tona të tjera",
     "explore": "Zbulo",
-    "faq": "Pyetje të shpeshta"
+    "faq": "Pyetje të shpeshta",
+    "workLabel": "Radha jote",
+    "workHeading": "Çfarë do të formësojmë më pas?",
+    "workBody": "Na trego çfarë ke në mendje. Mund të jetë një brief i qartë ose thjesht fillimi i një ideje. Të ndihmojmë të gjejmë hapat e radhës dhe e mbajmë gjithçka të thjeshtë."
   }
 }

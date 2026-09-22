@@ -1,6 +1,6 @@
 {
   "Home": {
-    "heroLine1": "Crea identità e plasma percezioni.",
+    "heroLine1": "Crea identità e | plasma percezioni.",
     "heroLine2": "Osa o resta invisibile.",
     "heroWordIdentities": "identità",
     "heroWordPerceptions": "percezioni",
@@ -60,7 +60,13 @@
     "exploreOther": "Scopri gli altri nostri servizi",
     "mediaPlanning": "Media planning",
     "process": "Processo",
-    "motionGraphics": "Motion graphics"
+    "motionGraphics": "Motion graphics",
+    "faqBrand": "Le domande più frequenti sullo sviluppo del marchio",
+    "faqComms": "Le domande più frequenti sulla comunicazione",
+    "faqProduction": "Le domande più frequenti sulla produzione",
+    "statProjects": "Progetti realizzati",
+    "statPartners": "Partner",
+    "statDays": "Giorni di attività"
   },
   "People": {
     "eyebrow": "Persone",
@@ -89,7 +95,7 @@
     "felt": "Se hai letto fin qui, speriamo di averti fatto provare qualcosa.",
     "felt1": "Un po’ di calore. Un po’ di fiducia. Magari un sorriso davanti al caos di due ragazzi che costruiscono qualcosa di vero in un Paese che sta ancora cercando di capire cosa significhi “brand”.",
     "join": "Vuoi unirti al nostro team?",
-    "visitCareers": "Scopri Lavora con noi",
+    "visitCareers": "Lavora con noi",
     "teamAlt": "Il team BoldCrest",
     "climbing": "Scaliamo le montagne insieme.",
     "founders": "Xhulio e Aldo, fondatori di BoldCrest",
@@ -356,6 +362,9 @@
     "requestAssistance": "Chiedi assistenza",
     "exploreOther": "Scopri gli altri nostri servizi",
     "explore": "Scopri",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "workLabel": "Tocca a te",
+    "workHeading": "A cosa diamo forma adesso?",
+    "workBody": "Raccontaci che cosa hai in mente. Può essere un brief preciso o solo l’inizio di un’idea. Ti aiutiamo a definire i passi successivi e manteniamo tutto semplice."
   }
 }

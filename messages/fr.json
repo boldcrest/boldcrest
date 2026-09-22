@@ -5,7 +5,7 @@
     "people": "Équipe",
     "diary": "Journal",
     "contact": "Contact",
-    "startProject": "Lancer un Projet",
+    "startProject": "Lancer un projet",
     "home": "BoldCrest — accueil",
     "toggleMenu": "Ouvrir ou fermer le menu",
     "closeMenu": "Fermer le menu",
@@ -21,8 +21,8 @@
     "fr": "Français"
   },
   "Work": {
-    "eyebrow": "Nos Projets",
-    "title": "L’Audace Bâtit les Marques",
+    "eyebrow": "Nos projets",
+    "title": "L’audace bâtit les marques",
     "intro": "C’est ici que les idées prennent forme. Les noms, les mondes que nous créons, les campagnes, les packagings, les détails que l’on remarque avant de comprendre pourquoi. Chaque projet est né d’un enjeu commercial. Il a pris un visage, une voix et une place sur le marché.",
     "filterServices": "Services",
     "filterIndustry": "Secteur",
@@ -30,7 +30,7 @@
     "overview": "Aperçu",
     "challenge": "Défi",
     "solution": "Solution",
-    "moreWork": "Autres Projets"
+    "moreWork": "Autres projets"
   },
   "Contact": {
     "eyebrow": "Contact",
@@ -54,7 +54,7 @@
     "emailAddress": "Adresse e-mail"
   },
   "Home": {
-    "heroLine1": "Créez des identités et façonnez les perceptions.",
+    "heroLine1": "Créez des identités et | façonnez les perceptions.",
     "heroLine2": "Osez ou restez invisibles.",
     "heroWordIdentities": "identités",
     "heroWordPerceptions": "perceptions",
@@ -85,7 +85,7 @@
     "noEgosLabel": "Sans ego",
     "go": "Osez",
     "brandDev": "Marque",
-    "stillMotion": "Photo & Vidéo",
+    "stillMotion": "Photo & vidéo",
     "brandDevDesc": "Nous partons de ce qu’est votre marque, de ce qu’elle veut devenir et de la façon dont les gens devraient s’en souvenir, puis nous en faisons une identité qu’ils peuvent reconnaître, croire et retrouver."
   },
   "Services": {
@@ -114,7 +114,13 @@
     "exploreOther": "Découvrez nos autres services",
     "mediaPlanning": "Planification média",
     "process": "Processus",
-    "motionGraphics": "Motion design"
+    "motionGraphics": "Motion design",
+    "faqBrand": "Les questions les plus fréquentes sur la marque",
+    "faqComms": "Les questions les plus fréquentes sur la communication",
+    "faqProduction": "Les questions les plus fréquentes sur la production",
+    "statProjects": "Projets livrés",
+    "statPartners": "Partenaires",
+    "statDays": "Jours d’activité"
   },
   "People": {
     "eyebrow": "Équipe",
@@ -179,8 +185,8 @@
     "allServices": "Tous les services",
     "work": "Projets",
     "backToTop": "Retour en haut",
-    "brandDevelopment": "Développement de Marque",
-    "stillMotion": "Photo et Vidéo"
+    "brandDevelopment": "Développement de marque",
+    "stillMotion": "Photo et vidéo"
   },
   "Chat": {
     "imMegi": "Je suis Megi.",
@@ -343,7 +349,7 @@
   },
   "Cta": {
     "nextStep": "Prochaine étape",
-    "startProject": "Lancer un Projet",
+    "startProject": "Lancer un projet",
     "brandHeading": "Vous voulez créer une marque qui reste en mémoire ?",
     "brandBody": "Dites-nous où en est votre marque et ce qu’elle doit faire ensuite. Nous vous proposerons un périmètre clair, un calendrier et un prix. Sans engagement.",
     "commsHeading": "Vous voulez trouver le bon message ?",
@@ -356,6 +362,9 @@
     "requestAssistance": "Demander de l’aide",
     "exploreOther": "Découvrez nos autres services",
     "explore": "Découvrir",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "workLabel": "À vous",
+    "workHeading": "Qu’est-ce qu’on façonne ensuite ?",
+    "workBody": "Dites-nous ce que vous avez en tête. Cela peut être un brief précis ou simplement le début d’une idée. Nous vous aidons à définir les prochaines étapes et gardons les choses simples."
   }
 }

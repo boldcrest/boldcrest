@@ -96,6 +96,7 @@ export default function BrandDevelopmentClient({
   content?: ServicePageContent | null
 }) {
   const tCta = useTranslations('Cta')
+  const tServices = useTranslations('Services')
   const hero = content?.hero
   const outcomes = content?.outcomes?.length ? content.outcomes : OUTCOMES
   const services = content?.capabilities?.length
@@ -147,7 +148,7 @@ export default function BrandDevelopmentClient({
         description={content?.ctaSection?.description ?? tCta('brandBody')}
         buttonLabel={content?.ctaSection?.buttonLabel ?? undefined}
       />
-      <FAQSection heading="Brand Development Questions Answered" items={faqItems} noTopBorder grayBg />
+      <FAQSection heading={tServices('faqBrand')} items={faqItems} noTopBorder grayBg />
       <OtherServices services={otherServices} />
     </main>
   )

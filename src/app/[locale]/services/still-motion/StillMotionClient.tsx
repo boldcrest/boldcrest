@@ -75,6 +75,7 @@ export default function StillMotionClient({
   content?: ServicePageContent | null
 }) {
   const tCta = useTranslations('Cta')
+  const tServices = useTranslations('Services')
   const hero = content?.hero
   const outcomes = content?.outcomes?.length ? content.outcomes : OUTCOMES
   const services = content?.capabilities?.length
@@ -118,7 +119,7 @@ export default function StillMotionClient({
         description={content?.ctaSection?.description ?? tCta('motionBody')}
         buttonLabel={content?.ctaSection?.buttonLabel ?? undefined}
       />
-      <FAQSection heading="Production Questions Answered" items={faqItems} noTopBorder grayBg />
+      <FAQSection heading={tServices('faqProduction')} items={faqItems} noTopBorder grayBg />
       <OtherServices services={otherServices} />
     </main>
   )

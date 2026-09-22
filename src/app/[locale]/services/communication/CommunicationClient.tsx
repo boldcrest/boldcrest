@@ -75,6 +75,7 @@ export default function CommunicationClient({
   content?: ServicePageContent | null
 }) {
   const tCta = useTranslations('Cta')
+  const tServices = useTranslations('Services')
   const hero = content?.hero
   const outcomes = content?.outcomes?.length ? content.outcomes : OUTCOMES
   const services = content?.capabilities?.length
@@ -125,7 +126,7 @@ export default function CommunicationClient({
         description={content?.ctaSection?.description ?? tCta('commsBody')}
         buttonLabel={content?.ctaSection?.buttonLabel ?? undefined}
       />
-      <FAQSection heading="Communication Questions Answered" items={faqItems} noTopBorder grayBg />
+      <FAQSection heading={tServices('faqComms')} items={faqItems} noTopBorder grayBg />
       <OtherServices services={otherServices} />
     </main>
   )
