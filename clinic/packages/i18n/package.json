@@ -1,0 +1,22 @@
+{
+  "name": "@clinic/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Albanian/English dictionaries and Albanian-orthography-aware date/time/money format helpers.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@clinic/core": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "typescript": "^5"
+  }
+}

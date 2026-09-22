@@ -6,10 +6,16 @@ ready-made WhatsApp reminders, and treatment follow-ups the patient confirms wit
 Built to be shown to a clinic. Everything is clickable, nothing is a mock-up screenshot,
 and no backend or account is needed to run it.
 
+This is a pnpm + turborepo workspace. pnpm is not installed globally, so every command
+goes through corepack, run from `clinic/` (never from the repo root):
+
 ```bash
-npm install
-npm run dev     # http://localhost:3000
-npm test        # protocol engine, message rendering, seed integrity
+corepack pnpm install
+corepack pnpm dev         # http://localhost:3000
+corepack pnpm test        # protocol engine, message rendering, seed integrity (18 tests)
+corepack pnpm typecheck
+corepack pnpm lint
+corepack pnpm build
 ```
 
 ## What to click, in order
@@ -40,8 +46,8 @@ Language toggle (SQ/EN) and light/dark are in the top bar. Albanian is the defau
 
 Real behaviour, not faked screens:
 
-- Follow-ups are generated from protocol definitions and visit dates by `src/lib/protocols.ts`.
-- Messages are rendered from templates per patient language by `src/lib/whatsapp.ts`.
+- Follow-ups are generated from protocol definitions and visit dates by `packages/core/src/protocols.ts`.
+- Messages are rendered from templates per patient language by `packages/core/src/whatsapp.ts`.
 - **Hap WhatsApp** opens a genuine `wa.me` deep link with the text prefilled, which is exactly
   how a clinic would send it on day one, with no WhatsApp Business API approval and no
   per-message cost.
@@ -69,15 +75,25 @@ consent show *Pa pëlqim kontakti* and cannot be messaged at all.
 
 ## Where things live
 
+A pnpm workspace: the Next.js app in `apps/app`, shared code in `packages/*`, consumed as
+TypeScript source directly (no build step for the packages themselves).
+
 ```
-src/lib/demo/types.ts     domain model
-src/lib/demo/seed.ts      the seeded clinic, and the message templates
-src/lib/demo/store.tsx    state, demo clock, persistence, cross-tab sync
-src/lib/protocols.ts      follow-up generation, due dates, priority
-src/lib/whatsapp.ts       template rendering, wa.me links, tokens
-src/lib/i18n.ts           Albanian and English copy, Albanian date formatting
-src/app/(app)/            clinic app: paneli, orari, pacientet, ndjekjet, cilesimet
-src/app/konfirmo/[token]/ the patient-facing confirmation page
+apps/app/                          the Next.js clinic app
+  src/lib/demo/seed.ts             the seeded clinic, and the message templates
+  src/lib/demo/store.tsx           state, demo clock, persistence, cross-tab sync
+  src/lib/demo/types.ts            re-exports @clinic/core (kept so existing imports work)
+  src/components/                  shell, status badges, forms, WhatsApp composer
+  src/app/(app)/                   clinic app: paneli, orari, pacientet, ndjekjet, cilesimet
+  src/app/konfirmo/[token]/        the patient-facing confirmation page
+
+packages/core/    @clinic/core     domain types, follow-up protocols, WhatsApp message
+                                    building — pure logic, no React, no DOM, no localStorage
+packages/ui/      @clinic/ui       design system: styles.css (tokens, .bloom/.mesh, tailwind
+                                    entry) plus the ui.tsx / viz.tsx component primitives
+packages/i18n/    @clinic/i18n     Albanian and English copy, Albanian-orthography date/time/
+                                    money formatting (depends on @clinic/core for the Lang type)
+packages/db/      @clinic/db       Postgres schema, RLS policies, tenant-isolation tests
 ```
 
 ## Next

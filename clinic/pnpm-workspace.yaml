@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Explicitly allow the postinstall/build scripts these deps need (pnpm blocks
+# all install scripts by default since v10). Everything else stays sandboxed.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

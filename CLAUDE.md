@@ -3,14 +3,17 @@
 Two things live here:
 
 - **root** — the Boldcrest marketing site (Next.js + Sanity). Its own `package.json`.
-- **`clinic/`** — a separate Next.js app: the clinic-platform demo. Its own `package.json`;
-  run it with `cd clinic && npm install && npm run dev`. Never run the clinic app from the
-  repo root.
+- **`clinic/`** — the clinic-platform product, a pnpm + turborepo workspace.
+  Never run clinic commands from the repo root.
 
 ## The clinic product
 
 A modular SaaS for dental and medical-aesthetic clinics, launching in Albania (Tirana),
-then Balkans/EU. Built dental-and-aesthetics in parallel, not one after the other.
+then Balkans/EU. One base platform (calendar, patients, consent, recalls, messaging,
+online booking, reports, roles and audit) plus two vertical packs built in parallel —
+Dental and Aesthetics — sold in three tiers with add-ons. Finance, invoicing and
+fiscalization are not built in-product: they are an integration with a separate finance
+app (`docs/product/v1-product-build-plan.md` section 7).
 
 Research and planning docs (all cited, read these before re-deriving anything):
 
@@ -25,51 +28,109 @@ docs/product/platform-architecture-spec.md     shared core vs vertical modules
 docs/product/feature-catalog.md                every feature vs competitor benchmark, MVP cut
 docs/product/security-plan.md                  Supabase security design
 docs/product/infrastructure-plan.md            stack, costs, messaging strategy
-docs/product/mvp-demo-build-plan.md            v0.1 scope
+docs/product/mvp-demo-build-plan.md            v0.1 scope (superseded by the v1 plan below)
+docs/product/v1-product-build-plan.md          the build plan: phases, database, pricing, launch checklist
+docs/product/progress.md                       where we are, decisions log, changelog — read this first
 ```
 
 ## Decisions already made (do not re-litigate)
 
-- **Albanian is the default UI language**, English toggle. Patient messages render in the
-  *patient's* language (sq/it/en), independent of the clinic's UI language.
-- **Albanian orthography**: weekdays and months are lowercase. Never use CSS `capitalize` on
-  dates; use `capitalizeFirst()` from `src/lib/i18n.ts`.
-- **WhatsApp carries scheduling text and links only.** Commissioner Guideline No. 2 of
-  30.04.2025 forbids health data over personal apps. Clinical content stays behind the
-  patient portal. This is a selling point, not a limitation.
-- **Fiscalization goes through a certified partner** (easyPos or fature.al), never self-
-  certification: VKM 239/2020 demands 10 staff, 1 year trading, 30M ALL turnover and a
-  10M ALL (~EUR 97k) bank guarantee.
-- **No Stripe in Albania.** Paysera/EasyPay locally; Stripe via a UK Ltd for foreign deposits.
-- **Supabase, Frankfurt region**, RLS as the security boundary. Every documented Supabase
-  breach was missing RLS, so cross-tenant RLS tests gate deploys.
-- **Closest competitor is DenteX (dentex.al)**, an Albanian dental-tourism CRM. It has no
-  patient booking, no portal, no odontogram, no public pricing, and no verifiable customers.
+- **Albanian is the default UI language**, English toggle, Italian being added for staff UI.
+  Patient messages render in the *patient's* language (sq/it/en), independent of the clinic's
+  UI language. Weekdays and months are lowercase (Albanian orthography); never CSS `capitalize`
+  on dates, use `capitalizeFirst()` from `@clinic/i18n`.
+- **WhatsApp is click-to-send only.** A `wa.me` link opens the clinic's own WhatsApp with the
+  text ready; a person presses send. **No message is ever sent automatically** — no Meta API,
+  no SMS gateway, no in-app inbox. WhatsApp/SMS may carry scheduling text and links only, never
+  health data (Commissioner Guideline No. 2 of 30.04.2025); clinical content stays behind the
+  patient portal.
+- **Finance, invoicing and fiscalization are an integration with another app**, never built
+  in-product. Which app is still open (decision D1 in `progress.md`).
+- **We sell the product ourselves; clinics pay by credit card only**, auto-renewing. No Stripe
+  for an Albanian entity.
+- **The aesthetics pack is product-agnostic about botulinum toxin.** The clinic is responsible
+  for what it stocks and charts; we ship charting, lot tracking and provenance and make no claim
+  about any product's legal status.
+- **Product name and domain are undecided** (decision D4). `PRODUCT` is the placeholder.
+- **Supabase, Frankfurt region**, RLS as the security boundary — every documented Supabase
+  breach was missing RLS, so cross-tenant RLS tests gate merges.
+- **Closest competitor is DenteX (dentex.al)**, an Albanian dental-tourism CRM with no patient
+  booking, no portal, no odontogram, no public pricing, and no verifiable customers.
 
-## Demo app conventions (`clinic/`)
+## Workspace and commands
 
-- State lives in `src/lib/demo/store.tsx` (React context + localStorage + cross-tab sync).
-  There is no database yet; swapping in Supabase should not change the UI.
-- A **demo clock** (`state.now`) drives everything. Never call `Date.now()` for "today" in
-  product code; read `now` from `useDemo()`.
+Layout of `clinic/`, a pnpm + turborepo workspace:
+
+```
+clinic/
+  apps/app/           the Next.js clinic app
+  packages/core/      @clinic/core   pure domain logic (protocols, WhatsApp message building), no React
+  packages/ui/        @clinic/ui     design system: CSS tokens and classes, ui.tsx, viz.tsx
+  packages/i18n/      @clinic/i18n   dictionaries and format helpers
+  packages/db/        @clinic/db     SQL migrations and database tests
+```
+
+Run everything from `clinic/`, never from the repo root. pnpm is not installed globally on
+Aldo's machine, so every command goes through corepack: `corepack pnpm install`,
+`corepack pnpm dev` (http://localhost:3000). Before committing: `corepack pnpm typecheck`,
+`corepack pnpm lint`, `corepack pnpm test`, `corepack pnpm build`.
+
+`apps/app` has its own `AGENTS.md`: this Next.js version has breaking changes from what you
+know, and `node_modules/next/dist/docs/` must be read before writing Next-specific code.
+
+Database tests run on PGlite (Postgres in WASM) through vitest inside `packages/db` — there is
+no Docker on Aldo's machine. A real local Supabase stack arrives in a later build step and
+needs Docker.
+
+## Design system conventions
+
+- **Achromatic chrome, colour only as light.** Buttons, nav and card backgrounds are ink,
+  white and paper, never a brand hue — ink-black primary actions and active nav, white cards
+  on a warm near-white canvas (`--bg`). Colour appears only as a blurred light field glowing
+  out of a card.
+- **`.bloom`** — the default card: light (`--b-base`), a hot core (`--b-core`) fading through
+  `--b-mid` to paper (`--b-edge`) at the rim, ink text (`--b-ink`). Palettes: `bloom-amber`,
+  `bloom-rose`, `bloom-green`, `bloom-blue`, `bloom-violet`, `bloom-quiet`. The focal point
+  (`--b-x`/`--b-y`, the `Bloom` component's `focal` prop) moves per instance so tiles never
+  bloom from the same spot. In dark mode the same core reads as emitted light off a near-black
+  card.
+- **`.mesh`** — a saturated field, white text, reserved for surfaces that are themselves the
+  message (e.g. `AppMark`). Palettes in the CSS today: `mesh-ink`, `mesh-green`.
+- **Colour semantics**: a dashboard tile stays paper (`bloom-quiet`) at zero and takes a
+  palette above zero, so colour always means "something needs you". Status colours (`--ok`,
+  `--warn`, `--danger`) are always paired with an icon and a label, never colour alone.
+- **Radius scale**: `--r-tile` (30px), `--r-panel` (22px), `--r` (14px, card), `--r-sm` (10px)
+  — `rounded-tile` / `rounded-panel` / `rounded-card` in use; buttons and pills are
+  `rounded-full`.
+- **Shadows**: warm-tinted scale `--shadow-card` / `--shadow-raised` / `--shadow-float` /
+  `--shadow-pop` (a neutral black shadow on warm paper reads as dirt), one easing curve
+  `--ease`, used as `ease-[var(--ease)]`.
+- **`@utility hairline`** (`box-shadow: inset 0 0 0 1px var(--border)`), used as `dark:hairline`
+  on floating cards which have no shadow to separate them from the page in dark mode.
+- **Instruments live in `viz.tsx`**: `Metric`, `ArcGauge`, `Ruler`, `Sparkbars`, `Callout`,
+  `Bloom` — plain SVG/CSS, deliberately no charting library, nothing animates on mount.
+- **Big figures are solid tabular type** (`Metric`, `.nums`). The dot-matrix numeral treatment
+  was removed at Aldo's explicit request — do not reintroduce it.
+
+## Code conventions
+
 - Icons: **Phosphor** (`@phosphor-icons/react`) only. Never hand-roll SVG icons.
 - Motion: `motion/react`, restrained; everything honours `prefers-reduced-motion`.
-- **Visual language**: a grey canvas (`--bg`) with white cards floating on it, no
-  borders in light mode. Two radii: `rounded-panel` (26px) for cards and modals,
-  `rounded-card` (16px) for things inside them; buttons and chips are `rounded-full`.
-- Headline counts are punched out of a dot grid via the `.dots` class (`--dot` sets
-  the colour). Guarded by `@supports (background-clip: text)`.
-- `.mesh` + a palette class (`mesh-blue|amber|green|rose|quiet`) paints a soft blurred
-  gradient field. Dashboard tiles use `mesh-quiet` at zero and a colour palette above
-  zero, so colour on the dashboard always means "something needs you".
-- Teal stays the interactive accent (primary buttons, active nav); the mesh palettes are
-  decoration, never the only carrier of meaning. Semantic status colours are always
-  paired with an icon and a label, never colour alone.
-- Grid children that hold wide rows need `min-w-0`, or they push the page sideways on
-  a phone.
+- Grid children that hold wide rows need `min-w-0`, or they push the page sideways on a phone.
 - **No em-dashes anywhere in user-visible copy.**
-- Checks before committing: `npx tsc --noEmit`, `npx eslint src`, `npx vitest run`,
-  `npm run build`.
+- A **demo clock** (`state.now` from `useDemo()`) drives everything that means "today". Never
+  call `Date.now()` for it in product code.
+- React 19's `react-hooks/set-state-in-effect` lint rule is enforced. Derive state or use
+  `useSyncExternalStore` instead of setting state inside an effect.
+
+## Process
+
+- `docs/product/progress.md` is updated at the end of every working session, before anything
+  else: the status block, the phase tracker, and a changelog entry (what changed, why, what
+  was verified). Decisions are never deleted, only superseded.
+- `docs/product/v1-product-build-plan.md` is the build plan; its version line and
+  `progress.md` follow the versioning scheme documented in `progress.md`.
+- Never push without Aldo's go.
 
 ## Gotchas
 
@@ -77,5 +138,6 @@ docs/product/mvp-demo-build-plan.md            v0.1 scope
   it. Kill by PID from `ps -eo pid,cmd | grep next-server`, or by port.
 - Rebuilding while an old server runs leaves it serving HTML that points at deleted chunks,
   which shows up as 500s on `/_next/static/...`. Kill the old server before rebuilding.
-- React 19's `react-hooks/set-state-in-effect` lint rule is enforced. Derive state or use
-  `useSyncExternalStore` instead of setting state inside an effect.
+- A screenshot taken from a hidden in-app browser pane is paint-throttled and can look like
+  missing or half-faded content when nothing is wrong. Check `document.visibilityState` and
+  probe computed opacity before believing it; use Playwright for captures you need to trust.

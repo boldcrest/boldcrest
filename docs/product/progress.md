@@ -4,7 +4,7 @@ The single place that says where the product is, what changed, and why. Updated 
 
 **Plan:** `v1-product-build-plan.md` (currently v1.2)
 **Branch:** `claude/clinic-app-market-research-682su6` (ahead of `main`, never pushed without Aldo's go)
-**App version:** `0.2.0` (`clinic/package.json`)
+**App version:** `0.3.0` (`clinic/apps/app/package.json` — the workspace root carries its own version and is not the app's)
 
 ---
 
@@ -12,12 +12,13 @@ The single place that says where the product is, what changed, and why. Updated 
 
 | | |
 |---|---|
-| Phase | **0, decisions and foundations.** Phase 1 has not started |
-| Last session | 19 September 2026 |
-| Working tree | Clean. App 0.2.0, plan v1.2 and this file committed and pushed on 19 September 2026, tagged `clinic-v0.2.0` |
-| Checks at last run | `tsc` clean, `eslint` clean, `vitest` 18/18, `build` green |
-| Blocking | D1 (which finance app) and D4 (name and domain) |
-| Next action | Step 1.1, restructure `clinic/` into the workspace. Does not depend on D1 or D4 |
+| Phase | **1, platform spine.** Phase 0 still open on D1 and D4, which block nothing in phase 1 |
+| Last session | 22 September 2026 |
+| Working tree | Clean. App 0.3.0 committed 22 September, not pushed |
+| Checks at last run | `tsc`, `eslint`, `vitest` 18/18 and `build` all green across `@clinic/app`, `core`, `ui`, `i18n`. `@clinic/db` typecheck is RED until 1.4 writes its first test file — its tsconfig includes `tests/**/*.ts` and the directory is empty |
+| Blocking | D1 (which finance app) and D4 (name and domain). Neither blocks phase 1 |
+| Next action | Step 1.4, the first schema domains and their tenant-isolation tests on PGlite |
+| Needs Aldo | Vercel root directory must change from `clinic` to `clinic/apps/app` or nothing deploys. Supabase Frankfurt project (0.4) needs his account and a signed DPA |
 
 ---
 
@@ -45,6 +46,8 @@ A changelog entry says what changed, why, and what it touched. Newest first.
 | D5 | Botulinum toxin charting in Albania | Decided | 2026-09-18 | Not ours to police. The Aesthetics pack is product-agnostic, the clinic is responsible for what it stocks and charts |
 | D6 | Visual language | Decided | 2026-09-18 | Achromatic chrome, colour only as blurred light fields. No dot-matrix numerals. The design conventions in the repo `CLAUDE.md` are superseded |
 | D7 | Finance scope | Decided | 2026-09-18 | Invoicing, fiscalization and accounting are an integration with another app, not built in-product |
+| D8 | Staff password reset | Decided | 2026-09-22 | **No self-service reset for staff.** The option does not exist, so there is no reset link to phish. The owner clicks Reset next to the person, which kills the old password and issues a one-time code valid for an hour; the owner hands it over and **the staff member sets their own password**. The owner never learns it, so the audit log still proves who acted. Owner recovery: two owners per clinic, printed recovery codes, and us as a logged last resort after a verified phone check |
+| D9 | Account suspension | Decided | 2026-09-22 | The owner can **lock an account outright**, separately from resetting a password, for the day someone is dismissed. Locking revokes sessions immediately, removes the person from assignable lists, and keeps every note, appointment and audit entry they created. Staff are never deleted, because the audit trail must always resolve to a person. Reversible in one click. Locking and unlocking are themselves audited |
 
 ---
 
@@ -67,11 +70,11 @@ Status: ⬜ not started · 🟨 in progress · ✅ done · ⛔ blocked. Step num
 
 | Step | Work | Status |
 |---|---|---|
-| 1.1 | Convert `clinic/` to the workspace (apps + packages) | ⬜ |
-| 1.2 | Bring `CLAUDE.md` in line with the new design | ⬜ |
+| 1.1 | Convert `clinic/` to the workspace (apps + packages) | ✅ |
+| 1.2 | Bring `CLAUDE.md` in line with the new design | ✅ |
 | 1.3 | Local Supabase stack, migrations, type generation, seed | ⬜ |
-| 1.4 | Schema domains A, C, D, J, K and the three core patterns | ⬜ |
-| 1.5 | Auth, MFA, invitations, token hook, clinic switcher | ⬜ |
+| 1.4 | Schema domains A, C, D, J, K and the three core patterns | 🟨 |
+| 1.5 | Auth, MFA, invitations, token hook, clinic switcher, owner-driven password reset (D8) and account locking (D9) | ⬜ |
 | 1.6 | Permission map and role-aware navigation | ⬜ |
 | 1.7 | Replace `store.tsx` with a Supabase data layer, same selectors | ⬜ |
 | 1.8 | Audit log with read logging, compliance dashboard v1 | ⬜ |
@@ -97,6 +100,22 @@ Steps inside phases 2 to 9 get their own rows here when the phase starts.
 ---
 
 ## Changelog
+
+### 2026-09-22 · app 0.3.0 · steps 1.1 and 1.2 · the workspace
+
+**Why:** the demo was a single Next.js app. Everything after this step — a database package, shared UI, an operator console later — needs more than one deployable, so the split comes before the schema rather than after it.
+**Step 1.1.** `clinic/` is now a pnpm + turborepo workspace: `apps/app` (the Next.js app) and `packages/core` (pure domain logic, no React), `ui` (CSS tokens, `ui.tsx`, `viz.tsx`), `i18n`, `db`. Tests split 3 in core and 15 in the app, still 18.
+**Step 1.2.** `CLAUDE.md` rewritten around the 0.2.0 design: the bloom/mesh system and the viz instruments replace the grey canvas, two radii, teal accent and `.dots`; the workspace layout and `corepack pnpm` commands replace the npm ones; decisions D1–D9 and the process rules are stated so they are not re-litigated.
+**Obstacles worth remembering:** pnpm is not on PATH and `corepack enable` fails with EACCES, so every command is `corepack pnpm` and turbo needs a shim at `node_modules/.bin/pnpm`, written by `scripts/ensure-pnpm-shim.js` on postinstall.
+**Known red:** `@clinic/db` typecheck fails with TS18003 because its tsconfig includes `tests/**/*.ts` and no test exists yet. 1.4 closes it.
+**⚠ Deploy:** Vercel's root directory still points at `clinic`. It must become `clinic/apps/app` or the next push will not build.
+
+### 2026-09-22 · decisions D8 and D9 · account access
+
+**Why:** Aldo: staff should not be able to reset their own passwords, only the admin, and the owner should also be able to lock an account outright the day someone is dismissed.
+**Decided:** D8 (owner-initiated reset, staff-chosen password, no self-service path) and D9 (suspension separate from reset). Both shape step 1.5.
+**Design consequence to settle in 1.5:** suspension must bite immediately. Revoking the refresh token stops renewal, but an access token already issued stays valid until it expires, so a dismissed person could keep reading for that window. Fix: shorten the access token lifetime and make `app.clinic_id()` return null for a membership that is not active, which costs one indexed lookup per statement and makes the lock take effect on the next query.
+**Also:** Postmark dropped from the budget for now (free tier at beta, revisit if delivery suffers). Beta running cost about $235 a month.
 
 ### 2026-09-18 · plan v1.2 · D3 revised: manual send only
 

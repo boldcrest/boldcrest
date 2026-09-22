@@ -1,0 +1,463 @@
+import type { Lang } from "@clinic/core";
+
+/** Albanian day and month names are lowercase by orthographic rule. */
+const SQ_DAYS = ["e diel", "e hënë", "e martë", "e mërkurë", "e enjte", "e premte", "e shtunë"];
+const SQ_DAYS_SHORT = ["die", "hën", "mar", "mër", "enj", "pre", "sht"];
+const SQ_MONTHS = [
+  "janar", "shkurt", "mars", "prill", "maj", "qershor",
+  "korrik", "gusht", "shtator", "tetor", "nëntor", "dhjetor",
+];
+const EN_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const EN_DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const EN_MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+export function formatDate(d: Date | string, lang: Lang): string {
+  const date = typeof d === "string" ? new Date(d) : d;
+  return lang === "sq"
+    ? `${date.getDate()} ${SQ_MONTHS[date.getMonth()]} ${date.getFullYear()}`
+    : `${EN_MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
+export function formatDayMonth(d: Date | string, lang: Lang): string {
+  const date = typeof d === "string" ? new Date(d) : d;
+  return lang === "sq"
+    ? `${date.getDate()} ${SQ_MONTHS[date.getMonth()]}`
+    : `${EN_MONTHS[date.getMonth()]} ${date.getDate()}`;
+}
+
+export function formatWeekday(d: Date | string, lang: Lang, short = false): string {
+  const date = typeof d === "string" ? new Date(d) : d;
+  const i = date.getDay();
+  if (lang === "sq") return short ? SQ_DAYS_SHORT[i] : SQ_DAYS[i];
+  return short ? EN_DAYS_SHORT[i] : EN_DAYS[i];
+}
+
+/** Albanian keeps weekday and month names lowercase, so only the very first
+ *  letter may be raised. CSS `capitalize` would wrongly raise every word. */
+export function capitalizeFirst(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function formatTime(d: Date | string): string {
+  const date = typeof d === "string" ? new Date(d) : d;
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+export function formatMoney(all: number, lang: Lang): string {
+  const n = new Intl.NumberFormat(lang === "sq" ? "sq-AL" : "en-GB").format(all);
+  return `${n} Lekë`;
+}
+
+const sq = {
+  appName: "Klinika",
+  demoBadge: "Demo",
+  nav: {
+    dashboard: "Paneli",
+    schedule: "Orari",
+    patients: "Pacientët",
+    followups: "Ndjekjet",
+    settings: "Cilësimet",
+  },
+  clock: {
+    label: "Data e demos",
+    advanceDay: "Një ditë para",
+    advanceWeek: "Një javë para",
+    reset: "Rinis demon",
+    hint: "Lëvize kohën për të parë si aktivizohen kujtesat dhe ndjekjet.",
+  },
+  dashboard: {
+    title: "Paneli i ditës",
+    greeting: "Mirë se vini",
+    todayAppointments: "Terminet e sotme",
+    unconfirmed: "Pa konfirmuar",
+    followupsDue: "Ndjekje për sot",
+    overdue: "Të vonuara",
+    awaitingBooking: "Konfirmuar, pa rezervuar",
+    agenda: "Axhenda e sotme",
+    needsAttention: "Kërkojnë vëmendje",
+    recentVisits: "Vizitat e fundit",
+    noAppointments: "Asnjë termin sot.",
+    noAttention: "Gjithçka në rregull. Asnjë veprim i mbetur.",
+    remindersToSend: "Kujtesa për t'u dërguar",
+    sendAll: "Shiko të gjitha",
+    confirmRate: "Konfirmuar",
+    confirmRateHint: "nga terminet e sotme",
+    dayLoad: "Ngarkesa e ditës",
+    completed: "Kryer",
+    remaining: "Mbetur",
+    nowLabel: "Tani",
+  },
+  schedule: {
+    title: "Orari",
+    week: "Javë",
+    day: "Ditë",
+    today: "Sot",
+    allProviders: "Të gjithë",
+    newAppointment: "Termin i ri",
+    noneThisDay: "Asnjë termin këtë ditë.",
+    outsideHours: "Jashtë orarit të punës",
+    conflict: "Përplasje me një termin tjetër",
+  },
+  patients: {
+    title: "Pacientët",
+    search: "Kërko me emër ose telefon",
+    new: "Pacient i ri",
+    count: (n: number) => `${n} pacientë`,
+    none: "Asnjë pacient nuk përputhet me kërkimin.",
+    traveller: "Turizëm",
+    noConsent: "Pa pëlqim kontakti",
+    timeline: "Historiku",
+    details: "Të dhënat",
+    logVisit: "Regjistro vizitë",
+    book: "Cakto termin",
+    age: (n: number) => `${n} vjeç`,
+    emptyTimeline: "Ende asnjë veprim i regjistruar.",
+    nextAppointment: "Termini i radhës",
+    lastVisit: "Vizita e fundit",
+  },
+  followups: {
+    title: "Ndjekjet e trajtimeve",
+    due: "Për sot dhe më parë",
+    upcoming: "Në vijim",
+    handled: "Të mbyllura",
+    none: "Asnjë ndjekje në pritje.",
+    sendRequest: "Dërgo kërkesë konfirmimi",
+    resend: "Ridërgo",
+    book: "Rezervo terminin",
+    markDone: "Shëno si kryer",
+    snooze: "Shtyj 7 ditë",
+    dueOn: "Afati",
+    fromVisit: "Nga vizita",
+    protocol: "Protokolli",
+    overdueBy: (n: number) => `${n} ditë vonesë`,
+    dueToday: "Sot",
+    inDays: (n: number) => `Pas ${n} ditësh`,
+  },
+  settings: {
+    title: "Cilësimet",
+    treatments: "Trajtimet",
+    protocols: "Protokollet",
+    templates: "Mesazhet",
+    providers: "Stafi dhe orari",
+    duration: "Kohëzgjatja",
+    price: "Çmimi",
+    minutes: (n: number) => `${n} min`,
+    step: "Hapi",
+    afterDays: (n: number) => `pas ${n} ditësh`,
+    templateHint: "Mesazhet dërgohen në gjuhën e pacientit.",
+    hours: "Orari i punës",
+  },
+  message: {
+    title: "Mesazh WhatsApp",
+    to: "Për",
+    language: "Gjuha",
+    preview: "Teksti i mesazhit",
+    open: "Hap WhatsApp",
+    copy: "Kopjo tekstin",
+    copied: "U kopjua",
+    markSent: "Shëno si dërguar",
+    sent: "Mesazhi u regjistrua në historik.",
+    linkHint: "Linku i konfirmimit është personal dhe skadon pas 7 ditësh.",
+    testLink: "Hap faqen e pacientit",
+    noConsent: "Ky pacient nuk ka dhënë pëlqim për kontakt.",
+    complianceNote:
+      "Mesazhi përmban vetëm orarin dhe linkun. Të dhënat klinike nuk dërgohen kurrë me WhatsApp.",
+  },
+  confirm: {
+    heading: "Konfirmim termini",
+    headingFollowup: "Konfirmim i ndjekjes së trajtimit",
+    hello: (name: string) => `Përshëndetje, ${name}`,
+    appointmentIntro: "Ju keni këtë termin:",
+    followupIntro: "Sipas protokollit, ka ardhur koha për:",
+    with: "me",
+    at: "te",
+    confirmBtn: "Po, konfirmoj",
+    confirmFollowupBtn: "Po, dua ta rezervoj",
+    rescheduleBtn: "Dua ta shtyj",
+    confirmedTitle: "Faleminderit, u konfirmua.",
+    confirmedBody: "Ju presim në orarin e caktuar.",
+    confirmedFollowupBody: "Klinika ju kontakton shumë shpejt për të caktuar orarin.",
+    rescheduledTitle: "E morëm kërkesën tuaj.",
+    rescheduledBody: "Ju kontaktojmë brenda ditës për një orar tjetër.",
+    expired: "Ky link ka skaduar. Kontaktoni klinikën.",
+    notFound: "Ky link nuk është i vlefshëm.",
+    alreadyUsed: "Përgjigja juaj është regjistruar tashmë.",
+  },
+  status: {
+    scheduled: "Planifikuar",
+    arrived: "Mbërriti",
+    completed: "Kryer",
+    noshow: "Nuk erdhi",
+    cancelled: "Anuluar",
+  },
+  confirmation: {
+    pending: "Pa konfirmuar",
+    sent: "Dërguar",
+    confirmed: "Konfirmuar",
+    reschedule: "Kërkon shtyrje",
+  },
+  fu: {
+    due: "Pret dërgim",
+    sent: "Dërguar",
+    confirmed: "Konfirmuar",
+    declined: "Refuzoi",
+    booked: "Rezervuar",
+    done: "Kryer",
+    snoozed: "Shtyrë",
+  },
+  actions: {
+    save: "Ruaj",
+    cancel: "Anulo",
+    close: "Mbyll",
+    confirm: "Konfirmo",
+    markArrived: "Shëno mbërritjen",
+    markCompleted: "Shëno si kryer",
+    markNoshow: "Nuk erdhi",
+    cancelAppointment: "Anulo terminin",
+    sendReminder: "Dërgo kujtesë",
+    back: "Kthehu",
+    add: "Shto",
+  },
+  form: {
+    firstName: "Emri",
+    lastName: "Mbiemri",
+    phone: "Telefoni",
+    city: "Qyteti",
+    birthYear: "Viti i lindjes",
+    language: "Gjuha e komunikimit",
+    consent: "Pranon kujtesa me WhatsApp",
+    traveller: "Pacient nga jashtë",
+    note: "Shënim",
+    patient: "Pacienti",
+    provider: "Mjeku",
+    treatment: "Trajtimi",
+    date: "Data",
+    time: "Ora",
+    visitNote: "Shënimi i vizitës",
+    required: "Kjo fushë është e detyrueshme",
+    selectPatient: "Zgjidh pacientin",
+    selectProvider: "Zgjidh mjekun",
+    selectTreatment: "Zgjidh trajtimin",
+  },
+  toast: {
+    visitLogged: "Vizita u regjistrua.",
+    followupsCreated: (n: number) =>
+      n === 1 ? "U krijua 1 ndjekje sipas protokollit." : `U krijuan ${n} ndjekje sipas protokollit.`,
+    appointmentCreated: "Termini u caktua.",
+    appointmentUpdated: "Termini u përditësua.",
+    patientCreated: "Pacienti u shtua.",
+    followupBooked: "Ndjekja u rezervua.",
+    snoozed: "U shty me 7 ditë.",
+    reset: "Demoja u rinis.",
+  },
+};
+
+const en: typeof sq = {
+  appName: "Clinic",
+  demoBadge: "Demo",
+  nav: {
+    dashboard: "Dashboard",
+    schedule: "Schedule",
+    patients: "Patients",
+    followups: "Follow-ups",
+    settings: "Settings",
+  },
+  clock: {
+    label: "Demo date",
+    advanceDay: "Skip a day",
+    advanceWeek: "Skip a week",
+    reset: "Reset demo",
+    hint: "Move time forward to watch reminders and follow-ups come due.",
+  },
+  dashboard: {
+    title: "Today",
+    greeting: "Welcome",
+    todayAppointments: "Today's appointments",
+    unconfirmed: "Unconfirmed",
+    followupsDue: "Follow-ups due",
+    overdue: "Overdue",
+    awaitingBooking: "Confirmed, not booked",
+    agenda: "Today's agenda",
+    needsAttention: "Needs attention",
+    recentVisits: "Recent visits",
+    noAppointments: "No appointments today.",
+    noAttention: "All clear. Nothing waiting on you.",
+    remindersToSend: "Reminders to send",
+    sendAll: "View all",
+    confirmRate: "Confirmed",
+    confirmRateHint: "of today's appointments",
+    dayLoad: "Day load",
+    completed: "Completed",
+    remaining: "Remaining",
+    nowLabel: "Now",
+  },
+  schedule: {
+    title: "Schedule",
+    week: "Week",
+    day: "Day",
+    today: "Today",
+    allProviders: "Everyone",
+    newAppointment: "New appointment",
+    noneThisDay: "No appointments this day.",
+    outsideHours: "Outside working hours",
+    conflict: "Clashes with another appointment",
+  },
+  patients: {
+    title: "Patients",
+    search: "Search by name or phone",
+    new: "New patient",
+    count: (n: number) => `${n} patients`,
+    none: "No patient matches that search.",
+    traveller: "Travelling",
+    noConsent: "No contact consent",
+    timeline: "Timeline",
+    details: "Details",
+    logVisit: "Log visit",
+    book: "Book appointment",
+    age: (n: number) => `${n} years old`,
+    emptyTimeline: "Nothing recorded yet.",
+    nextAppointment: "Next appointment",
+    lastVisit: "Last visit",
+  },
+  followups: {
+    title: "Treatment follow-ups",
+    due: "Due today and earlier",
+    upcoming: "Upcoming",
+    handled: "Closed",
+    none: "No follow-ups waiting.",
+    sendRequest: "Send confirmation request",
+    resend: "Send again",
+    book: "Book it",
+    markDone: "Mark as done",
+    snooze: "Snooze 7 days",
+    dueOn: "Due",
+    fromVisit: "From visit",
+    protocol: "Protocol",
+    overdueBy: (n: number) => `${n} days late`,
+    dueToday: "Today",
+    inDays: (n: number) => `In ${n} days`,
+  },
+  settings: {
+    title: "Settings",
+    treatments: "Treatments",
+    protocols: "Protocols",
+    templates: "Messages",
+    providers: "Staff and hours",
+    duration: "Duration",
+    price: "Price",
+    minutes: (n: number) => `${n} min`,
+    step: "Step",
+    afterDays: (n: number) => `after ${n} days`,
+    templateHint: "Messages are sent in the patient's language.",
+    hours: "Working hours",
+  },
+  message: {
+    title: "WhatsApp message",
+    to: "To",
+    language: "Language",
+    preview: "Message text",
+    open: "Open WhatsApp",
+    copy: "Copy text",
+    copied: "Copied",
+    markSent: "Mark as sent",
+    sent: "Message recorded on the timeline.",
+    linkHint: "The confirmation link is personal and expires after 7 days.",
+    testLink: "Open the patient page",
+    noConsent: "This patient has not consented to contact.",
+    complianceNote:
+      "The message carries only the time and the link. Clinical data never travels over WhatsApp.",
+  },
+  confirm: {
+    heading: "Appointment confirmation",
+    headingFollowup: "Follow-up confirmation",
+    hello: (name: string) => `Hello ${name}`,
+    appointmentIntro: "You have this appointment:",
+    followupIntro: "Your treatment protocol is due for:",
+    with: "with",
+    at: "at",
+    confirmBtn: "Yes, I confirm",
+    confirmFollowupBtn: "Yes, book it for me",
+    rescheduleBtn: "I need another time",
+    confirmedTitle: "Thank you, that is confirmed.",
+    confirmedBody: "We will see you at the scheduled time.",
+    confirmedFollowupBody: "The clinic will contact you shortly to set a time.",
+    rescheduledTitle: "We have your request.",
+    rescheduledBody: "We will contact you today with another time.",
+    expired: "This link has expired. Please contact the clinic.",
+    notFound: "This link is not valid.",
+    alreadyUsed: "Your answer has already been recorded.",
+  },
+  status: {
+    scheduled: "Scheduled",
+    arrived: "Arrived",
+    completed: "Completed",
+    noshow: "No-show",
+    cancelled: "Cancelled",
+  },
+  confirmation: {
+    pending: "Unconfirmed",
+    sent: "Sent",
+    confirmed: "Confirmed",
+    reschedule: "Wants to move",
+  },
+  fu: {
+    due: "To send",
+    sent: "Sent",
+    confirmed: "Confirmed",
+    declined: "Declined",
+    booked: "Booked",
+    done: "Done",
+    snoozed: "Snoozed",
+  },
+  actions: {
+    save: "Save",
+    cancel: "Cancel",
+    close: "Close",
+    confirm: "Confirm",
+    markArrived: "Mark arrived",
+    markCompleted: "Mark completed",
+    markNoshow: "No-show",
+    cancelAppointment: "Cancel appointment",
+    sendReminder: "Send reminder",
+    back: "Back",
+    add: "Add",
+  },
+  form: {
+    firstName: "First name",
+    lastName: "Last name",
+    phone: "Phone",
+    city: "City",
+    birthYear: "Year of birth",
+    language: "Contact language",
+    consent: "Accepts WhatsApp reminders",
+    traveller: "Travelling patient",
+    note: "Note",
+    patient: "Patient",
+    provider: "Clinician",
+    treatment: "Treatment",
+    date: "Date",
+    time: "Time",
+    visitNote: "Visit note",
+    required: "This field is required",
+    selectPatient: "Choose a patient",
+    selectProvider: "Choose a clinician",
+    selectTreatment: "Choose a treatment",
+  },
+  toast: {
+    visitLogged: "Visit recorded.",
+    followupsCreated: (n: number) =>
+      n === 1 ? "1 follow-up created from the protocol." : `${n} follow-ups created from the protocol.`,
+    appointmentCreated: "Appointment booked.",
+    appointmentUpdated: "Appointment updated.",
+    patientCreated: "Patient added.",
+    followupBooked: "Follow-up booked.",
+    snoozed: "Snoozed by 7 days.",
+    reset: "Demo reset.",
+  },
+};
+
+export const dictionaries = { sq, en };
+export type Dict = typeof sq;

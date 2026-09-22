@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    // "dom" is here (not just in apps/app) because tsc type-checks whatever a
+    // package's own tsconfig pulls in transitively: @clinic/i18n and
+    // @clinic/app both import @clinic/core, and core's whatsapp.ts touches
+    // `window`/`crypto` (feature-detected at runtime, so it still runs fine
+    // in Node/vitest) — each package's own tsc invocation re-typechecks that
+    // file under its own compilerOptions since there are no project references.
+    "lib": ["ES2017", "dom", "dom.iterable"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  }
+}

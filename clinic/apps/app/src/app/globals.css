@@ -1,0 +1,11 @@
+/* The design system (Tailwind import, tokens, .bloom/.mesh, @utility hairline,
+   etc.) lives in @clinic/ui so packages/ui and apps/app share one visual
+   language. This file is only the entry point Next.js compiles.
+
+   Tailwind v4 scans for class names relative to the CSS entry file (this one,
+   inside apps/app). packages/ui's ui.tsx and viz.tsx live in a sibling
+   package, so without the @source line below their classes (rounded-tile,
+   bloom-amber, ruler, hairline, the arbitrary-value classes in viz.tsx, etc.)
+   would be silently dropped from the generated CSS. */
+@import "@clinic/ui/styles.css";
+@source "../../../../packages/ui/src";
