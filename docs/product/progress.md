@@ -15,9 +15,9 @@ The single place that says where the product is, what changed, and why. Updated 
 | Phase | **1, platform spine.** Phase 0 still open on D1 and D4, which block nothing in phase 1 |
 | Last session | 22 September 2026 |
 | Working tree | Clean. App 0.3.0 committed 22 September, not pushed |
-| Checks at last run | `tsc`, `eslint`, `vitest` 18/18 and `build` all green across `@clinic/app`, `core`, `ui`, `i18n`. `@clinic/db` typecheck is RED until 1.4 writes its first test file — its tsconfig includes `tests/**/*.ts` and the directory is empty |
+| Checks at last run | All green. `tsc` 5/5 packages, `eslint` clean, `vitest` 34/34 (3 core, 15 app, 16 db), `build` green |
 | Blocking | D1 (which finance app) and D4 (name and domain). Neither blocks phase 1 |
-| Next action | Step 1.4, the first schema domains and their tenant-isolation tests on PGlite |
+| Next action | Continue 1.4: domain A (clinics, memberships) and C (patients) as tables with RLS, then the cross-tenant isolation tests |
 | Needs Aldo | Vercel root directory must change from `clinic` to `clinic/apps/app` or nothing deploys. Supabase Frankfurt project (0.4) needs his account and a signed DPA |
 
 ---
@@ -100,6 +100,15 @@ Steps inside phases 2 to 9 get their own rows here when the phase starts.
 ---
 
 ## Changelog
+
+### 2026-09-22 · step 1.4 in progress · the database is testable without Docker
+
+**Why:** there is no Docker on this machine, so `supabase start` cannot run a local stack, and the hosted Frankfurt project does not exist yet (0.4, needs Aldo's account and a signed DPA). Neither is a reason to wait: PGlite is Postgres compiled to WASM, so the migrations can be applied and the policies exercised for real, in-process, and the same files then run unchanged on Supabase.
+**Added:** `packages/db/tests/harness.ts` applies `supabase-shim.sql` and then every migration in filename order against a fresh in-memory Postgres, and `asUser()` runs a query as a signed-in member by setting the `request.jwt.claims` GUC and `SET LOCAL ROLE authenticated` inside a transaction — the same mechanism PostgREST uses, so a policy reads its claims in tests exactly as it will in production. `btree_gist` is bundled with PGlite, so the EXCLUDE constraint that makes double-booking impossible can be tested too.
+**Added:** `tests/supabase-shim.sql` — the three Supabase roles our GRANTs name, plus `auth.jwt()`, `auth.uid()` and a minimal `auth.users`. Test-only; it never ships.
+**Added:** `tests/app-helpers.test.ts`, 16 tests over the four tenancy helpers. What they pin down: `app.clinic_id()` returns null (never a wrong uuid) for a token with no clinic or an empty claim; `app` is unreachable from an anonymous request; the role map is asserted per role, including that reception has no clinical access, an assistant can read clinical context but not write it, the accountant has only `schedule.read`, and `staff.manage` and `audit.read` are owner-only; an unknown role or permission key denies rather than falling through.
+**Closed:** the `@clinic/db` TS18003 red from the previous entry. Workspace is green: tsc 5/5, vitest 34/34, build.
+**Still to do in 1.4:** the tables themselves — domains A (clinics, memberships), C (patients), D (schedule, with the EXCLUDE constraint), J (files and consent), K (messaging queue) — each with RLS and a cross-tenant isolation test.
 
 ### 2026-09-22 · app 0.3.0 · steps 1.1 and 1.2 · the workspace
 
