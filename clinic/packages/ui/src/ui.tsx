@@ -199,14 +199,17 @@ export function Field({
   children,
   error,
   hint,
+  className,
 }: {
   label: string;
   children: ReactNode;
   error?: string;
   hint?: string;
+  /** so a field can span columns in the grid that holds it */
+  className?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className={cx("flex flex-col gap-1.5", className)}>
       <span className="text-[13px] font-medium text-ink-2">{label}</span>
       {children}
       {hint && !error ? <span className="text-xs text-ink-3">{hint}</span> : null}

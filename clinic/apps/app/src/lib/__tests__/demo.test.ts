@@ -6,6 +6,8 @@ import {
   isDue,
   isOverdue,
   followUpPriority,
+  occurrenceOffset,
+  openSeries,
   renderTemplate,
   waLink,
   makeToken,
@@ -123,10 +125,69 @@ describe("seed integrity", () => {
       expect(visitRecord, followUp.id).toBeDefined();
       expect(step, followUp.id).toBeDefined();
       const expected = format(
-        addDays(startOfDay(new Date(visitRecord!.date)), step!.offsetDays),
+        addDays(
+          startOfDay(new Date(visitRecord!.date)),
+          occurrenceOffset(step!, followUp.occurrence),
+        ),
         "yyyy-MM-dd",
       );
       expect(followUp.dueDate, followUp.id).toBe(expected);
+    }
+  });
+
+  it("has no two follow-ups with the same id", () => {
+    // Ids are derived from visit, step and occurrence. A collision would mean
+    // two recalls sharing one row of state, and acting on one would move both.
+    const ids = seed.followUps.map((f) => f.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("shows a course in progress as one row, at the session it has reached", () => {
+    // Ada is three sessions into a six-session laser course. The work list must
+    // read "session 3 of 6", not list six rows for one patient.
+    const adas = openSeries(seed.followUps.filter((f) => f.patientId === "pa-ada"));
+    expect(adas).toHaveLength(1);
+    const [course] = adas;
+    expect(course.length).toBe(6);
+    expect(course.head.occurrence).toBe(3);
+    expect(course.completed).toBe(2);
+    expect(course.later).toHaveLength(3);
+  });
+
+  it("gives every patient a full birth date in the past", () => {
+    for (const patient of seed.patients) {
+      expect(patient.birthDate, patient.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(new Date(patient.birthDate).getTime(), patient.id).toBeLessThan(today.getTime());
+      expect(Array.isArray(patient.allergies), patient.id).toBe(true);
+      expect(Array.isArray(patient.notes), patient.id).toBe(true);
+    }
+  });
+
+  it("gives every note its own id", () => {
+    const ids = seed.patients.flatMap((p) => p.notes.map((n) => n.id));
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("points every recommendation at a real patient, clinician and treatment", () => {
+    for (const recommendation of seed.recommendations) {
+      expect(seed.patients.some((p) => p.id === recommendation.patientId), recommendation.id).toBe(true);
+      expect(seed.providers.some((p) => p.id === recommendation.providerId), recommendation.id).toBe(true);
+      expect(recommendation.treatmentIds.length, recommendation.id).toBeGreaterThan(0);
+      for (const id of recommendation.treatmentIds) {
+        expect(seed.treatments.some((tr) => tr.id === id), id).toBe(true);
+      }
+    }
+  });
+
+  it("gives every discount or gift a value and a real grantor", () => {
+    for (const benefit of seed.benefits) {
+      expect(seed.patients.some((p) => p.id === benefit.patientId), benefit.id).toBe(true);
+      expect(seed.providers.some((p) => p.id === benefit.grantedBy), benefit.id).toBe(true);
+      // Either a percentage or an amount, otherwise the record says nothing.
+      expect(benefit.percent != null || benefit.amount != null, benefit.id).toBe(true);
+      if (benefit.treatmentId) {
+        expect(seed.treatments.some((tr) => tr.id === benefit.treatmentId), benefit.id).toBe(true);
+      }
     }
   });
 

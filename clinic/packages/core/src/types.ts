@@ -41,6 +41,20 @@ export interface Provider {
   tint: "teal" | "amber" | "violet";
 }
 
+/** A note on the record. `label` is the clinic's own heading for it, so a note
+ *  can be a named category ("Ankth nga shpimi", "Mjekim kronik") rather than
+ *  one anonymous blob of text per patient. */
+export interface PatientNote {
+  id: string;
+  label?: string;
+  body: string;
+  /** provider who wrote it; absent for notes taken at reception */
+  authorId?: string;
+  createdAt: string;
+  /** pinned notes sort first and are the ones a clinician sees at a glance */
+  pinned?: boolean;
+}
+
 export interface Patient {
   id: string;
   firstName: string;
@@ -48,10 +62,16 @@ export interface Patient {
   phone: string; // E.164, used for wa.me links
   lang: Lang | "it";
   city: string;
-  birthYear: number;
+  /** Full date, "yyyy-MM-dd". Age is derived, never stored, so it cannot go
+   *  stale, and the day is needed for birthday greetings and for telling two
+   *  patients of the same name apart. */
+  birthDate: string;
+  /** Free text, one per line in the UI. Safety-critical, so it is rendered
+   *  before anything else on the record rather than inside a notes list. */
+  allergies: string[];
   contactConsent: boolean;
   isTraveller: boolean;
-  note?: string;
+  notes: PatientNote[];
   createdAt: string;
 }
 
@@ -64,12 +84,23 @@ export interface Treatment {
   protocolId?: string;
 }
 
+/** How often a step recurs after its first occurrence. A monthly maintenance
+ *  step is `{ everyDays: 30, times: 6 }`: six visits, the first at
+ *  `offsetDays` and one every thirty days after it. */
+export interface StepRepeat {
+  everyDays: number;
+  /** total occurrences, counting the first */
+  times: number;
+}
+
 export interface ProtocolStep {
   id: string;
   offsetDays: number;
   label: { sq: string; en: string; it: string };
   /** which WhatsApp template renders this step's message */
   template: "followup";
+  /** absent for a one-off step */
+  repeat?: StepRepeat;
 }
 
 export interface Protocol {
@@ -91,6 +122,8 @@ export interface Appointment {
   note?: string;
   /** set when the appointment was created to serve a follow-up */
   followUpId?: string;
+  /** set when the appointment was created from a recommendation */
+  recommendationId?: string;
 }
 
 export interface Visit {
@@ -110,9 +143,55 @@ export interface FollowUp {
   stepId: string;
   dueDate: string; // ISO date
   status: FollowUpStatus;
+  /** 1-based position in the step's series; 1 for a one-off step */
+  occurrence: number;
+  /** how many occurrences the series has in total; 1 for a one-off step */
+  seriesLength: number;
   snoozeUntil?: string;
   appointmentId?: string;
   lastMessageId?: string;
+}
+
+/** What the clinician thinks the patient should still have done. Separate from
+ *  a follow-up: a follow-up is the protocol running on its own schedule, a
+ *  recommendation is a judgement someone made about this patient. */
+export type RecommendationStatus = "proposed" | "accepted" | "declined" | "done";
+
+export interface Recommendation {
+  id: string;
+  patientId: string;
+  providerId: string;
+  treatmentIds: string[];
+  note?: string;
+  /** how soon the clinician thinks it should happen; free text is deliberate,
+   *  a recommendation is advice and not a scheduled obligation */
+  urgency?: "soon" | "routine" | "watch";
+  status: RecommendationStatus;
+  createdAt: string;
+  appointmentId?: string;
+}
+
+export type BenefitKind = "discount" | "gift";
+
+/** A discount or a gift the clinic gave this patient. This is a record of the
+ *  decision, not an accounting entry — the invoice itself lives in the
+ *  clinic's finance app (see the finance adapter in the build plan). */
+export interface Benefit {
+  id: string;
+  patientId: string;
+  kind: BenefitKind;
+  label: string;
+  /** percentage off, when that is how it was given */
+  percent?: number;
+  /** fixed value in ALL: the amount taken off, or what the gift is worth */
+  amount?: number;
+  /** the treatment it applies to, when it applies to one */
+  treatmentId?: string;
+  reason?: string;
+  grantedBy: string; // provider id
+  createdAt: string;
+  expiresAt?: string;
+  usedAt?: string;
 }
 
 export interface Message {
@@ -171,6 +250,8 @@ export interface DemoState {
   appointments: Appointment[];
   visits: Visit[];
   followUps: FollowUp[];
+  recommendations: Recommendation[];
+  benefits: Benefit[];
   messages: Message[];
   tokens: ConfirmToken[];
   templates: MessageTemplate[];

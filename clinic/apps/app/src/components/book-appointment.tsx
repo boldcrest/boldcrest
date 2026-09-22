@@ -11,6 +11,8 @@ export interface BookingPrefill {
   patientId?: string;
   treatmentIds?: string[];
   followUpId?: string;
+  /** set when the booking answers a clinician's recommendation */
+  recommendationId?: string;
   providerId?: string;
   start?: Date;
 }
@@ -112,6 +114,7 @@ function BookingDialog({
       start,
       note: note.trim() || undefined,
       followUpId: prefill?.followUpId,
+      recommendationId: prefill?.recommendationId,
     });
     toast.push(prefill?.followUpId ? t.toast.followupBooked : t.toast.appointmentCreated);
     onBooked?.(appointment.id);

@@ -4,7 +4,7 @@ The single place that says where the product is, what changed, and why. Updated 
 
 **Plan:** `v1-product-build-plan.md` (currently v1.2)
 **Branch:** `claude/clinic-app-market-research-682su6` (ahead of `main`, never pushed without Aldo's go)
-**App version:** `0.3.0` (`clinic/apps/app/package.json` — the workspace root carries its own version and is not the app's)
+**App version:** `0.4.0` (`clinic/apps/app/package.json` — the workspace root carries its own version and is not the app's)
 
 ---
 
@@ -14,10 +14,10 @@ The single place that says where the product is, what changed, and why. Updated 
 |---|---|
 | Phase | **1, platform spine.** Phase 0 still open on D1 and D4, which block nothing in phase 1 |
 | Last session | 22 September 2026 |
-| Working tree | Clean. App 0.3.0 committed 22 September, not pushed |
-| Checks at last run | All green. `tsc` 5/5 packages, `eslint` clean, `vitest` 34/34 (3 core, 15 app, 16 db), `build` green |
+| Working tree | Clean. App 0.4.0 committed 22 September, not pushed |
+| Checks at last run | All green. `tsc` 5/5 packages, `eslint` clean, `vitest` 70/70 (27 core, 21 app, 16 db, 6 i18n), `build` green. Verified in a real browser with Playwright, light and dark |
 | Blocking | D1 (which finance app) and D4 (name and domain). Neither blocks phase 1 |
-| Next action | Continue 1.4: domain A (clinics, memberships) and C (patients) as tables with RLS, then the cross-tenant isolation tests |
+| Next action | Continue 1.4: domain A (clinics, memberships) and C (patients) as tables with RLS, then the cross-tenant isolation tests. The schema must now also carry protocol recurrence, patient allergies and notes, recommendations and benefits |
 | Needs Aldo | Vercel root directory must change from `clinic` to `clinic/apps/app` or nothing deploys. Supabase Frankfurt project (0.4) needs his account and a signed DPA |
 
 ---
@@ -100,6 +100,25 @@ Steps inside phases 2 to 9 get their own rows here when the phase starts.
 ---
 
 ## Changelog
+
+### 2026-09-22 · app 0.4.0 · follow-ups become a cadence, and the patient record grows
+
+**Why:** three changes Aldo asked for. Follow-ups needed a clearer structure and had to be near-automatic: a service that should be repeated monthly must say so by itself. Patients needed full birthdays, allergies, free-form notes and a panel for what the clinician recommends next. Discounts and gifts had to be recordable.
+
+**1. Follow-ups are driven by the service, and a course is one row.**
+A protocol step can now repeat: `repeat: { everyDays, times }`. Logging one visit generates the whole series at once, so a six-session monthly course is on the books from the first session and nobody has to remember the next one. `openSeries()` then collapses every occurrence of one step of one visit into a single row — the session to act on, how many are finished, how many are queued — because six rows for one patient would bury five other patients. The page is now ordered by urgency (me vonesë / sot / këtë javë / më vonë) instead of due-versus-upcoming, and every row states its cadence in words a clinic uses: `formatCadence()` says "çdo muaj", never "çdo 30 ditë".
+Settings gained **Trajtim i ri**, which creates the service and its follow-up steps in one form, because they are one decision. Verified end to end in the browser: new service with a monthly course → log a visit → "U krijuan 6 ndjekje sipas protokollit" → the course appears on the record at session 1 of 6.
+
+**2. The patient record.**
+`birthYear` became a full `birthDate` and age is derived everywhere, so it cannot go stale; a birthday within a week shows on the header. `allergies` render above everything else, in danger tone with a warning icon, because they change what a clinician may do — and the empty state is shown too, since "nothing recorded" and "nobody asked" otherwise look identical. `notes` replaced the single free-text note: many notes, each with an optional custom label, pinned ones first. `recommendations` are new — what the clinician thinks should still happen, with proposed → accepted → booked/done/declined, and booking one from the record links the appointment back to it.
+
+**3. Discounts and gifts.**
+`Benefit` records a percentage or an amount, what it applies to, who gave it, why, when it expires and when it was used. It is deliberately a record of the decision and not an accounting entry — the invoice belongs to the finance app (D1), and the card says so.
+
+**Schema consequence for 1.4:** domains C and D have to carry all of this — `protocol_steps.repeat`, `follow_ups.occurrence`/`series_length`, `patients.birth_date`/`allergies`, `patient_notes`, `recommendations`, `benefits`.
+**Tests:** 34 → 70. New: `packages/core` recurrence and series (13) and record helpers (11), `packages/i18n` formatter tests (6, the package had no test setup before), and seed integrity for the new records.
+**Storage key** bumped to `arnika.demo.v2`; a v1 payload would hydrate into the new UI missing every new field.
+**Pre-existing, not introduced here:** the root layout's pre-paint theme script sets a class on `<html>`, which React reports as a hydration mismatch in dev. It is the usual price of avoiding a theme flash.
 
 ### 2026-09-22 · step 1.4 in progress · the database is testable without Docker
 

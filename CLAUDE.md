@@ -82,6 +82,26 @@ Database tests run on PGlite (Postgres in WASM) through vitest inside `packages/
 no Docker on Aldo's machine. A real local Supabase stack arrives in a later build step and
 needs Docker.
 
+## The domain model (what the demo already knows)
+
+- **A service carries its own follow-ups.** A `Treatment` points at a `Protocol` whose steps
+  each fire `offsetDays` after a visit. A step with `repeat: { everyDays, times }` is a
+  **course**: the whole series is generated the moment the visit is logged, so a monthly
+  recall is never something a person has to remember. Settings → Trajtimet creates a service
+  and its steps in one form.
+- **A series is one thing in the work list.** `openSeries()` collapses every occurrence of one
+  step of one visit into a head (the occurrence to act on), the ones queued behind it, and how
+  many are finished. Never list six sessions of one patient as six rows.
+- **Cadence is written the way a clinic speaks.** `formatCadence()` gives "çdo muaj", not
+  "çdo 30 ditë"; days only when the interval is not whole months or weeks.
+- **The patient record holds four things beyond contact details**: a full `birthDate` (age is
+  always derived, never stored), `allergies` (rendered above everything else, because they
+  change what a clinician may do), `notes` (each with an optional custom label, pinned notes
+  first), and `recommendations` (what a clinician thinks the patient should still have done —
+  advice with a status, distinct from a protocol running on its own schedule).
+- **`Benefit` records a discount or a gift, not an accounting entry.** The invoice lives in the
+  finance app; this is the trace of who decided what and why. Say so in the UI.
+
 ## Design system conventions
 
 - **Achromatic chrome, colour only as light.** Buttons, nav and card backgrounds are ink,

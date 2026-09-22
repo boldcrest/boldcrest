@@ -8,6 +8,8 @@ import {
   CalendarPlus,
   ChatCircleText,
   ClipboardText,
+  Gift,
+  Lightbulb,
   Repeat,
   Stethoscope,
   WhatsappLogo,
@@ -17,20 +19,30 @@ import { FadeIn, PageHeader } from "@/components/shell";
 import { FollowUpBadge, StatusBadge } from "@/components/status";
 import { BookAppointmentModal } from "@/components/book-appointment";
 import { WhatsAppComposer, useWhatsAppComposer } from "@/components/whatsapp-composer";
+import {
+  AllergyPanel,
+  BenefitsCard,
+  FollowUpSeriesCard,
+  NotesCard,
+  RECOMMENDATION_TONE,
+  RecommendationsCard,
+} from "@/components/patient-record";
 import { Modal } from "@clinic/ui";
 import { useDemo, useSelectors } from "@/lib/demo/store";
 import { formatDate, formatTime } from "@clinic/i18n";
-import { isOpen } from "@clinic/core";
-import { reminderTemplateFor } from "@clinic/core";
+import { ageOn, daysUntilBirthday, reminderTemplateFor } from "@clinic/core";
 
 type TimelineItem = {
   id: string;
   at: string;
-  kind: "visit" | "appointment" | "message" | "followup";
+  kind: "visit" | "appointment" | "message" | "followup" | "recommendation" | "benefit";
   title: string;
   body?: string;
   badge?: React.ReactNode;
 };
+
+/** A birthday is worth surfacing for a week; beyond that it is just a date. */
+const BIRTHDAY_WINDOW_DAYS = 7;
 
 export default function PatientDetailPage() {
   const params = useParams<{ id: string }>();
@@ -83,14 +95,47 @@ export default function PatientDetailPage() {
         id: followUp.id,
         at: `${followUp.dueDate}T08:00:00.000Z`,
         kind: "followup",
-        title: s.stepLabel(followUp.protocolId, followUp.stepId),
+        title:
+          followUp.seriesLength > 1
+            ? `${s.stepLabel(followUp.protocolId, followUp.stepId)} · ${t.followups.session(followUp.occurrence, followUp.seriesLength)}`
+            : s.stepLabel(followUp.protocolId, followUp.stepId),
         body: s.protocolById(followUp.protocolId)?.name[state.lang],
         badge: <FollowUpBadge status={followUp.status} />,
       });
     }
 
+    for (const recommendation of s.recommendationsForPatient(patient.id)) {
+      items.push({
+        id: recommendation.id,
+        at: `${recommendation.createdAt}T09:00:00.000Z`,
+        kind: "recommendation",
+        title: s.treatmentNames(recommendation.treatmentIds).join(", "),
+        body: recommendation.note,
+        badge: (
+          <Pill tone={RECOMMENDATION_TONE[recommendation.status]}>
+            {t.rec[recommendation.status]}
+          </Pill>
+        ),
+      });
+    }
+
+    for (const benefit of s.benefitsForPatient(patient.id)) {
+      items.push({
+        id: benefit.id,
+        at: `${benefit.createdAt}T09:30:00.000Z`,
+        kind: "benefit",
+        title: benefit.label,
+        body: benefit.reason,
+        badge: (
+          <Pill tone={benefit.kind === "gift" ? "lime" : "accent"}>
+            {benefit.kind === "gift" ? t.form.benefitGift : t.form.benefitDiscount}
+          </Pill>
+        ),
+      });
+    }
+
     return items.sort((a, b) => b.at.localeCompare(a.at));
-  }, [patient, state, s]);
+  }, [patient, state, s, t]);
 
   if (!patient) {
     return (
@@ -108,15 +153,13 @@ export default function PatientDetailPage() {
     );
   }
 
-  const openFollowUps = state.followUps.filter(
-    (f) => f.patientId === patient.id && isOpen(f),
-  );
-
   const nextAppointment = state.appointments
     .filter(
       (a) => a.patientId === patient.id && new Date(a.start) >= now && a.status === "scheduled",
     )
     .sort((a, b) => a.start.localeCompare(b.start))[0];
+
+  const untilBirthday = daysUntilBirthday(patient.birthDate, now);
 
   return (
     <>
@@ -157,24 +200,44 @@ export default function PatientDetailPage() {
           </div>
         }
       >
-        <p className="nums mt-1 text-sm text-ink-3">
-          {patient.phone} · {patient.city} ·{" "}
-          {t.patients.age(new Date(state.now).getFullYear() - patient.birthYear)}
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <p className="nums text-sm text-ink-3">
+            {patient.phone} · {patient.city} · {t.patients.age(ageOn(patient.birthDate, now))}
+          </p>
+          {untilBirthday <= BIRTHDAY_WINDOW_DAYS ? (
+            <Pill tone="lime">
+              {untilBirthday === 0
+                ? t.patients.birthdayToday
+                : t.patients.birthdayIn(untilBirthday)}
+            </Pill>
+          ) : null}
+        </div>
       </PageHeader>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.5fr]">
-        <FadeIn className="flex min-w-0 flex-col gap-4">
+      <div className="flex flex-col gap-4">
+        <FadeIn>
+          <AllergyPanel patient={patient} />
+        </FadeIn>
+
+        <FadeIn delay={0.05} className="grid gap-4 lg:grid-cols-3">
           <Card>
             <CardHeader title={t.patients.details} />
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 pb-5 text-sm">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-6 pb-5 text-sm">
+              <div>
+                <dt className="text-xs text-ink-3">{t.patients.birthday}</dt>
+                <dd className="nums text-ink">{formatDate(patient.birthDate, state.lang)}</dd>
+              </div>
               <div>
                 <dt className="text-xs text-ink-3">{t.form.language}</dt>
                 <dd className="text-ink uppercase">{patient.lang}</dd>
               </div>
               <div>
-                <dt className="text-xs text-ink-3">{t.form.birthYear}</dt>
-                <dd className="nums text-ink">{patient.birthYear}</dd>
+                <dt className="text-xs text-ink-3">{t.patients.registered}</dt>
+                <dd className="nums text-ink">{formatDate(patient.createdAt, state.lang)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-ink-3">{t.form.city}</dt>
+                <dd className="text-ink">{patient.city}</dd>
               </div>
               <div className="col-span-2 flex flex-wrap gap-2">
                 {patient.isTraveller ? <Pill tone="accent">{t.patients.traveller}</Pill> : null}
@@ -182,40 +245,19 @@ export default function PatientDetailPage() {
                   {patient.contactConsent ? t.form.consent : t.patients.noConsent}
                 </Pill>
               </div>
-              {patient.note ? (
-                <div className="col-span-2">
-                  <dt className="text-xs text-ink-3">{t.form.note}</dt>
-                  <dd className="text-ink-2">{patient.note}</dd>
-                </div>
-              ) : null}
             </dl>
           </Card>
 
-          <Card>
-            <CardHeader title={t.followups.title} />
-            {openFollowUps.length === 0 ? (
-              <EmptyState icon={<Repeat size={22} />} title={t.followups.none} />
-            ) : (
-              <ul className="divide-y divide-line">
-                {openFollowUps.map((followUp) => (
-                  <li key={followUp.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-medium text-ink">
-                        {s.stepLabel(followUp.protocolId, followUp.stepId)}
-                      </p>
-                      <p className="nums truncate text-xs text-ink-3">
-                        {t.followups.dueOn}: {formatDate(followUp.dueDate, state.lang)}
-                      </p>
-                    </div>
-                    <FollowUpBadge status={followUp.status} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+          <FollowUpSeriesCard patient={patient} />
+          <RecommendationsCard patient={patient} />
         </FadeIn>
 
-        <FadeIn delay={0.05}>
+        <FadeIn delay={0.1} className="grid gap-4 lg:grid-cols-2">
+          <BenefitsCard patient={patient} />
+          <NotesCard patient={patient} />
+        </FadeIn>
+
+        <FadeIn delay={0.15}>
           <Card>
             <CardHeader title={t.patients.timeline} />
             {timeline.length === 0 ? (
@@ -279,6 +321,8 @@ function TimelineIcon({ kind }: { kind: TimelineItem["kind"] }) {
   if (kind === "visit") return <Stethoscope size={size} weight="bold" />;
   if (kind === "message") return <ChatCircleText size={size} weight="bold" />;
   if (kind === "followup") return <Repeat size={size} weight="bold" />;
+  if (kind === "recommendation") return <Lightbulb size={size} weight="bold" />;
+  if (kind === "benefit") return <Gift size={size} weight="bold" />;
   return <CalendarPlus size={size} weight="bold" />;
 }
 

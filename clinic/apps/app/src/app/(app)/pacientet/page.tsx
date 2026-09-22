@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { MagnifyingGlass, UserPlus, Users } from "@phosphor-icons/react";
-import { Button, Card, Checkbox, EmptyState, Field, Input, Modal, Pill, Select, useToast } from "@clinic/ui";
+import { Button, Card, Checkbox, EmptyState, Field, Input, Modal, Pill, Select, Textarea, useToast } from "@clinic/ui";
 import { FadeIn, PageHeader } from "@/components/shell";
 import { useDemo } from "@/lib/demo/store";
 import { formatDate } from "@clinic/i18n";
@@ -134,14 +134,16 @@ function NewPatientModal({ open, onClose }: { open: boolean; onClose: () => void
     lastName: "",
     phone: "+355",
     city: "Tiranë",
-    birthYear: "1990",
+    birthDate: "",
+    allergies: "",
     lang: "sq" as "sq" | "en" | "it",
     contactConsent: true,
     isTraveller: false,
   });
   const [touched, setTouched] = useState(false);
 
-  const valid = form.firstName.trim() && form.lastName.trim() && form.phone.length > 6;
+  const valid =
+    form.firstName.trim() && form.lastName.trim() && form.phone.length > 6 && form.birthDate;
 
   function submit() {
     setTouched(true);
@@ -151,7 +153,12 @@ function NewPatientModal({ open, onClose }: { open: boolean; onClose: () => void
       lastName: form.lastName.trim(),
       phone: form.phone.replace(/\s/g, ""),
       city: form.city.trim(),
-      birthYear: Number(form.birthYear) || 1990,
+      birthDate: form.birthDate,
+      allergies: form.allergies
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean),
+      notes: [],
       lang: form.lang,
       contactConsent: form.contactConsent,
       isTraveller: form.isTraveller,
@@ -162,7 +169,8 @@ function NewPatientModal({ open, onClose }: { open: boolean; onClose: () => void
       lastName: "",
       phone: "+355",
       city: "Tiranë",
-      birthYear: "1990",
+      birthDate: "",
+      allergies: "",
       lang: "sq",
       contactConsent: true,
       isTraveller: false,
@@ -220,11 +228,14 @@ function NewPatientModal({ open, onClose }: { open: boolean; onClose: () => void
         <Field label={t.form.city}>
           <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
         </Field>
-        <Field label={t.form.birthYear}>
+        <Field
+          label={t.form.birthDate}
+          error={touched && !form.birthDate ? t.form.required : undefined}
+        >
           <Input
-            value={form.birthYear}
-            onChange={(e) => setForm({ ...form, birthYear: e.target.value })}
-            inputMode="numeric"
+            type="date"
+            value={form.birthDate}
+            onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
           />
         </Field>
         <Field label={t.form.language}>
@@ -236,6 +247,14 @@ function NewPatientModal({ open, onClose }: { open: boolean; onClose: () => void
             <option value="it">Italiano</option>
             <option value="en">English</option>
           </Select>
+        </Field>
+        <Field label={t.form.allergies} hint={t.form.allergiesHint} className="sm:col-span-2">
+          <Textarea
+            value={form.allergies}
+            onChange={(e) => setForm({ ...form, allergies: e.target.value })}
+            rows={2}
+            placeholder="Penicilinë"
+          />
         </Field>
         <div className="flex flex-col gap-2.5 sm:col-span-2">
           <Checkbox

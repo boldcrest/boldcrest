@@ -16,17 +16,27 @@ import {
   followUpsForVisit,
   makeToken,
   type Appointment,
+  type Benefit,
   type DemoState,
   type FollowUp,
   type Lang,
   type Message,
   type Patient,
+  type PatientNote,
+  type Protocol,
+  type ProtocolStep,
+  type Recommendation,
   type TemplateKey,
+  type Treatment,
   type Visit,
 } from "@clinic/core";
 import { dictionaries, type Dict } from "@clinic/i18n";
 
-const STORAGE_KEY = "arnika.demo.v1";
+// v2: patients gained a full birth date, allergies and a notes list, and the
+// state gained recommendations and benefits. A v1 payload would hydrate into
+// the new UI missing all of them, so the key changes rather than the shape
+// being patched on read — a demo has no data worth migrating.
+const STORAGE_KEY = "arnika.demo.v2";
 
 type Action =
   | { type: "hydrate"; state: DemoState }
@@ -40,6 +50,12 @@ type Action =
   | { type: "addMessage"; message: Message; token?: DemoState["tokens"][number] }
   | { type: "markMessageSent"; id: string }
   | { type: "patchFollowUp"; id: string; patch: Partial<FollowUp> }
+  | { type: "patchPatient"; id: string; patch: Partial<Patient> }
+  | { type: "addRecommendation"; recommendation: Recommendation }
+  | { type: "patchRecommendation"; id: string; patch: Partial<Recommendation> }
+  | { type: "addBenefit"; benefit: Benefit }
+  | { type: "patchBenefit"; id: string; patch: Partial<Benefit> }
+  | { type: "addTreatment"; treatment: Treatment; protocol?: Protocol }
   | { type: "useToken"; token: string; outcome: "confirmed" | "reschedule" };
 
 function reducer(state: DemoState, action: Action): DemoState {
@@ -88,6 +104,35 @@ function reducer(state: DemoState, action: Action): DemoState {
         followUps: state.followUps.map((f) =>
           f.id === action.id ? { ...f, ...action.patch } : f,
         ),
+      };
+    case "patchPatient":
+      return {
+        ...state,
+        patients: state.patients.map((p) =>
+          p.id === action.id ? { ...p, ...action.patch } : p,
+        ),
+      };
+    case "addRecommendation":
+      return { ...state, recommendations: [action.recommendation, ...state.recommendations] };
+    case "patchRecommendation":
+      return {
+        ...state,
+        recommendations: state.recommendations.map((r) =>
+          r.id === action.id ? { ...r, ...action.patch } : r,
+        ),
+      };
+    case "addBenefit":
+      return { ...state, benefits: [action.benefit, ...state.benefits] };
+    case "patchBenefit":
+      return {
+        ...state,
+        benefits: state.benefits.map((b) => (b.id === action.id ? { ...b, ...action.patch } : b)),
+      };
+    case "addTreatment":
+      return {
+        ...state,
+        treatments: [...state.treatments, action.treatment],
+        protocols: action.protocol ? [...state.protocols, action.protocol] : state.protocols,
       };
     case "useToken": {
       const token = state.tokens.find((t) => t.token === action.token);
@@ -177,6 +222,7 @@ function buildActions(state: DemoState, dispatch: (a: Action) => void) {
       start: Date;
       note?: string;
       followUpId?: string;
+      recommendationId?: string;
     }) => {
       const minutes = input.treatmentIds.reduce(
         (sum, id) => sum + (state.treatments.find((t) => t.id === id)?.minutes ?? 30),
@@ -193,6 +239,7 @@ function buildActions(state: DemoState, dispatch: (a: Action) => void) {
         confirmation: "pending",
         note: input.note,
         followUpId: input.followUpId,
+        recommendationId: input.recommendationId,
       };
       dispatch({ type: "addAppointment", appointment });
       if (input.followUpId) {
@@ -200,6 +247,13 @@ function buildActions(state: DemoState, dispatch: (a: Action) => void) {
           type: "patchFollowUp",
           id: input.followUpId,
           patch: { status: "booked", appointmentId: appointment.id },
+        });
+      }
+      if (input.recommendationId) {
+        dispatch({
+          type: "patchRecommendation",
+          id: input.recommendationId,
+          patch: { status: "accepted", appointmentId: appointment.id },
         });
       }
       return appointment;
@@ -283,6 +337,171 @@ function buildActions(state: DemoState, dispatch: (a: Action) => void) {
           snoozeUntil: addDays(now(), 7).toISOString().slice(0, 10),
         },
       }),
+
+    updatePatient: (id: string, patch: Partial<Patient>) =>
+      dispatch({ type: "patchPatient", id, patch }),
+
+    /** Allergies are edited as a block: the textarea is the record. */
+    setAllergies: (patientId: string, allergies: string[]) =>
+      dispatch({
+        type: "patchPatient",
+        id: patientId,
+        patch: { allergies: allergies.map((a) => a.trim()).filter(Boolean) },
+      }),
+
+    addNote: (
+      patientId: string,
+      input: { body: string; label?: string; authorId?: string; pinned?: boolean },
+    ) => {
+      const patient = state.patients.find((p) => p.id === patientId);
+      if (!patient) return;
+      const note: PatientNote = {
+        id: `no-${makeToken().slice(0, 6)}`,
+        label: input.label?.trim() || undefined,
+        body: input.body.trim(),
+        authorId: input.authorId,
+        pinned: input.pinned,
+        createdAt: now().toISOString().slice(0, 10),
+      };
+      dispatch({
+        type: "patchPatient",
+        id: patientId,
+        patch: { notes: [note, ...patient.notes] },
+      });
+      return note;
+    },
+
+    toggleNotePin: (patientId: string, noteId: string) => {
+      const patient = state.patients.find((p) => p.id === patientId);
+      if (!patient) return;
+      dispatch({
+        type: "patchPatient",
+        id: patientId,
+        patch: {
+          notes: patient.notes.map((n) =>
+            n.id === noteId ? { ...n, pinned: !n.pinned } : n,
+          ),
+        },
+      });
+    },
+
+    removeNote: (patientId: string, noteId: string) => {
+      const patient = state.patients.find((p) => p.id === patientId);
+      if (!patient) return;
+      dispatch({
+        type: "patchPatient",
+        id: patientId,
+        patch: { notes: patient.notes.filter((n) => n.id !== noteId) },
+      });
+    },
+
+    addRecommendation: (input: {
+      patientId: string;
+      providerId: string;
+      treatmentIds: string[];
+      note?: string;
+      urgency?: Recommendation["urgency"];
+    }) => {
+      const recommendation: Recommendation = {
+        id: `re-${makeToken().slice(0, 6)}`,
+        patientId: input.patientId,
+        providerId: input.providerId,
+        treatmentIds: input.treatmentIds,
+        note: input.note?.trim() || undefined,
+        urgency: input.urgency,
+        status: "proposed",
+        createdAt: now().toISOString().slice(0, 10),
+      };
+      dispatch({ type: "addRecommendation", recommendation });
+      return recommendation;
+    },
+
+    patchRecommendation: (id: string, patch: Partial<Recommendation>) =>
+      dispatch({ type: "patchRecommendation", id, patch }),
+
+    addBenefit: (input: {
+      patientId: string;
+      kind: Benefit["kind"];
+      label: string;
+      percent?: number;
+      amount?: number;
+      treatmentId?: string;
+      reason?: string;
+      grantedBy: string;
+      expiresAt?: string;
+    }) => {
+      const benefit: Benefit = {
+        id: `be-${makeToken().slice(0, 6)}`,
+        patientId: input.patientId,
+        kind: input.kind,
+        label: input.label.trim(),
+        percent: input.percent,
+        amount: input.amount,
+        treatmentId: input.treatmentId,
+        reason: input.reason?.trim() || undefined,
+        grantedBy: input.grantedBy,
+        expiresAt: input.expiresAt,
+        createdAt: now().toISOString().slice(0, 10),
+      };
+      dispatch({ type: "addBenefit", benefit });
+      return benefit;
+    },
+
+    markBenefitUsed: (id: string) =>
+      dispatch({
+        type: "patchBenefit",
+        id,
+        patch: { usedAt: now().toISOString().slice(0, 10) },
+      }),
+
+    /**
+     * A service and its follow-ups are created together: the steps given here
+     * become a protocol attached to the new treatment, so the first visit that
+     * uses it starts the recalls on its own.
+     */
+    addTreatment: (
+      input: {
+        nameSq: string;
+        nameEn: string;
+        vertical: Treatment["vertical"];
+        minutes: number;
+        price: number;
+      },
+      steps: Array<{ label: string; offsetDays: number; repeat?: ProtocolStep["repeat"] }> = [],
+    ) => {
+      const suffix = makeToken().slice(0, 6);
+      const treatmentId = `t-${suffix}`;
+      const clean = steps.filter((s) => s.label.trim().length > 0);
+      const protocol: Protocol | undefined =
+        clean.length > 0
+          ? {
+              id: `p-${suffix}`,
+              name: { sq: `Ndjekjet: ${input.nameSq}`, en: `Follow-ups: ${input.nameEn}` },
+              treatmentIds: [treatmentId],
+              steps: clean.map((step, index) => ({
+                id: `s-${suffix}-${index + 1}`,
+                offsetDays: step.offsetDays,
+                label: {
+                  sq: step.label.trim(),
+                  en: step.label.trim(),
+                  it: step.label.trim(),
+                },
+                template: "followup" as const,
+                repeat: step.repeat,
+              })),
+            }
+          : undefined;
+      const treatment: Treatment = {
+        id: treatmentId,
+        name: { sq: input.nameSq.trim(), en: input.nameEn.trim() || input.nameSq.trim() },
+        vertical: input.vertical,
+        minutes: input.minutes,
+        price: input.price,
+        protocolId: protocol?.id,
+      };
+      dispatch({ type: "addTreatment", treatment, protocol });
+      return { treatment, protocol };
+    },
   };
 }
 
@@ -374,10 +593,18 @@ export function useSelectors() {
       },
       treatmentNames: (ids: string[]) =>
         ids.map((id) => treatmentById(id)?.name[state.lang] ?? "").filter(Boolean),
+      stepById: (protocolId: string, stepId: string) =>
+        protocolById(protocolId)?.steps.find((s) => s.id === stepId),
       stepLabel: (protocolId: string, stepId: string) => {
         const step = protocolById(protocolId)?.steps.find((s) => s.id === stepId);
         return step?.label[state.lang] ?? "";
       },
+      recommendationsForPatient: (patientId: string) =>
+        state.recommendations.filter((r) => r.patientId === patientId),
+      benefitsForPatient: (patientId: string) =>
+        state.benefits.filter((b) => b.patientId === patientId),
+      followUpsForPatient: (patientId: string) =>
+        state.followUps.filter((f) => f.patientId === patientId),
       appointmentsOn: (day: Date) => {
         const key = startOfDay(day).toDateString();
         return state.appointments
