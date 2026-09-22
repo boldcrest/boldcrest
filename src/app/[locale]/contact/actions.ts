@@ -3,6 +3,7 @@
 import { sendFormEmail, buildBody } from '@/lib/email'
 import { isLikelyBot } from '@/lib/spam-guard'
 import { verifyTurnstile } from '@/lib/turnstile'
+import { sendLeadEvent } from '@/lib/meta-capi'
 
 const TO = 'info@boldcrest.com'
 
@@ -36,13 +37,25 @@ export async function submitContactForm(formData: FormData) {
     ['Message', data.message],
   ])
 
-  await sendFormEmail({
-    to: TO,
-    subject: 'Contact Form Submission - WebsiteForms - BoldCrest',
-    replyTo: data.email || undefined,
-    html: `<h2 style="font-family:Arial,sans-serif;font-size:18px">New Contact Form Submission - BoldCrest</h2>${html}`,
-    text: `New Contact Form Submission - BoldCrest\n\n${text}`,
-  })
+  // Run in parallel and let neither failure block the other or the visitor's
+  // success state — the email is the lead, the Meta event is only telemetry.
+  await Promise.allSettled([
+    sendFormEmail({
+      to: TO,
+      subject: 'Contact Form Submission - WebsiteForms - BoldCrest',
+      replyTo: data.email || undefined,
+      html: `<h2 style="font-family:Arial,sans-serif;font-size:18px">New Contact Form Submission - BoldCrest</h2>${html}`,
+      text: `New Contact Form Submission - BoldCrest\n\n${text}`,
+    }),
+    // Server-side half of the Meta Pixel. Shares `meta_event_id` with the
+    // browser so Meta dedupes to one conversion; no id = no consent = no send.
+    sendLeadEvent({
+      eventId: (formData.get('meta_event_id') as string) || '',
+      email: data.email,
+      name: data.name,
+      form: 'contact',
+    }),
+  ])
 
   // Always report success to the visitor; delivery failures are logged
   // server-side (and a missing API key degrades gracefully).

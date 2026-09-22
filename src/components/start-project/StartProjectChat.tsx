@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Script from 'next/script'
 import { submitProjectForm } from './actions'
 import { botReply, greeting } from './replies'
-import { trackLead } from '@/lib/analytics'
+import { trackLead, newMetaEventId } from '@/lib/analytics'
 // Global `window.turnstile` type comes from src/types/turnstile.d.ts.
 
 // Only set once the Cloudflare Turnstile widget has been created (see
@@ -1026,13 +1026,23 @@ export default function StartProjectChat() {
     fd.set('_gotcha', honeypot)
     fd.set('_ts', String(mountedAt))
     fd.set('cf-turnstile-response', turnstileToken)
+    // One id for this submission, shared by the browser pixel and the server's
+    // Conversions API call so Meta counts a single Lead. Null when the visitor
+    // has not accepted cookies — then neither half reports.
+    const metaEventId = newMetaEventId()
+    if (metaEventId) fd.set('meta_event_id', metaEventId)
+
     const res = await submitProjectForm(fd)
     if (res.success) {
       setStep('sent')
-      trackLead('start_project', {
-        services: a.services.join(', '),
-        budget: a.budget,
-      })
+      trackLead(
+        'start_project',
+        {
+          services: a.services.join(', '),
+          budget: a.budget,
+        },
+        metaEventId ?? undefined,
+      )
     } else {
       // Rare — Invisible mode resolves silently for virtually everyone. Land
       // back on the last question so the visitor can retry rather than get
