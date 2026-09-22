@@ -15,9 +15,9 @@ The single place that says where the product is, what changed, and why. Updated 
 | Phase | **1, platform spine.** Phase 0 still open on D1 and D4, which block nothing in phase 1 |
 | Last session | 22 September 2026 |
 | Working tree | Clean. App 0.4.0 committed 22 September, not pushed |
-| Checks at last run | All green. `tsc` 5/5 packages, `eslint` clean, `vitest` 70/70 (27 core, 21 app, 16 db, 6 i18n), `build` green. Verified in a real browser with Playwright, light and dark |
+| Checks at last run | All green. `tsc` 5/5 packages, `eslint` clean, `vitest` 72/72 (27 core, 21 app, 18 db, 6 i18n), `build` green. Verified in a real browser with Playwright |
 | Blocking | D1 (which finance app) and D4 (name and domain). Neither blocks phase 1 |
-| Next action | Continue 1.4: domain A (clinics, memberships) and C (patients) as tables with RLS, then the cross-tenant isolation tests. The schema must now also carry protocol recurrence, patient allergies and notes, recommendations and benefits |
+| Next action | Domain A (clinics, memberships, staff) as tables with RLS and cross-tenant tests, then the patient domain. Each screen ports off the fake store as its domain lands |
 | Needs Aldo | Vercel root directory must change from `clinic` to `clinic/apps/app` or nothing deploys. Supabase Frankfurt project (0.4) needs his account and a signed DPA |
 
 ---
@@ -100,6 +100,20 @@ Steps inside phases 2 to 9 get their own rows here when the phase starts.
 ---
 
 ## Changelog
+
+### 2026-09-22 · the demo now runs the real database
+
+**Why:** Aldo asked how to build the real product and still have something to click through — and said this was his own idea, from a developer he had watched switch users in a dropdown and see different access, against the real system. It also answers the problem from the session before: the demo had no concept of a user, so three features had just been designed with no permission boundary at all (`StaffRole` was declared in `types.ts` and used nowhere).
+
+**What changed.** PGlite runs in a browser as well as in node, so the demo no longer needs a fake store to have data. `packages/db` gained a generated module holding the schema as strings — the browser has no filesystem — and a `bootstrap()` / `beginSession()` pair that the test harness and the app now both use, so tests and demo apply byte-identical SQL. A drift test fails if the generated module falls behind the `.sql` files.
+
+**`/baza`** is the first page served by it: a real Postgres boots in the page in about 400–850 ms, applies the migrations, and answers a live `app.has_perm()` query for whichever role is chosen in a dropdown. As owner, eleven permissions. As reception, clinical and settings and audit go grey. Anonymous is refused outright by Postgres with "permission denied for schema app". Nothing on the page decides any of that.
+
+**What it does not prove**, stated on the page itself: the page chooses its own claims, so it can impersonate anyone. It demonstrates that the policies behave; it is not a security boundary. That arrives with server-signed tokens on Supabase, and the `packages/db` suite is what gates it.
+
+**Consequence for the plan:** step 1.7 ("replace store.tsx with a Supabase data layer, same selectors") effectively starts now against PGlite instead of later against Supabase. Swapping to supabase-js afterwards is a client change, not a UI change. The fake store stays under every screen that has not been ported.
+
+**Open decision:** the demo clock. The app owns `now` today; real queries would default to Postgres's clock. The time-travel buttons have to keep working, so the clock has to be passed into every date-aware query. Better settled before the first domain lands.
 
 ### 2026-09-22 · app 0.4.0 · follow-ups become a cadence, and the patient record grows
 

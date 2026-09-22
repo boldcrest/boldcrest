@@ -7,7 +7,7 @@
 // once. Hence the exhaustive per-role assertions rather than a spot check.
 
 import { beforeAll, describe, expect, it } from "vitest";
-import { asUser, createTestDb, migrationFiles, scalar, type Claims, type TestDb } from "./harness";
+import { asUser, createTestDb, migrationNames, scalar, type Claims, type TestDb } from "./harness";
 
 const CLINIC_A = "11111111-1111-4111-8111-111111111111";
 
@@ -26,10 +26,10 @@ beforeAll(async () => {
 }, 60_000);
 
 describe("migrations", () => {
-  it("applies every migration in order against a bare Postgres", async () => {
+  it("applies every migration in order against a bare Postgres", () => {
     // createTestDb() throws with the offending filename if any file fails, so
     // reaching here is the assertion. This test states the guarantee.
-    expect((await migrationFiles()).length).toBeGreaterThan(0);
+    expect(migrationNames().length).toBeGreaterThan(0);
   });
 
   it("creates the app schema without exposing it to anonymous requests", async () => {

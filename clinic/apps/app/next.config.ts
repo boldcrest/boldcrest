@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   // their own. Turbopack (the default bundler in Next 16) already transpiles
   // workspace packages automatically, but this is kept explicit so an app
   // build stays correct if it ever falls back to `next build --webpack`.
-  transpilePackages: ["@clinic/core", "@clinic/ui", "@clinic/i18n"],
+  transpilePackages: ["@clinic/core", "@clinic/ui", "@clinic/i18n", "@clinic/db"],
 };
 
 export default nextConfig;

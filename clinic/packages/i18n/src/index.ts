@@ -80,6 +80,7 @@ const sq = {
     patients: "Pacientët",
     followups: "Ndjekjet",
     settings: "Cilësimet",
+    database: "Baza",
   },
   clock: {
     label: "Data e demos",
@@ -380,6 +381,7 @@ const en: typeof sq = {
     patients: "Patients",
     followups: "Follow-ups",
     settings: "Settings",
+    database: "Database",
   },
   clock: {
     label: "Demo date",

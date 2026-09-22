@@ -8,6 +8,7 @@ import {
   ArrowCounterClockwise,
   CalendarBlank,
   CaretDoubleRight,
+  Database,
   Gear,
   Moon,
   Repeat,
@@ -25,6 +26,8 @@ const NAV = [
   { href: "/pacientet", key: "patients", Icon: Users },
   { href: "/ndjekjet", key: "followups", Icon: Repeat },
   { href: "/cilesimet", key: "settings", Icon: Gear },
+  // Build-time view: the real database, and who it lets see what. Not for clinics.
+  { href: "/baza", key: "database", Icon: Database },
 ] as const;
 
 /* -------------------------------------------------------------- app mark */

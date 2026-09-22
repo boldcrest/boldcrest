@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Postgres schema, RLS policies and tenant-isolation test suite for the clinic platform (Supabase).",
   "scripts": {
+    "generate": "node scripts/build-migrations.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "echo 'no lint config for @clinic/db yet'"
@@ -14,5 +15,8 @@
     "@types/node": "^22.10.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
+  },
+  "exports": {
+    ".": "./src/index.ts"
   }
 }
