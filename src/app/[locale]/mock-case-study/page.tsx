@@ -1,9 +1,18 @@
-/* TEMPORARY local preview only — never committed. Renders the case-study
-   template with stand-in content so the design can be reviewed before any
-   caseStudy document exists in Sanity. */
+/* Draft preview only. Renders the case-study template with stand-in content so
+   the design can be reviewed before any caseStudy document exists in Sanity.
+   The client, the figures and the imagery are invented. */
+import type { Metadata } from 'next'
 import CaseStudyArticle, {
   type CaseStudy,
 } from '../case-studies/[slug]/CaseStudyArticle'
+
+// Kept out of the index: this is a fictional client with invented numbers, and
+// the route inherits `index, follow` from the root layout otherwise. Without
+// this it would be crawlable the moment the branch ships.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
+
 
 const REELS = [
   'https://vimeo.com/903992253',

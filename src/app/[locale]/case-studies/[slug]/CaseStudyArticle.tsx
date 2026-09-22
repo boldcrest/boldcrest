@@ -1,4 +1,5 @@
 import { PortableText } from '@portabletext/react'
+import { getVimeoMeta } from '@/lib/vimeo'
 import { ptComponents } from '@/components/portableText'
 import CaseStudyHero from '@/components/case-study/CaseStudyHero'
 import ReelsCarousel, { type Reel } from '@/components/case-study/ReelsCarousel'
@@ -32,13 +33,23 @@ interface Labels {
  * Case-study page body. Order is deliberate: the number first (the claim), then
  * the write-up (the proof), then the work itself (reels, then the feed).
  */
-export default function CaseStudyArticle({
+export default async function CaseStudyArticle({
   study,
   labels,
 }: {
   study: CaseStudy
   labels: Labels
 }) {
+  // Resolve each reel's Vimeo cover AND true aspect here, on the server, the
+  // same way the /work cards do. getVimeoMeta caches for a week, so this is one
+  // oEmbed call per clip per week rather than per request.
+  const reels = await Promise.all(
+    (study.reels ?? []).map(async (reel) => {
+      const meta = await getVimeoMeta(reel.vimeoUrl)
+      return { ...reel, poster: meta.poster, aspect: meta.aspect }
+    }),
+  )
+
   return (
     <article>
       <CaseStudyHero
@@ -60,7 +71,7 @@ export default function CaseStudyArticle({
       )}
 
       <ReelsCarousel
-        reels={study.reels ?? []}
+        reels={reels}
         heading={labels.reels}
         hint={labels.reelsHint}
         closeLabel={labels.close}

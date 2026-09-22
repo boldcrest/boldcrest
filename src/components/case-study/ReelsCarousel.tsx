@@ -8,6 +8,15 @@ export interface Reel {
   vimeoUrl?: string
   aspectRatio?: string
   caption?: string
+  /** Vimeo oEmbed cover, resolved server-side. Without it the card is a black
+   *  box until the background player starts, and the whole rail reads as empty
+   *  on first scroll — the site never shows a bare video box (see the /work
+   *  cards, which use the same poster). */
+  poster?: string | null
+  /** The clip's true aspect, also from oEmbed. Preferred over `aspectRatio` so
+   *  the card matches the footage instead of letterboxing it inside an assumed
+   *  9:16 — the same reason /work sizes its slides from the native dimensions. */
+  aspect?: number | null
 }
 
 interface ReelsCarouselProps {
@@ -135,7 +144,8 @@ export default function ReelsCarousel({
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border">
               <VimeoEmbed
                 url={reel.vimeoUrl as string}
-                aspect={parseAspect(reel.aspectRatio)}
+                aspect={reel.aspect ?? parseAspect(reel.aspectRatio)}
+                poster={reel.poster}
                 className="bg-bg-card"
               />
             </div>
