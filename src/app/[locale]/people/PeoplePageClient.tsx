@@ -1109,7 +1109,7 @@ export default function PeoplePageClient({
                   {FOUNDERS_PHOTO ? (
                     <Image
                       src={FOUNDERS_PHOTO}
-                      alt="Xhulio and Aldo, founders of BoldCrest"
+                      alt={t('founders')}
                       width={1228}
                       height={1500}
                       unoptimized
@@ -1275,7 +1275,7 @@ export default function PeoplePageClient({
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
         >
-          <CTAButton href="https://careers.boldcrest.com" label="Visit Careers" showArrow />
+          <CTAButton href="https://careers.boldcrest.com" label={t('visitCareers')} showArrow />
         </motion.div>
       </div>
 

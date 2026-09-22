@@ -9,7 +9,8 @@
     "home": "BoldCrest — accueil",
     "toggleMenu": "Ouvrir ou fermer le menu",
     "closeMenu": "Fermer le menu",
-    "careers": "Carrières"
+    "careers": "Carrières",
+    "breadcrumb": "Fil d'Ariane"
   },
   "Language": {
     "label": "Langue",

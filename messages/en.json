@@ -9,7 +9,8 @@
     "home": "BoldCrest — home",
     "toggleMenu": "Toggle menu",
     "closeMenu": "Close menu",
-    "careers": "Careers"
+    "careers": "Careers",
+    "breadcrumb": "Breadcrumb"
   },
   "Language": {
     "label": "Language",

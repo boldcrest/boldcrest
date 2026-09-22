@@ -506,6 +506,7 @@ function AgencyTurn({
   children: React.ReactNode
   startDelay?: number
 }) {
+  const tc = useTranslations('Chat')
   const items = Children.toArray(children)
   const count = useRevealCount(items.length, startDelay, REVEAL_INTERVAL)
   const avatarRef = useRef<HTMLDivElement>(null)
@@ -521,7 +522,7 @@ function AgencyTurn({
             Megi
           </h3>
           <span className="text-[0.8rem] text-text-tertiary">
-            Account Manager
+            {tc('accountManager')}
           </span>
         </header>
         {/* Messages mount one at a time; the avatar below is pushed down as

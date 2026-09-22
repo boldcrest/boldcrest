@@ -534,7 +534,7 @@ function InlineFilter({
                 label and the right edge, kept clear of the view-style toggle. */}
             <motion.button
               onClick={() => setOpenFilter(null)}
-              aria-label="Clear filter"
+              aria-label={tp('clearFilter')}
               className="mt-[0.15rem] inline-flex shrink-0 items-center justify-center transition-colors duration-200 focus:outline-none"
               style={{ color: '#a3a3a3' }}
               onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff' }}

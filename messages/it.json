@@ -306,7 +306,8 @@
     "home": "BoldCrest — home",
     "toggleMenu": "Apri/chiudi menu",
     "closeMenu": "Chiudi menu",
-    "careers": "Lavora con noi"
+    "careers": "Lavora con noi",
+    "breadcrumb": "Percorso di navigazione"
   },
   "Language": {
     "label": "Lingua",

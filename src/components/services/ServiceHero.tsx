@@ -25,7 +25,7 @@ export default function ServiceHero({
         {/* Breadcrumb — sits in place of the old eyebrow label, matching the
             Work detail breadcrumb (ProjectHero) */}
         <nav
-          aria-label="Breadcrumb"
+          aria-label={tn('breadcrumb')}
           className="mb-4 flex items-center gap-2 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-text-tertiary"
         >
           <Link

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { usePathname, useRouter } from '@/i18n/navigation'
 
 /**
@@ -44,6 +44,7 @@ const CIRCLE = `${UNIT}rem`
 const EASE = 'cubic-bezier(0.76, 0, 0.24, 1)'
 
 export default function LanguageButton({ compact }: { compact: boolean }) {
+  const tl = useTranslations('Language')
   const activeLocale = useLocale()
   const current: Locale =
     LOCALES.find((l) => l.code === activeLocale) ?? LOCALES[0]
@@ -150,7 +151,7 @@ export default function LanguageButton({ compact }: { compact: boolean }) {
           double ring. */}
       <ul
         role="listbox"
-        aria-label="Language"
+        aria-label={tl('label')}
         className="absolute left-0 top-0 overflow-hidden"
         style={{
           width: CIRCLE,

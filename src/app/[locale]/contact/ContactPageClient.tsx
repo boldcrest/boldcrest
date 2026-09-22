@@ -102,7 +102,7 @@ export default function ContactPageClient({
       <section className="flex flex-col px-[var(--gutter)] pt-[120px] pb-0 landscape-short:pt-[5.5rem]">
         <div className="w-full">
           <p className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
-            Contact
+            {t('eyebrow')}
           </p>
 
           {/* Headline left, intro right-aligned to its bottom */}
@@ -200,7 +200,7 @@ export default function ContactPageClient({
                 required
                 disabled={submitted}
                 placeholder={t('fullName')}
-                aria-label="Full name"
+                aria-label={t('fullName')}
                 className={FIELD}
               />
               <input
