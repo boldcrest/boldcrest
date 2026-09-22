@@ -48,6 +48,12 @@ docs/product/progress.md                       where we are, decisions log, chan
   in-product. Which app is still open (decision D1 in `progress.md`).
 - **We sell the product ourselves; clinics pay by credit card only**, auto-renewing. No Stripe
   for an Albanian entity.
+- **We can never read a patient record (D10).** Non-negotiable, and it outranks support
+  convenience — Aldo: clinics finding out would end the business in days. Enforced as a database
+  privilege: the operator role holds no grants on any patient or clinical table, so Postgres
+  refuses the query whichever app asks. Never as an absent screen. No owner-granted support
+  access to clinical data either — the path existing is itself the liability. Support sees
+  billing, usage and system health only. Never design a feature that needs us to look.
 - **The aesthetics pack is product-agnostic about botulinum toxin.** The clinic is responsible
   for what it stocks and charts; we ship charting, lot tracking and provenance and make no claim
   about any product's legal status.

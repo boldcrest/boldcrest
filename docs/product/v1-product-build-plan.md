@@ -169,11 +169,11 @@ A separate app at `admin.PRODUCT` with its own staff table, mandatory MFA and it
 | Plans and features | Edit plans, prices, limits and feature keys without a deploy. Every change is versioned, and existing subscribers stay on their version until migrated |
 | Feature flags | Roll a feature to one clinic, a cohort or a percentage. Kill switch per module |
 | Messaging | Send-queue health per clinic: messages prepared, share actually sent, average delay between due and sent. A clinic that stops clicking is a clinic about to churn |
-| Support | Inbox, canned replies in Albanian, and **support access** (below) |
+| Support | Inbox and canned replies in Albanian. No patient data, ever (D10, below) |
 | Compliance | Sub-processor register, processing register (Art. 27), breach incidents, DSR queue across tenants, restore-drill log |
 | System | Job queues, webhook failures, integration outbox depth, error rates |
 
-**Support access is a product rule, not a convenience.** Operator staff cannot open a patient record by default. A clinic owner grants time-boxed support access (1 hour, 24 hours, 7 days) from their settings. Every read during that window is written to the clinic's own audit log with the staff member's name. This is what Guideline 2/2025 expects of a processor, and it is a line no local competitor can put in a sales deck.
+**Operator staff can never read a patient record (D10).** Not by default, not with consent, not for support. The operator database role holds no grants on any patient or clinical table, so Postgres refuses the query whichever application asks — it is a privilege, not a missing screen, because only one of those survives a clinic's technical adviser checking. The earlier design here (owner-granted, time-boxed, audited support access) is withdrawn: consent does not help when the damage is done by the path existing at all. Support sees billing, plan, usage counts, send-queue health and system state, and nothing that identifies a patient. Where a clinic needs help with their own data, they export it or screen-share; we do not reach in. This goes further than Guideline 2/2025 asks of a processor, and it is a line no local competitor can put in a sales deck.
 
 ### 4.2 Client lifecycle (the clinic)
 
@@ -617,7 +617,7 @@ The technical controls are in `security-plan.md`. This is the order they land in
 | Phase 0 | Sign the Supabase DPA. Open the sub-processor register and the processing register. Engage a lawyer for the clinic DPA, the terms and the privacy notice. Ask the Commissioner about the DPO threshold. Get written confirmation from Supabase on PITR and WAL region |
 | Phase 1 | RLS on every table with cross-tenant tests as a merge gate. MFA. Audit log. Staging uses synthetic data only. Secret scanning and dependency audit in CI |
 | Phase 2 | Private buckets, signed URL TTL of 5 minutes or less, EXIF GPS stripping, virus scan on public uploads. Consent registry. Template linter |
-| Phase 3 | Support access grants. Operator audit log. In-app DPA acceptance. Export and erasure workflows |
+| Phase 3 | Operator audit log. In-app DPA acceptance. Export and erasure workflows. (Support access grants to patient data: removed, D10) |
 | Phase 6 | PITR on. First restore drill. External penetration test. DPIA pack assembled from this plan plus audit evidence (mandatory from about 17 January 2027, so being ready early is a sales line). DPO appointed and published. Breach runbook rehearsed once |
 | Launch | Status page. Incident templates. Log drain to an EEA store so logs outlive the 7-day native retention |
 | Ongoing | Quarterly access review and restore drill. Deploys outside clinic hours (08:00 to 20:00 Tirana) with instant rollback |
@@ -715,7 +715,7 @@ Serves: you, and the clinic owner as a buyer.
 | 3.4 | Subscription engine: trial, activate, upgrade, downgrade, cancel, read-only, reactivation | State machine has a test for every transition |
 | 3.5 | Card billing: hosted card capture, tokenized recurring charge, 3-D Secure on renewal, webhooks, card-expiry warnings. Our invoices issued through the finance adapter (depends on 4.2) | A test clinic saves a card, is charged, gets a fiscal invoice, and renews next period with nobody touching it |
 | 3.6 | Operator console: tenants, tenant detail, billing, plans, flags, messaging, system | You can run the business without opening the database |
-| 3.7 | Support access grants and operator audit | Operator cannot open a patient without a live grant, and the clinic sees who did |
+| 3.7 | Operator audit log and the no-patient-access privilege | The operator role is proven, by test, to be unable to select from any patient or clinical table (D10). Operator actions on billing and plans are audited |
 | 3.8 | Self-serve sign-up, onboarding wizard, compliance capture, go-live checklist | A new clinic reaches a published booking page in under 30 minutes |
 | 3.9 | Account area for the owner: plan, usage, invoices, export, cancel | Cancel works without contacting anyone |
 | 3.10 | Marketing site with the published price list, in sq/en/it. Legal pages from counsel | Live on the product domain |

@@ -48,6 +48,7 @@ A changelog entry says what changed, why, and what it touched. Newest first.
 | D7 | Finance scope | Decided | 2026-09-18 | Invoicing, fiscalization and accounting are an integration with another app, not built in-product |
 | D8 | Staff password reset | Decided | 2026-09-22 | **No self-service reset for staff.** The option does not exist, so there is no reset link to phish. The owner clicks Reset next to the person, which kills the old password and issues a one-time code valid for an hour; the owner hands it over and **the staff member sets their own password**. The owner never learns it, so the audit log still proves who acted. Owner recovery: two owners per clinic, printed recovery codes, and us as a logged last resort after a verified phone check |
 | D9 | Account suspension | Decided | 2026-09-22 | The owner can **lock an account outright**, separately from resetting a password, for the day someone is dismissed. Locking revokes sessions immediately, removes the person from assignable lists, and keeps every note, appointment and audit entry they created. Staff are never deleted, because the audit trail must always resolve to a person. Reversible in one click. Locking and unlocking are themselves audited |
+| D10 | Operator access to patient data | Decided | 2026-09-22 | **We can never read a patient record. Non-negotiable, and it outranks support convenience.** Aldo: if clinics find out we can see their patient files we are out of the market in three days. Enforced as a database privilege, not a missing screen: the operator role holds no grants on any patient or clinical table, so Postgres refuses the query whoever asks. The owner-granted, time-boxed support access that section 4.1 of the plan described is **withdrawn for clinical data** — consent is not wanted here, because the existence of the path is itself the liability. Support sees billing, plan, usage counts and system health only. Honest limit, written down rather than glossed: a database superuser could still grant themselves access, so the remaining controls are who holds production credentials, a break-glass procedure that is loud, and the clinic's own audit log |
 
 ---
 
@@ -100,6 +101,20 @@ Steps inside phases 2 to 9 get their own rows here when the phase starts.
 ---
 
 ## Changelog
+
+### 2026-09-22 · decision D10 · we can never read a patient record
+
+**Why:** Aldo, unprompted and absolute: "I don't want access to edit or see their patients. That's the number one non-negotiable. If they find out I can see their patient files I am done and out of the market in three days." Commercial reasoning, not only legal, and it is the stronger position.
+
+**What changes in the plan.** Section 4.1 described operator support access to patient records, time-boxed and granted by the clinic owner, every read written to their audit log. That was the standard processor model and it is now withdrawn for clinical data. The reasoning: consent does not help here, because what damages us is not misuse but the *existence* of the path. A clinic that learns we could look, with permission, has still learned we could look.
+
+**How it is enforced.** As a privilege, never as an absent screen. The operator role receives no grants on any patient or clinical table, so Postgres refuses the query no matter which application asks. This has to be true from the first migration that creates those tables, not added later, because "we removed the screen" and "we cannot read it" are very different claims and only one survives a clinic's technical adviser asking.
+
+**What support keeps:** billing, subscription and plan, usage counts, send-queue health as numbers, error rates, system state. Enough to run the business, nothing that identifies a patient.
+
+**The limit, stated rather than glossed:** we host the database, so we possess the data. A database superuser can grant themselves anything. What stands between is who holds production credentials, a break-glass procedure that is noisy and audited, and the clinic's own audit log. Field-level encryption with a key we never hold is the only thing that would make this a mathematical guarantee rather than a procedural one, and it costs search, reporting and recoverability — worth revisiting for the most sensitive fields, not worth promising now.
+
+**Consequences to carry:** we cannot diagnose a clinic's data problem by looking at it, so support has to be built around exports, screenshots and clinic-side tools. Migrations still run over patient rows — that is code, not a person, and the distinction needs writing down before someone blurs it. Backups and restores still move the data, and the restore drill has to respect the same boundary.
 
 ### 2026-09-22 · the demo now runs the real database
 
