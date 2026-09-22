@@ -8,11 +8,12 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 import { asUser, createTestDb, migrationNames, scalar, type Claims, type TestDb } from "./harness";
+import { CLINIC_A, seedTenants, USERS } from "./fixtures";
 
-const CLINIC_A = "11111111-1111-4111-8111-111111111111";
-
+// The owner of clinic A, who really is a member of it — app.clinic_id() now
+// confirms the claim against the membership table, so a made-up id answers null.
 const staff = (role: string, over: Partial<Claims> = {}): Claims => ({
-  sub: "99999999-9999-4999-8999-999999999999",
+  sub: USERS.ownerA,
   clinic_id: CLINIC_A,
   role,
   aal: "aal2",
@@ -23,6 +24,7 @@ let db: TestDb;
 
 beforeAll(async () => {
   db = await createTestDb();
+  await seedTenants(db);
 }, 60_000);
 
 describe("migrations", () => {
@@ -43,11 +45,23 @@ describe("migrations", () => {
 });
 
 describe("claim readers", () => {
-  it("reads clinic_id from the JWT", async () => {
+  it("answers with the clinic when an active membership backs the claim", async () => {
     const got = await asUser(db, staff("owner"), (tx) =>
       scalar<string>(tx, "select app.clinic_id()"),
     );
     expect(got).toBe(CLINIC_A);
+  });
+
+  it("answers null when the claim is not backed by a membership", async () => {
+    // The token is the question, not the answer. Someone who was removed, or
+    // whose token names a clinic they never worked at, gets nothing — see
+    // tenancy.test.ts for the full set of attempts.
+    const got = await asUser(
+      db,
+      staff("owner", { clinic_id: "cccccccc-0000-4000-8000-00000000000c" }),
+      (tx) => scalar<string | null>(tx, "select app.clinic_id()"),
+    );
+    expect(got).toBeNull();
   });
 
   it("returns null when the token carries no clinic, rather than failing open", async () => {

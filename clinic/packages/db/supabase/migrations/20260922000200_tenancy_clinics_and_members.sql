@@ -1,0 +1,210 @@
+-- 20260922000200_tenancy_clinics_and_members.sql
+-- Domain A: clinics and the people who work in them.
+--
+-- Three things happen here, and the third is the important one.
+--
+--   1. `clinics` and `memberships`, with row-level security, so a clinic can
+--      only ever see its own rows.
+--   2. app.clinic_id() stops trusting the token on its own. The token says
+--      which clinic; the database confirms the person is still an active
+--      member of it. This is what makes D9 (locking an account) bite
+--      immediately instead of whenever the access token happens to expire.
+--   3. The wall between us and the clinics (D10). Clinic data lives in
+--      `public`. Anything we are allowed to see lives in `ops`. The operator
+--      role is given no access to `public` at all — not to the tables, not
+--      even to the schema — so a patient table added in six months is
+--      unreachable by default rather than by anyone remembering.
+
+-- ---------------------------------------------------------------------------
+-- 1. Clinics
+-- ---------------------------------------------------------------------------
+
+create table clinics (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (length(btrim(name)) > 0),
+  -- used in the public booking URL, so it must be unique across the platform
+  slug text not null unique check (slug ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'),
+  city text,
+  timezone text not null default 'Europe/Tirane',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create trigger clinics_set_updated_at
+  before update on clinics
+  for each row execute function app.set_updated_at();
+
+comment on table clinics is 'One row per paying customer. The tenant boundary every other table hangs off.';
+
+-- ---------------------------------------------------------------------------
+-- 2. Memberships
+--
+-- A person is not "a user of the platform", they are a member of a clinic. The
+-- same human can work at two clinics with different roles, so the role lives
+-- on the membership and never on the user.
+--
+-- `status` carries D9: locking a dismissed member keeps every note, booking
+-- and audit entry they created, because the audit trail has to keep resolving
+-- to a person. Nobody is ever deleted.
+-- ---------------------------------------------------------------------------
+
+create table memberships (
+  id uuid primary key default gen_random_uuid(),
+  clinic_id uuid not null references clinics (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete restrict,
+  role text not null check (role in ('owner', 'practitioner', 'assistant', 'reception', 'accountant')),
+  status text not null default 'active' check (status in ('invited', 'active', 'locked')),
+  full_name text not null check (length(btrim(full_name)) > 0),
+  locked_at timestamptz,
+  locked_by uuid references auth.users (id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (clinic_id, user_id),
+  -- a locked row must say when, so "since when could they not get in" is answerable
+  constraint memberships_locked_has_timestamp
+    check ((status = 'locked') = (locked_at is not null))
+);
+
+-- Every RLS policy in the schema filters on clinic_id, and app.clinic_id()
+-- looks a membership up on every statement, so both directions are indexed.
+create index memberships_clinic_idx on memberships (clinic_id);
+create index memberships_user_idx on memberships (user_id);
+
+create trigger memberships_set_updated_at
+  before update on memberships
+  for each row execute function app.set_updated_at();
+
+comment on table memberships is 'A person''s role at one clinic. Locked members keep their history; nobody is deleted (D9).';
+
+-- ---------------------------------------------------------------------------
+-- 3. app.clinic_id() now verifies the membership
+--
+-- Replaces the claim-only version from the first migration. The JWT still says
+-- which clinic the session is working in — a person at two clinics switches
+-- between them — but the answer is null unless an ACTIVE membership backs it.
+--
+-- SECURITY DEFINER on purpose: this function is called by the RLS policy on
+-- `memberships` itself, so reading that table as the caller would recurse
+-- forever. It selects one row by a unique key and returns nothing else.
+-- ---------------------------------------------------------------------------
+
+create or replace function app.clinic_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select m.clinic_id
+  from public.memberships m
+  where m.user_id = (select auth.uid())
+    and m.clinic_id = nullif(auth.jwt() ->> 'clinic_id', '')::uuid
+    and m.status = 'active'
+$$;
+
+comment on function app.clinic_id() is
+  'Active clinic for this session: the clinic_id claim, confirmed against an active membership. Null the moment the membership is locked, which is what makes a lock take effect on the next query (D9).';
+
+-- ---------------------------------------------------------------------------
+-- 4. Row-level security
+-- ---------------------------------------------------------------------------
+
+alter table clinics enable row level security;
+alter table memberships enable row level security;
+-- Policies bind to the table owner too, so a future migration running as owner
+-- cannot quietly read across tenants either.
+alter table clinics force row level security;
+alter table memberships force row level security;
+
+-- A session sees its own clinic and nothing else.
+create policy clinics_select on clinics
+  for select to authenticated
+  using (id = (select app.clinic_id()));
+
+create policy clinics_update on clinics
+  for update to authenticated
+  using (id = (select app.clinic_id()) and (select app.has_perm('settings.manage')))
+  with check (id = (select app.clinic_id()));
+
+-- Everyone in a clinic can see who else works there: the schedule, assignment
+-- and handover are meaningless otherwise. Changing the staff list is owner-only
+-- (staff.manage), which is what D8 and D9 hang on.
+create policy memberships_select on memberships
+  for select to authenticated
+  using (clinic_id = (select app.clinic_id()));
+
+create policy memberships_insert on memberships
+  for insert to authenticated
+  with check (
+    clinic_id = (select app.clinic_id())
+    and (select app.has_perm('staff.manage'))
+  );
+
+create policy memberships_update on memberships
+  for update to authenticated
+  using (clinic_id = (select app.clinic_id()) and (select app.has_perm('staff.manage')))
+  with check (clinic_id = (select app.clinic_id()));
+
+-- No delete policy anywhere: memberships are locked, never removed, or the
+-- audit trail stops resolving to a person.
+
+grant select, update on clinics to authenticated;
+grant select, insert, update on memberships to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 5. The wall (D10)
+--
+-- We can never read a patient record. Enforced as a privilege, so it holds
+-- whichever application asks, and enforced by DEFAULT, so it also holds for
+-- every table written after this migration by someone who never read this
+-- comment.
+--
+-- `public` is the clinics' data. `ops` is ours. The operator role gets no
+-- access to `public` — not the tables, not the schema — so it cannot so much
+-- as name a table there, let alone select from one.
+-- ---------------------------------------------------------------------------
+
+create schema if not exists ops;
+
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'operator') then
+    create role operator nologin noinherit;
+  end if;
+end
+$$;
+
+-- Operator lives in ops and nowhere else.
+grant usage on schema ops to operator;
+
+-- Belt: nothing currently in public is reachable.
+--
+-- Note the second half. Postgres grants USAGE on schema `public` to the
+-- built-in PUBLIC role, which every role inherits, so revoking it from
+-- `operator` by name does nothing at all — the privilege does not come from
+-- there. It has to be taken away from PUBLIC and handed back explicitly to the
+-- roles that need it. Table privileges are not granted to PUBLIC by default,
+-- so the wall already stands without this; it is defence in depth, and it
+-- means `operator` cannot even resolve a table name in public.
+revoke all on all tables in schema public from operator;
+revoke all on all sequences in schema public from operator;
+revoke all on all functions in schema public from operator;
+
+revoke usage on schema public from public;
+grant usage on schema public to authenticated, anon, service_role;
+
+-- Braces: nothing added to public later becomes reachable either. Default
+-- privileges are the only way to make a rule that applies to tables nobody has
+-- written yet, which is the whole point — the patient tables do not exist yet.
+alter default privileges in schema public revoke all on tables from operator;
+alter default privileges in schema public revoke all on sequences from operator;
+alter default privileges in schema public revoke all on functions from operator;
+
+-- The clinic side must not be able to read our side either. The wall is not
+-- there to protect us, but a one-way wall is easier to reason about than a
+-- door.
+revoke all on schema ops from public;
+revoke usage on schema ops from authenticated, anon;
+
+comment on schema ops is
+  'Operator-visible data only: billing, plans, usage counts, system health. Never anything that identifies a patient. The operator role has no access to schema public and never will (D10).';

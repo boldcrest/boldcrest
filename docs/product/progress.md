@@ -15,9 +15,9 @@ The single place that says where the product is, what changed, and why. Updated 
 | Phase | **1, platform spine.** Phase 0 still open on D1 and D4, which block nothing in phase 1 |
 | Last session | 22 September 2026 |
 | Working tree | Clean. App 0.4.0 committed 22 September, not pushed |
-| Checks at last run | All green. `tsc` 5/5 packages, `eslint` clean, `vitest` 72/72 (27 core, 21 app, 18 db, 6 i18n), `build` green. Verified in a real browser with Playwright |
+| Checks at last run | All green. `tsc` 5/5 packages, `eslint` clean, `vitest` 87/87 (27 core, 21 app, 33 db, 6 i18n), `build` green |
 | Blocking | D1 (which finance app) and D4 (name and domain). Neither blocks phase 1 |
-| Next action | Domain A (clinics, memberships, staff) as tables with RLS and cross-tenant tests, then the patient domain. Each screen ports off the fake store as its domain lands |
+| Next action | Domain C: patients, allergies, notes, recommendations, benefits — as tables with RLS, then port the patient screens off the fake store |
 | Needs Aldo | Vercel root directory must change from `clinic` to `clinic/apps/app` or nothing deploys. Supabase Frankfurt project (0.4) needs his account and a signed DPA |
 
 ---
@@ -74,7 +74,7 @@ Status: ⬜ not started · 🟨 in progress · ✅ done · ⛔ blocked. Step num
 | 1.1 | Convert `clinic/` to the workspace (apps + packages) | ✅ |
 | 1.2 | Bring `CLAUDE.md` in line with the new design | ✅ |
 | 1.3 | Local Supabase stack, migrations, type generation, seed | ⬜ |
-| 1.4 | Schema domains A, C, D, J, K and the three core patterns | 🟨 |
+| 1.4 | Schema domains A, C, D, J, K and the three core patterns | 🟨 A done (clinics, memberships, the operator wall). C next |
 | 1.5 | Auth, MFA, invitations, token hook, clinic switcher, owner-driven password reset (D8) and account locking (D9) | ⬜ |
 | 1.6 | Permission map and role-aware navigation | ⬜ |
 | 1.7 | Replace `store.tsx` with a Supabase data layer, same selectors | ⬜ |
@@ -101,6 +101,20 @@ Steps inside phases 2 to 9 get their own rows here when the phase starts.
 ---
 
 ## Changelog
+
+### 2026-09-22 · domain A · clinics, memberships, and the wall
+
+**Why:** the first real tables, and the first migration that has to carry D9 and D10 rather than describe them.
+
+**Clinics and memberships.** A person is not a user of the platform, they are a member of a clinic, so the role lives on the membership — the same human can work at two clinics with two roles. Row-level security on both tables, `force`d so a future migration running as owner cannot read across tenants either. No delete privilege on memberships at all: people are locked, never removed, or the audit trail stops resolving to a person.
+
+**D9 now bites.** `app.clinic_id()` no longer trusts the token by itself. The claim says which clinic; the function confirms an **active** membership backs it. So locking a dismissed member takes effect on their next query rather than whenever their access token happens to expire — which was the hole recorded when D9 was taken. `security definer`, because the function is called by the policy on the very table it reads and would otherwise recurse. The old claim-only test was rewritten rather than deleted: it now asserts both halves, and a claim naming a clinic the person does not work at answers null.
+
+**D10 is a privilege, and it is default-deny.** Clinic data lives in `public`; anything we may see lives in a new `ops` schema. The `operator` role gets usage on `ops` and nothing whatsoever on `public` — and, crucially, `alter default privileges ... revoke` so that tables written months from now are unreachable without anyone remembering this decision. The test enumerates every table in `public` and asserts the operator is refused each one, so it keeps proving itself as the schema grows.
+
+**Caught while building:** revoking `usage on schema public` from `operator` by name does nothing, because that privilege is inherited from the built-in PUBLIC role. It has to be taken from PUBLIC and handed back explicitly to `authenticated`, `anon` and `service_role`. Table privileges were already denied, so the wall stood regardless — but the first version of this migration would have read as stronger than it was, which is exactly the failure mode D10 is about.
+
+**Tests:** 72 → 87. The tenancy set is written as attempts rather than happy paths: edit the clinic in the token, plant a member in someone else's clinic, delete a locked colleague, read a table as the operator.
 
 ### 2026-09-22 · decision D10 · we can never read a patient record
 
