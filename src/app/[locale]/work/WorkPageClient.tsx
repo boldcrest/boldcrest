@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { routing } from '@/i18n/routing'
+import { useTaxonomyLabel } from '@/lib/taxonomy'
 import { Link } from '@/i18n/navigation'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -70,6 +71,7 @@ const SHORT_SERVICE: Record<string, string> = {
 }
 
 function ProjectCard({ project, index }: { project: Project; index: number }) {
+  const tax = useTaxonomyLabel()
   const { ref, isVisible } = useInViewOnce()
 
   return (
@@ -157,7 +159,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               {project.industry && (
                 <span className="rounded-[var(--radius-pill)] bg-white/10 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-secondary">
-                  {project.industry}
+                  {tax(project.industry)}
                 </span>
               )}
               {project.services?.map((service) => (
@@ -165,7 +167,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                   key={service}
                   className="rounded-[var(--radius-pill)] border border-border px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
                 >
-                  {service}
+                  {tax(service)}
                 </span>
               ))}
             </div>
@@ -187,7 +189,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             {project.industry && (
               <div className="flex flex-wrap gap-1.5">
                 <span className="rounded-[10px] bg-white/10 px-2 py-0.5 text-[0.55rem] font-medium uppercase tracking-[0.06em] text-text-secondary">
-                  {project.industry}
+                  {tax(project.industry)}
                 </span>
               </div>
             )}
@@ -219,6 +221,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 }
 
 function ProjectListRow({ project, index }: { project: Project; index: number }) {
+  const tax = useTaxonomyLabel()
   const { ref, isVisible } = useInViewOnce()
   const [hovered, setHovered] = useState(false)
   const [mouseMoving, setMouseMoving] = useState(false)
@@ -283,7 +286,7 @@ function ProjectListRow({ project, index }: { project: Project; index: number })
               key={service}
               className="text-[0.7rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
             >
-              {service}
+              {tax(service)}
             </span>
           ))}
         </div>
@@ -351,6 +354,7 @@ function InlineFilter({
   allServices: string[]
   allIndustries: string[]
 }) {
+  const tax = useTaxonomyLabel()
   const t = useTranslations('Work')
   const tp = useTranslations('Portfolio')
   const labelClass =
@@ -497,7 +501,7 @@ function InlineFilter({
             transition={{ duration: 0.2 }}
           >
             <span className="shrink-0 text-[0.75rem] font-semibold uppercase tracking-[0.15em] leading-[1.4] text-white whitespace-nowrap">
-              {openFilter === 'services' ? 'Services' : 'Industry'}
+              {openFilter === 'services' ? t('filterServices') : t('filterIndustry')}
             </span>
             {/* mt-[0.125rem] vertically centers the 12px divider on the first
                 row's text (glyph center ≈ 8px from the row top) — matching the
@@ -526,7 +530,7 @@ function InlineFilter({
                     ease: [0.16, 1, 0.3, 1],
                   }}
                 >
-                  {item}
+                  {tax(item)}
                 </motion.button>
               ))}
             </div>

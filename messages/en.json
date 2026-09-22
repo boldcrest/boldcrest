@@ -345,7 +345,52 @@
     "peopleDescription": "It's not about us, it's about you. Meet the team behind BoldCrest.",
     "diaryTitle": "Diary — BoldCrest",
     "contactTitle": "Contact — BoldCrest",
-    "contactDescription": "Let's talk. Get in touch with BoldCrest to start your next project."
+    "contactDescription": "Let's talk. Get in touch with BoldCrest to start your next project.",
+    "servicesTitle": "Creative Agency Services",
+    "servicesDescription": "BoldCrest is a Tirana-based creative agency offering brand development, photography, video, animation, and communication. 300+ projects, 30+ brands, 7+ years of creative excellence.",
+    "servicesOgTitle": "Creative Agency Services | BoldCrest",
+    "servicesOgDescription": "BoldCrest is a Tirana-based creative agency offering brand development, photography, video, animation, and communication. 300+ projects, 30+ brands, 7+ years.",
+    "servicesKeywords": [
+      "creative agency Tirana",
+      "branding agency",
+      "creative services",
+      "best branding agencies Tirana"
+    ],
+    "brandTitle": "Brand Development Agency | Visual Identity, Logo & Packaging Design | BoldCrest",
+    "brandDescription": "Strategic brand development from Tirana. Logo design, visual identity systems, brand guidelines, packaging design, and creative advertising. 300+ projects across 11 industries. Go bold or go unseen.",
+    "brandOgTitle": "Brand Development | BoldCrest",
+    "brandOgDescription": "Strategic brand development. Logo design, visual identity systems, brand guidelines, packaging design, and creative advertising.",
+    "brandKeywords": [
+      "branding agency",
+      "logo design",
+      "brand identity design",
+      "visual identity",
+      "packaging design",
+      "brandbook design"
+    ],
+    "commsTitle": "Social Media & Communication Agency | Strategy, Content & Campaigns | BoldCrest",
+    "commsDescription": "Full-service social media management, digital marketing, PR, and campaign management from Tirana. 22+ active brands managed. Strategy, production, and reporting, all in-house.",
+    "commsOgTitle": "Communication Services | BoldCrest",
+    "commsOgDescription": "Full-service social media management, digital marketing, PR, and campaign management. 22+ active brands managed.",
+    "commsKeywords": [
+      "social media management Tirana",
+      "digital marketing",
+      "creative advertising campaigns",
+      "content strategy",
+      "campaign management"
+    ],
+    "motionTitle": "Photography, Video & Animation Production | Still & Motion | BoldCrest",
+    "motionDescription": "In-house photography, videography, animation, motion graphics, and post-production from Tirana. 22+ active brands, full in-house team. Production that matches your brand's ambition.",
+    "motionOgTitle": "Still & Motion Production | BoldCrest",
+    "motionOgDescription": "In-house photography, videography, animation, motion graphics, and post-production. 22+ active brands.",
+    "motionKeywords": [
+      "product photography Tirana",
+      "video production",
+      "TVC production",
+      "animation agency",
+      "motion graphics",
+      "content production"
+    ]
   },
   "Cta": {
     "nextStep": "Next Step",
@@ -366,5 +411,24 @@
     "workLabel": "Your turn",
     "workHeading": "What are we shaping next?",
     "workBody": "Tell us what you have in mind. It can be a clear brief or just the start of an idea. We’ll help shape the next steps and keep everything simple from there."
+  },
+  "Taxonomy": {
+    "branding": "Branding",
+    "creativeAdvertising": "Creative Advertising",
+    "packaging": "Packaging",
+    "photography": "Photography",
+    "socialMediaManagement": "Social Media Management",
+    "televisionCommercials": "Television Commercials",
+    "videography": "Videography",
+    "construction": "Construction",
+    "fashion": "Fashion",
+    "finance": "Finance",
+    "foodBeverage": "Food & Beverage",
+    "healthBeauty": "Health & Beauty",
+    "horeca": "HoReCa",
+    "homeAppliances": "Home & Appliances",
+    "ngo": "NGO",
+    "services": "Services",
+    "tech": "Tech"
   }
 }

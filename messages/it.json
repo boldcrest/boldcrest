@@ -345,7 +345,52 @@
     "peopleDescription": "Non si tratta di noi, ma di te. Scopri il team dietro BoldCrest.",
     "diaryTitle": "Diario — BoldCrest",
     "contactTitle": "Contatti — BoldCrest",
-    "contactDescription": "Parliamone. Contatta BoldCrest per iniziare il tuo prossimo progetto."
+    "contactDescription": "Parliamone. Contatta BoldCrest per iniziare il tuo prossimo progetto.",
+    "servicesTitle": "Servizi di agenzia creativa",
+    "servicesDescription": "BoldCrest è un’agenzia creativa con sede a Tirana: sviluppo del marchio, fotografia, video, animazione e comunicazione. Oltre 300 progetti, più di 30 marchi, 7 anni di lavoro creativo.",
+    "servicesOgTitle": "Servizi di agenzia creativa | BoldCrest",
+    "servicesOgDescription": "BoldCrest è un’agenzia creativa con sede a Tirana: sviluppo del marchio, fotografia, video, animazione e comunicazione. Oltre 300 progetti, più di 30 marchi, 7 anni.",
+    "servicesKeywords": [
+      "agenzia creativa Tirana",
+      "agenzia di branding",
+      "servizi creativi",
+      "agenzia pubblicitaria Albania"
+    ],
+    "brandTitle": "Agenzia di branding | Identità visiva, logo e packaging | BoldCrest",
+    "brandDescription": "Sviluppo del marchio da Tirana: design del logo, sistemi di identità visiva, linee guida, packaging e advertising creativo. Oltre 300 progetti in 11 settori. Osa o resta invisibile.",
+    "brandOgTitle": "Sviluppo del marchio | BoldCrest",
+    "brandOgDescription": "Sviluppo del marchio: design del logo, sistemi di identità visiva, linee guida, packaging e advertising creativo.",
+    "brandKeywords": [
+      "agenzia di branding",
+      "design del logo",
+      "brand identity",
+      "identità visiva",
+      "design del packaging",
+      "manuale del marchio"
+    ],
+    "commsTitle": "Agenzia di comunicazione e social media | Strategia, contenuti e campagne | BoldCrest",
+    "commsDescription": "Gestione social media, marketing digitale, PR e campagne da Tirana. Oltre 22 marchi seguiti. Strategia, produzione e reportistica, tutto in casa.",
+    "commsOgTitle": "Servizi di comunicazione | BoldCrest",
+    "commsOgDescription": "Gestione social media, marketing digitale, PR e campagne. Oltre 22 marchi seguiti.",
+    "commsKeywords": [
+      "gestione social media Tirana",
+      "marketing digitale",
+      "campagne pubblicitarie creative",
+      "strategia di contenuti",
+      "gestione campagne"
+    ],
+    "motionTitle": "Produzione foto, video e animazione | Foto e video | BoldCrest",
+    "motionDescription": "Fotografia, video, animazione, motion graphics e post-produzione interne, da Tirana. Oltre 22 marchi attivi, squadra interna completa. Una produzione all’altezza dell’ambizione del tuo marchio.",
+    "motionOgTitle": "Produzione foto e video | BoldCrest",
+    "motionOgDescription": "Fotografia, video, animazione, motion graphics e post-produzione interne. Oltre 22 marchi attivi.",
+    "motionKeywords": [
+      "fotografia di prodotto Tirana",
+      "produzione video",
+      "produzione spot TV",
+      "agenzia di animazione",
+      "motion graphics",
+      "produzione contenuti"
+    ]
   },
   "Cta": {
     "nextStep": "Prossimo passo",
@@ -366,5 +411,24 @@
     "workLabel": "Tocca a te",
     "workHeading": "A cosa diamo forma adesso?",
     "workBody": "Raccontaci che cosa hai in mente. Può essere un brief preciso o solo l’inizio di un’idea. Ti aiutiamo a definire i passi successivi e manteniamo tutto semplice."
+  },
+  "Taxonomy": {
+    "branding": "Branding",
+    "creativeAdvertising": "Advertising creativo",
+    "packaging": "Packaging",
+    "photography": "Fotografia",
+    "socialMediaManagement": "Gestione social media",
+    "televisionCommercials": "Spot televisivi",
+    "videography": "Videografia",
+    "construction": "Edilizia",
+    "fashion": "Moda",
+    "finance": "Finanza",
+    "foodBeverage": "Food & Beverage",
+    "healthBeauty": "Salute e bellezza",
+    "horeca": "HoReCa",
+    "homeAppliances": "Casa ed elettrodomestici",
+    "ngo": "ONG",
+    "services": "Servizi",
+    "tech": "Tecnologia"
   }
 }

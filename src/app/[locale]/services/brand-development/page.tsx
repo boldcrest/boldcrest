@@ -1,21 +1,33 @@
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
+import { routing } from '@/i18n/routing'
 import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
 import { projectsByServicesQuery, serviceDetailPageQuery } from '@/sanity/lib/queries'
 import BrandDevelopmentClient from './BrandDevelopmentClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
 
-export const metadata: Metadata = {
-  title: { absolute: 'Brand Development Agency | Visual Identity, Logo & Packaging Design | BoldCrest' },
-  description:
-    'Strategic brand development from Tirana. Logo design, visual identity systems, brand guidelines, packaging design, and creative advertising. 300+ projects across 11 industries. Go bold or go unseen.',
-  keywords: ['branding agency', 'logo design', 'brand identity design', 'visual identity', 'packaging design', 'brandbook design'],
-  openGraph: {
-    title: 'Brand Development | BoldCrest',
-    description: 'Strategic brand development. Logo design, visual identity systems, brand guidelines, packaging design, and creative advertising.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
-  },
-  alternates: { canonical: '/services/brand-development' },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'Seo' })
+  // The canonical must carry the locale prefix. A static '/services/brand-development' told Google
+  // every localised service page was a duplicate of the English one.
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`
+
+  return {
+    title: { absolute: t('brandTitle') },
+    description: t('brandDescription'),
+    keywords: t.raw('brandKeywords') as string[],
+    openGraph: {
+      title: t('brandOgTitle'),
+      description: t('brandOgDescription'),
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
+    alternates: { canonical: `${prefix}/services/brand-development` },
+  }
 }
 
 const FAQ_ITEMS = [

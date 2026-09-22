@@ -1,27 +1,33 @@
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
+import { routing } from '@/i18n/routing'
 import { sanityFetch } from '@/sanity/lib/live'
 import { allServicesByCategoryQuery, servicesPartnersQuery, servicesPageQuery } from '@/sanity/lib/queries'
 import ServicesPageClient from './ServicesPageClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
 
-export const metadata: Metadata = {
-  // Short, keyword-rich title; the root layout template appends "— BoldCrest"
-  // once (every other page follows this pattern). Don't include the brand here
-  // or it doubles. The full keyword detail lives in the description below.
-  title: 'Creative Agency Services',
-  description:
-    'BoldCrest is a Tirana-based creative agency offering brand development, photography, video, animation, and communication. 300+ projects, 30+ brands, 7+ years of creative excellence.',
-  keywords: ['creative agency Tirana', 'branding agency', 'creative services', 'best branding agencies Tirana'],
-  openGraph: {
-    title: 'Creative Agency Services | BoldCrest',
-    description:
-      'BoldCrest is a Tirana-based creative agency offering brand development, photography, video, animation, and communication. 300+ projects, 30+ brands, 7+ years.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
-  },
-  alternates: {
-    canonical: '/services',
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'Seo' })
+  // The canonical must carry the locale prefix. A static '/services' told Google
+  // every localised service page was a duplicate of the English one.
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`
+
+  return {
+    title: t('servicesTitle'),
+    description: t('servicesDescription'),
+    keywords: t.raw('servicesKeywords') as string[],
+    openGraph: {
+      title: t('servicesOgTitle'),
+      description: t('servicesOgDescription'),
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
+    alternates: { canonical: `${prefix}/services` },
+  }
 }
 
 const FAQ_ITEMS = [
