@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
-import { client } from '@/sanity/lib/client'
+import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
 import { projectsByServicesQuery, serviceDetailPageQuery } from '@/sanity/lib/queries'
 import BrandDevelopmentClient from './BrandDevelopmentClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
@@ -36,8 +36,8 @@ export default async function BrandDevelopmentPage({ params }: { params: Promise
   const projects = await client.fetch(projectsByServicesQuery, {
     locale,
     serviceNames: ['Branding', 'Creative Advertising', 'Packaging'],
-  })
-  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'brand-development', locale })
+  }, { next: { revalidate: CMS_REVALIDATE } })
+  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'brand-development', locale }, { next: { revalidate: CMS_REVALIDATE } })
   const faqItems = content?.faqs?.length ? content.faqs : FAQ_ITEMS
 
   return (

@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
-import { client } from '@/sanity/lib/client'
+import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
 import { projectsByServicesQuery, serviceDetailPageQuery } from '@/sanity/lib/queries'
 import CommunicationClient from './CommunicationClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
@@ -36,8 +36,8 @@ export default async function CommunicationPage({ params }: { params: Promise<{ 
   const projects = await client.fetch(projectsByServicesQuery, {
     locale,
     serviceNames: ['Social Media Management', 'Ads Management'],
-  })
-  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'communication', locale })
+  }, { next: { revalidate: CMS_REVALIDATE } })
+  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'communication', locale }, { next: { revalidate: CMS_REVALIDATE } })
   const faqItems = content?.faqs?.length ? content.faqs : FAQ_ITEMS
 
   return (

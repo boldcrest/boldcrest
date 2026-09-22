@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
-import { client } from '@/sanity/lib/client'
+import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
 import { projectsByServicesQuery, serviceDetailPageQuery } from '@/sanity/lib/queries'
 import StillMotionClient from './StillMotionClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
@@ -35,8 +35,8 @@ export default async function StillMotionPage({ params }: { params: Promise<{ lo
   const projects = await client.fetch(projectsByServicesQuery, {
     locale,
     serviceNames: ['Photography', 'Videography'],
-  })
-  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'still-motion', locale })
+  }, { next: { revalidate: CMS_REVALIDATE } })
+  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'still-motion', locale }, { next: { revalidate: CMS_REVALIDATE } })
   const faqItems = content?.faqs?.length ? content.faqs : FAQ_ITEMS
 
   return (

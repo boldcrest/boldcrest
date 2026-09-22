@@ -2,7 +2,7 @@ import { routing } from '@/i18n/routing'
 import { setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { sanityFetch } from '@/sanity/lib/live'
-import { client } from '@/sanity/lib/client'
+import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
 import {
   projectBySlugQuery,
   relatedProjectsQuery,
@@ -24,7 +24,7 @@ import {
 } from '@/lib/seo'
 
 export async function generateStaticParams() {
-  const projects = await client.fetch(allProjectsQuery, { locale: routing.defaultLocale })
+  const projects = await client.fetch(allProjectsQuery, { locale: routing.defaultLocale }, { next: { revalidate: CMS_REVALIDATE } })
   // Cross product with the locales: returning slugs alone leaves the `locale`
   // segment unresolved, and Next silently drops the whole route to dynamic
   // rendering instead of prerendering it.
