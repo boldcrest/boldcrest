@@ -243,6 +243,9 @@ export default function ReelPlayer({
   const [scrubbing, setScrubbing] = useState(false)
   // between the tap and the first frame: the corner button turns into a spinner
   const [loading, setLoading] = useState(false)
+  // waiting on the network mid-play — after a seek, or when the stream runs
+  // dry — shown as a ring in the middle of the picture
+  const [buffering, setBuffering] = useState(false)
   // the player has answered and can be driven
   const [ready, setReady] = useState(false)
   // the neighbour reels are nudged into showing their first frame; while that
@@ -383,6 +386,13 @@ export default function ReelPlayer({
       v.addEventListener('timeupdate', onTime)
       v.addEventListener('ended', onEnded)
       v.addEventListener('volumechange', syncMuted)
+      const onWait = () => setBuffering(true)
+      const onGo = () => setBuffering(false)
+      v.addEventListener('waiting', onWait)
+      v.addEventListener('seeking', onWait)
+      v.addEventListener('seeked', onGo)
+      v.addEventListener('playing', onGo)
+      v.addEventListener('canplay', onGo)
       if (v.readyState >= 1) onMeta()
       return () => {
         cancelled = true
@@ -393,6 +403,11 @@ export default function ReelPlayer({
         v.removeEventListener('timeupdate', onTime)
         v.removeEventListener('ended', onEnded)
         v.removeEventListener('volumechange', syncMuted)
+        v.removeEventListener('waiting', onWait)
+        v.removeEventListener('seeking', onWait)
+        v.removeEventListener('seeked', onGo)
+        v.removeEventListener('playing', onGo)
+        v.removeEventListener('canplay', onGo)
         media.current = null
       }
     }
@@ -500,6 +515,9 @@ export default function ReelPlayer({
         }
         setTime(d.seconds)
       })
+      p.on('bufferstart', () => setBuffering(true))
+      p.on('bufferend', () => setBuffering(false))
+      p.on('seeked', () => setBuffering(false))
       p.on('ended', () => {
         isPaused = true
         setPlaying(false)
@@ -694,6 +712,9 @@ export default function ReelPlayer({
   }
 
   const seek = (clientX: number) => {
+    // the ring goes up the moment the visitor lands somewhere new; the player
+    // takes it down when it has the frame
+    setBuffering(true)
     const el = track.current
     if (!media.current || !el || !duration) return
     const r = el.getBoundingClientRect()
@@ -853,6 +874,15 @@ export default function ReelPlayer({
                       : 'z-30 cursor-pointer opacity-0'
                 }`}
               />
+            )}
+
+            {/* Waiting on the network mid-play: the same ring the corner button
+                turns on a first press, in the middle of the picture. Only once
+                the reel has started — before that the corner already says so. */}
+            {buffering && started && !ended && (
+              <div aria-hidden className="pointer-events-none absolute inset-0 z-[35] grid place-items-center">
+                <span className="size-9 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              </div>
             )}
 
             {/* Close, in the reel's own top-right corner. It sits inside the
