@@ -205,6 +205,10 @@ export default function ReelPlayer({
   const [loading, setLoading] = useState(false)
   // the player has answered and can be driven
   const [ready, setReady] = useState(false)
+  // the neighbour reels are nudged into showing their first frame; while that
+  // happens the player fires 'play', which must NOT make this the reel in view
+  const priming = useRef(false)
+  const [primed, setPrimed] = useState(false)
 
   // The player is put on the page once the reel comes near the screen,
   // invisible over the cover, so the first tap lands inside the player. A
@@ -296,6 +300,8 @@ export default function ReelPlayer({
       })
       p.on('play', () => {
         isPaused = false
+        // a priming play only exists to paint frame 0; it is not playback
+        if (priming.current) return
         // a tap inside the player started it: this reel becomes the one playing
         onPlayRef.current()
         syncMuted()
@@ -406,6 +412,33 @@ export default function ReelPlayer({
     document.addEventListener('fullscreenchange', onChange)
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
+
+  // A preloaded neighbour shows its OWN first frame rather than the cover: the
+  // player is already built, so start it muted and stop it again on the first
+  // frame. Scrolling onto it then reveals the video itself, and there is no
+  // cover to swap out at all. Muted because a browser will not start it
+  // otherwise — it is not the reel in view yet.
+  useEffect(() => {
+    if (!preload || active || !ready || primed) return
+    const m = media.current
+    if (!m) return
+    let cancelled = false
+    priming.current = true
+    m.setMuted(true)
+    m.play()
+    const id = window.setTimeout(() => {
+      if (cancelled) return
+      m.pause()
+      m.seek(0)
+      priming.current = false
+      setPrimed(true)
+    }, 300)
+    return () => {
+      cancelled = true
+      window.clearTimeout(id)
+      priming.current = false
+    }
+  }, [preload, active, ready, primed])
 
   // In the feed: the slide scrolled into view starts on its own. The browser
   // may refuse sound without a gesture on this particular reel — play() already
@@ -599,7 +632,7 @@ export default function ReelPlayer({
                 scrolling onto a reel shows the picture and then the video,
                 never a hole. pointer-events-none so the tap still reaches the
                 player underneath. */}
-            {poster && (inFeed ? !started : !showControls) && (
+            {poster && (inFeed ? !started && !primed : !showControls) && (
               <span
                 aria-hidden
                 className={
@@ -609,7 +642,7 @@ export default function ReelPlayer({
                       // pause; once the reel has started, pausing should hold
                       // the frame you stopped on and the end should hold the
                       // last one, the way a reel does.
-                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-200 ${started ? 'opacity-0' : 'opacity-100'}`
+                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-200 ${started || primed ? 'opacity-0' : 'opacity-100'}`
                     : 'absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]'
                 }
                 style={{ backgroundImage: `url(${poster})` }}
