@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import ReelPlayer from './ReelPlayer'
+import ReelsFeed from './ReelsFeed'
 
 export interface Reel {
   vimeoUrl?: string
@@ -32,6 +33,8 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
   const scrollerRef = useRef<HTMLDivElement>(null)
   // which reel owns playback; null until one is started
   const [active, setActive] = useState<number | null>(null)
+  // the full-screen feed, open at the reel whose button was pressed
+  const [feedAt, setFeedAt] = useState<number | null>(null)
 
   const items = (reels ?? []).filter((r) => r.vimeoUrl)
   if (items.length === 0) return null
@@ -95,6 +98,7 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
               caption={reel.caption}
               active={active === i}
               onPlay={() => setActive(i)}
+              onExpand={() => setFeedAt(i)}
             />
             {reel.caption && (
               <p className="mt-3 text-[0.8rem] leading-[1.5] text-text-secondary">{reel.caption}</p>
@@ -102,6 +106,18 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
           </div>
         ))}
       </div>
+
+      {feedAt !== null && (
+        <ReelsFeed
+          reels={items}
+          startAt={feedAt}
+          onClose={() => {
+            setFeedAt(null)
+            // nothing in the rail resumes on its own when the feed closes
+            setActive(null)
+          }}
+        />
+      )}
     </section>
   )
 }

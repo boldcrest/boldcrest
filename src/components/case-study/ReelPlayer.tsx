@@ -150,12 +150,23 @@ export default function ReelPlayer({
   caption,
   active,
   onPlay,
+  onExpand,
+  inFeed = false,
+  autoPlay = false,
 }: {
   vimeoUrl: string
   poster?: string | null
   caption?: string
   active: boolean
   onPlay: () => void
+  /** Given by the rail: the full-screen button opens the reels feed instead of
+   *  growing this one reel over the page. Without it the player expands itself,
+   *  which is what a reel outside a feed should do. */
+  onExpand?: () => void
+  /** Inside the feed: it is already full screen, so no full-screen button. */
+  inFeed?: boolean
+  /** Inside the feed: this is the slide in view, so it should be playing. */
+  autoPlay?: boolean
 }) {
   const t = useTranslations('CaseStudy')
   const frame = useRef<HTMLIFrameElement>(null)
@@ -179,6 +190,8 @@ export default function ReelPlayer({
   const [scrubbing, setScrubbing] = useState(false)
   // between the tap and the first frame: the corner button turns into a spinner
   const [loading, setLoading] = useState(false)
+  // the player has answered and can be driven
+  const [ready, setReady] = useState(false)
 
   // The player is put on the page once the reel comes near the screen,
   // invisible over the cover, so the first tap lands inside the player. A
@@ -262,7 +275,10 @@ export default function ReelPlayer({
         paused: () => isPaused,
         fullscreen: () => p.requestFullscreen(),
       }
-      p.on('loaded', () => void p.getDuration().then(setDuration))
+      p.on('loaded', () => {
+        setReady(true)
+        void p.getDuration().then(setDuration)
+      })
       p.on('play', () => {
         isPaused = false
         // a tap inside the player started it: this reel becomes the one playing
@@ -312,6 +328,7 @@ export default function ReelPlayer({
     window.addEventListener('blur', onBlur)
     return () => {
       cancelled = true
+      setReady(false)
       window.clearTimeout(waiting)
       window.clearTimeout(giveUp)
       window.removeEventListener('blur', onBlur)
@@ -374,6 +391,17 @@ export default function ReelPlayer({
     document.addEventListener('fullscreenchange', onChange)
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
+
+  // In the feed: the slide scrolled into view starts on its own. The browser
+  // may refuse sound without a gesture on this particular reel — play() already
+  // handles that by muting and retrying, which is how a reels feed behaves
+  // anyway once you scroll past the one you tapped.
+  useEffect(() => {
+    if (!autoPlay || !ready || !active) return
+    const m = media.current
+    if (!m) return
+    if (m.paused()) m.play()
+  }, [autoPlay, ready, active])
 
   const play = () => {
     const m = media.current
@@ -571,12 +599,19 @@ export default function ReelPlayer({
                 <span className="pointer-events-none absolute left-5 top-3 z-20 flex h-8 items-center text-[0.7rem] font-medium tabular-nums text-white/90">
                   {clock(time)} / {clock(duration)}
                 </span>
-                {!full && (
+                {!full && !inFeed && (
                   <button
                     type="button"
                     onClick={() => {
-                      // the reel grown over the page, which keeps the site in
-                      // view behind it; on an iPhone the player's own full screen
+                      // From the rail this opens the reels feed, so scrolling
+                      // moves to the next clip. On its own (no feed around it)
+                      // the reel grows over the page instead, and on an iPhone
+                      // it asks the player for its own full screen, the only
+                      // one iOS gives a video.
+                      if (onExpand) {
+                        onExpand()
+                        return
+                      }
                       if (/iPhone|iPod/.test(navigator.userAgent) && media.current)
                         void media.current.fullscreen().catch(() => setExpanded(true))
                       else setExpanded(true)
