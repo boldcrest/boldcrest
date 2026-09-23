@@ -65,6 +65,17 @@ const DOMAIN_REDIRECTS = new Set([
 /** Canonical hosts for the live site (used to scope the /careers redirect). */
 const CANONICAL_HOSTS = new Set(['boldcrest.com', 'www.boldcrest.com'])
 
+/**
+ * Hosts that serve the site as themselves rather than redirecting to the
+ * canonical one. draft.boldcrest.com is bound to a work branch in Vercel so a
+ * build can be looked at on a phone: the generated preview URLs sit behind
+ * Vercel's SSO (the project protects everything except custom domains), and
+ * a custom domain is the one way past it. Nothing here is indexed — the
+ * preview builds carry noindex on the pages that matter — and the host is
+ * only ever whatever the branch last pushed.
+ */
+const SERVE_AS_IS = new Set(['draft.boldcrest.com'])
+
 export function proxy(req: NextRequest) {
   const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0]
 
@@ -102,7 +113,7 @@ export function proxy(req: NextRequest) {
   // with no way back to the real site. A path that's genuinely invalid
   // still 404s normally — just on www.boldcrest.com, where the nav actually
   // works.
-  if (host.endsWith('.boldcrest.com') && !CANONICAL_HOSTS.has(host)) {
+  if (host.endsWith('.boldcrest.com') && !CANONICAL_HOSTS.has(host) && !SERVE_AS_IS.has(host)) {
     const dest = new URL(req.nextUrl.pathname + req.nextUrl.search, CANONICAL_SITE)
     return NextResponse.redirect(dest, 308)
   }
