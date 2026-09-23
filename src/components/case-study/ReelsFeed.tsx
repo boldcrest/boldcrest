@@ -64,13 +64,19 @@ export default function ReelsFeed({
   // opened on, and does not come back if the visitor scrolls up again.
   const [hint, setHint] = useState(true)
   const release = useRef(0)
+  const quiet = useRef(0)
+  const pulling = useRef(false)
+  const spent = useRef(false)
   const lastTouch = useRef<number | null>(null)
   // A flick carries on arriving for half a second after the fingers have gone,
   // and left to itself would run through three reels. One gesture moves one
-  // reel: the step is taken on the first event and the rest of the tail is
-  // swallowed, the window pushed back for as long as events keep coming, so a
-  // deliberate second flick still steps.
-  const lockUntil = useRef(0)
+  // reel: the step is taken on the first event and the tail is swallowed, while
+  // a genuine second push still steps. See onWheel for how the two are told
+  // apart.
+  const lastAt = useRef(0)
+  const lastDelta = useRef(0)
+  const steppedAt = useRef(0)
+  const target = useRef<number | null>(null)
   // The reel this opened on decides what plays, not the observer. The slides
   // are still being scrolled into place when the feed appears, and the observer
   // fires for whichever one it passes on the way — which would leave the feed
@@ -90,6 +96,9 @@ export default function ReelsFeed({
   const MAX_PULL = 56
   const RESISTANCE = 0.3
 
+  /** How long the give is held, measured from the first push of the gesture. */
+  const HOLD = 320
+
   /** A gesture the feed cannot act on because there is nothing that way. */
   const pullBy = (dy: number) => {
     const el = scroller.current
@@ -99,16 +108,39 @@ export default function ReelsFeed({
       ? el.scrollTop + el.clientHeight >= el.scrollHeight - 1
       : el.scrollTop <= 1
     if (!stuck) return
+
+    // A gap this long means the fingers have gone and the next push is a fresh
+    // ask rather than the tail of this one.
+    window.clearTimeout(quiet.current)
+    quiet.current = window.setTimeout(() => {
+      spent.current = false
+    }, 180)
+    if (spent.current) return
+
+    // The give is held for a fixed span from the FIRST push, not for a quiet
+    // period after the last. A flick keeps arriving for half a second after the
+    // fingers have gone, and letting that extend the hold left the reels
+    // sitting out there for the whole tail.
+    if (!pulling.current) {
+      pulling.current = true
+      window.clearTimeout(release.current)
+      release.current = window.setTimeout(() => {
+        spent.current = true
+        pulling.current = false
+        setPull(0)
+        setEdge(null)
+      }, HOLD)
+    }
     setEdge(down ? 'end' : 'top')
     setPull((p) => Math.max(-MAX_PULL, Math.min(MAX_PULL, p + dy * RESISTANCE)))
-    // the gesture is over once it stops arriving — a wheel has no end event
-    window.clearTimeout(release.current)
-    release.current = window.setTimeout(() => {
-      setPull(0)
-      setEdge(null)
-    }, 150)
   }
-  useEffect(() => () => window.clearTimeout(release.current), [])
+  useEffect(
+    () => () => {
+      window.clearTimeout(release.current)
+      window.clearTimeout(quiet.current)
+    },
+    [],
+  )
 
   // The wheel steps, one reel per gesture. It has to be a native listener:
   // React's onWheel is passive, and this preventDefaults so the scroller's own
@@ -121,20 +153,36 @@ export default function ReelsFeed({
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.deltaY === 0) return
       e.preventDefault()
       const now = performance.now()
+      const mag = Math.abs(e.deltaY)
+      const gap = now - lastAt.current
+      const prev = lastDelta.current
+      lastAt.current = now
+      lastDelta.current = mag
+
+      // Telling a flick's tail from the visitor pushing again. A tail streams —
+      // events a frame or two apart, each smaller than the last. A push, from a
+      // mouse wheel or a second flick, comes after a real gap or harder than
+      // what came before. Holding the window open for as long as events kept
+      // arriving, as this used to, meant a continuous stream never let go and
+      // the feed stopped moving altogether.
+      const tail = gap < 40 && mag <= prev * 1.3
+      if (tail) return
+      // ...and two steps cannot be closer together than this, whatever arrives
+      if (now - steppedAt.current < 130) return
+
       const down = e.deltaY > 0
-      const here = Math.round(el.scrollTop / el.clientHeight)
+      // mid-flight, the scroller's own position is between two reels: step from
+      // where it is going, not from where it has got to
+      const flying = now - steppedAt.current < 420 && target.current !== null
+      const here = flying ? (target.current as number) : Math.round(el.scrollTop / el.clientHeight)
       const next = down ? here + 1 : here - 1
       // nothing that way: the feed gives instead of moving
       if (next < 0 || next > reels.length - 1) {
         pullBy(e.deltaY)
         return
       }
-      if (now < lockUntil.current) {
-        // still the same gesture — hold the window open rather than stepping
-        lockUntil.current = now + 110
-        return
-      }
-      lockUntil.current = now + 460
+      target.current = next
+      steppedAt.current = now
       setHint(false)
       el.scrollTo({ top: next * el.clientHeight, behavior: 'smooth' })
     }
@@ -280,6 +328,9 @@ export default function ReelsFeed({
         onTouchEnd={() => {
           lastTouch.current = null
           window.clearTimeout(release.current)
+          window.clearTimeout(quiet.current)
+          pulling.current = false
+          spent.current = false
           setPull(0)
           setEdge(null)
         }}
