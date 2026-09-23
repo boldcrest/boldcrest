@@ -121,7 +121,35 @@ export default function VimeoEmbed({
   // sound and controls — themed to the brand accent. Interactive (no background
   // mode), so clicking plays the video in place.
   if (feature) {
-    const playerUrl = `https://player.vimeo.com/video/${videoId}?playsinline=1&title=0&byline=0&portrait=0&dnt=1&color=a3a3a3`
+    // Vimeo keeps adding interface to the player (ask-AI, chapters, transcript,
+    // collections, cast buttons), and anything not switched off explicitly can
+    // come back on with one of their releases. The JokaDent reel player turns
+    // the lot off by name; the same list is used here so the only chrome is the
+    // transport, tinted to the brand accent. dnt=1 keeps Vimeo from tracking.
+    const playerParams = new URLSearchParams({
+      playsinline: '1',
+      title: '0',
+      byline: '0',
+      portrait: '0',
+      dnt: '1',
+      color: 'a3a3a3',
+      pip: '0',
+      airplay: '0',
+      chromecast: '0',
+      like: '0',
+      watchlater: '0',
+      share: '0',
+      embed: '0',
+      vimeo_logo: '0',
+      cc: '0',
+      transcript: '0',
+      chapters: '0',
+      quality_selector: '0',
+      speed: '0',
+      collections: '0',
+      ask_ai: '0',
+    })
+    const playerUrl = `https://player.vimeo.com/video/${videoId}?${playerParams}`
     return (
       <div className={`relative overflow-hidden ${className}`} style={{ aspectRatio }}>
         <iframe
@@ -136,7 +164,10 @@ export default function VimeoEmbed({
     )
   }
 
-  const embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1&loop=1&background=1&playsinline=1`
+  // autopause=0: Vimeo pauses every other player on the page when one starts,
+  // which a rail of six background reels would trip over constantly. dnt=1 for
+  // the same reason as the feature player.
+  const embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1&loop=1&background=1&playsinline=1&autopause=0&dnt=1`
 
   return (
     <div className={`relative overflow-hidden ${className}`} style={{ aspectRatio }}>

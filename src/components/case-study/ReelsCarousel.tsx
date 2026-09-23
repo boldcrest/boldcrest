@@ -13,9 +13,10 @@ export interface Reel {
    *  on first scroll — the site never shows a bare video box (see the /work
    *  cards, which use the same poster). */
   poster?: string | null
-  /** The clip's true aspect, also from oEmbed. Preferred over `aspectRatio` so
-   *  the card matches the footage instead of letterboxing it inside an assumed
-   *  9:16 — the same reason /work sizes its slides from the native dimensions. */
+  /** The clip's true aspect from oEmbed. Only a FALLBACK: reels are 9:16 by
+   *  definition, so the authored `aspectRatio` wins. Letting oEmbed drive the
+   *  card meant a stand-in clip that happened to be square made the whole rail
+   *  square. */
   aspect?: number | null
 }
 
@@ -44,6 +45,26 @@ export default function ReelsCarousel({
 }: ReelsCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState<number | null>(null)
+
+  // While the lightbox is up: Escape closes it and the page underneath does not
+  // scroll. Both are borrowed from the JokaDent reel player, which also parks
+  // the scroll position and restores it — without the lock, scrolling the
+  // backdrop moves the rail behind the overlay and the reel is somewhere else
+  // when it closes.
+  useEffect(() => {
+    if (open === null) return
+    const html = document.documentElement
+    const savedOverflow = html.style.overflow
+    html.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(null)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      html.style.overflow = savedOverflow
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
 
   // Mouse/trackpad only. On touch the native horizontal scroll is already
   // perfect — intercepting pointer events there is what makes strips feel
@@ -144,7 +165,7 @@ export default function ReelsCarousel({
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border">
               <VimeoEmbed
                 url={reel.vimeoUrl as string}
-                aspect={reel.aspect ?? parseAspect(reel.aspectRatio)}
+                aspect={parseAspect(reel.aspectRatio) || reel.aspect || 9 / 16}
                 poster={reel.poster}
                 className="bg-bg-card"
               />
