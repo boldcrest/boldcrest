@@ -356,5 +356,15 @@
     "exploreOther": "Découvrez nos autres services",
     "explore": "Découvrir",
     "faq": "FAQ"
+  },
+  "CaseStudy": {
+    "play": "Lire",
+    "pause": "Pause",
+    "replay": "Revoir",
+    "mute": "Couper le son",
+    "unmute": "Activer le son",
+    "seek": "Parcourir",
+    "fullscreen": "Plein écran",
+    "exitFullscreen": "Quitter le plein écran"
   }
 }

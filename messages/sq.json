@@ -356,5 +356,15 @@
     "exploreOther": "Zbulo shërbimet tona të tjera",
     "explore": "Zbulo",
     "faq": "Pyetje të shpeshta"
+  },
+  "CaseStudy": {
+    "play": "Luaj",
+    "pause": "Ndalo",
+    "replay": "Luaj sërish",
+    "mute": "Hiq zërin",
+    "unmute": "Vendos zërin",
+    "seek": "Lëviz",
+    "fullscreen": "Ekran i plotë",
+    "exitFullscreen": "Dil nga ekrani i plotë"
   }
 }

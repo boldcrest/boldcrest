@@ -74,7 +74,6 @@ export default async function CaseStudyArticle({
         reels={reels}
         heading={labels.reels}
         hint={labels.reelsHint}
-        closeLabel={labels.close}
       />
 
       <FeedGrid feed={study.feed ?? []} heading={labels.feed} />

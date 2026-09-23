@@ -1,133 +1,64 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import VimeoEmbed from '@/components/VimeoEmbed'
+import { useRef, useState } from 'react'
+import ReelPlayer from './ReelPlayer'
 
 export interface Reel {
   vimeoUrl?: string
   aspectRatio?: string
   caption?: string
   /** Vimeo oEmbed cover, resolved server-side. Without it the card is a black
-   *  box until the background player starts, and the whole rail reads as empty
-   *  on first scroll — the site never shows a bare video box (see the /work
-   *  cards, which use the same poster). */
+   *  box until the player is touched, and the whole rail reads as empty on
+   *  first scroll — the site never shows a bare video box. */
   poster?: string | null
-  /** The clip's true aspect from oEmbed. Only a FALLBACK: reels are 9:16 by
-   *  definition, so the authored `aspectRatio` wins. Letting oEmbed drive the
-   *  card meant a stand-in clip that happened to be square made the whole rail
-   *  square. */
-  aspect?: number | null
 }
 
 interface ReelsCarouselProps {
   reels: Reel[]
   heading: string
   hint: string
-  closeLabel: string
-}
-
-/** "9:16" → 0.5625. Falls back to a vertical reel, which is what these are. */
-function parseAspect(ratio?: string): number {
-  const [w, h] = (ratio || '9:16').split(':').map(Number)
-  return w > 0 && h > 0 ? w / h : 9 / 16
 }
 
 /** Movement beyond this (px) counts as a drag, so the click that ends it must
- *  not also open the lightbox. */
+ *  not also start a reel. */
 const DRAG_SLOP = 6
 
-export default function ReelsCarousel({
-  reels,
-  heading,
-  hint,
-  closeLabel,
-}: ReelsCarouselProps) {
+/**
+ * The reels rail. Each card is a full player (see ReelPlayer, ported from the
+ * JokaDent patient reel); starting one stops whichever was playing, so only one
+ * reel speaks at a time.
+ */
+export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement>(null)
-  const [open, setOpen] = useState<number | null>(null)
+  // which reel owns playback; null until one is started
+  const [active, setActive] = useState<number | null>(null)
 
-  // While the lightbox is up: Escape closes it and the page underneath does not
-  // scroll. Both are borrowed from the JokaDent reel player, which also parks
-  // the scroll position and restores it — without the lock, scrolling the
-  // backdrop moves the rail behind the overlay and the reel is somewhere else
-  // when it closes.
-  useEffect(() => {
-    if (open === null) return
-    const html = document.documentElement
-    const savedOverflow = html.style.overflow
-    html.style.overflow = 'hidden'
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(null)
-    }
-    document.addEventListener('keydown', onKey)
-    return () => {
-      html.style.overflow = savedOverflow
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
+  const items = (reels ?? []).filter((r) => r.vimeoUrl)
+  if (items.length === 0) return null
 
   // Mouse/trackpad only. On touch the native horizontal scroll is already
   // perfect — intercepting pointer events there is what makes strips feel
   // laggy and steals vertical scroll, so we simply don't.
-  const drag = useRef({ active: false, startX: 0, startScroll: 0, moved: 0 })
+  const drag = { active: false, startX: 0, startScroll: 0, moved: 0 }
+  const state = { current: drag }
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== 'mouse') return
     const el = scrollerRef.current
     if (!el) return
-    drag.current = {
-      active: true,
-      startX: e.clientX,
-      startScroll: el.scrollLeft,
-      moved: 0,
-    }
+    state.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft, moved: 0 }
   }
-
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!drag.current.active) return
+    const d = state.current
     const el = scrollerRef.current
-    if (!el) return
-    const dx = e.clientX - drag.current.startX
-    drag.current.moved = Math.max(drag.current.moved, Math.abs(dx))
-    el.scrollLeft = drag.current.startScroll - dx
+    if (!d.active || !el) return
+    const dx = e.clientX - d.startX
+    d.moved = Math.max(d.moved, Math.abs(dx))
+    if (d.moved > DRAG_SLOP) el.scrollLeft = d.startScroll - dx
   }
-
   const endDrag = () => {
-    drag.current.active = false
+    state.current.active = false
   }
-
-  // Lightbox: lock the page behind it with overflow:hidden — NEVER
-  // position:fixed on body (that suppresses iOS visual-viewport behaviour and
-  // is the bug that plagued the chat panel). Esc closes.
-  useEffect(() => {
-    if (open === null) return
-    const html = document.documentElement
-    const prevHtml = html.style.overflow
-    const prevBody = document.body.style.overflow
-    html.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => {
-      html.style.overflow = prevHtml
-      document.body.style.overflow = prevBody
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
-  const openReel = useCallback((i: number) => {
-    // Swallow the click that merely ended a drag.
-    if (drag.current.moved > DRAG_SLOP) return
-    setOpen(i)
-  }, [])
-
-  const items = (reels ?? []).filter((r) => r.vimeoUrl)
-  if (items.length === 0) return null
-
-  const active = open !== null ? items[open] : null
 
   return (
     <section className="py-[var(--space-2xl)]">
@@ -136,9 +67,7 @@ export default function ReelsCarousel({
           <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
             {heading}
           </h2>
-          <p className="text-[0.7rem] uppercase tracking-[0.15em] text-text-tertiary">
-            {hint}
-          </p>
+          <p className="text-[0.7rem] uppercase tracking-[0.15em] text-text-tertiary">{hint}</p>
         </div>
       </div>
 
@@ -155,78 +84,24 @@ export default function ReelsCarousel({
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-[var(--gutter)] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-6 [&::-webkit-scrollbar]:hidden"
       >
         {items.map((reel, i) => (
-          <button
+          <div
             key={i}
-            type="button"
-            onClick={() => openReel(i)}
-            aria-label={reel.caption || `Reel ${i + 1}`}
-            className="group relative w-[62vw] shrink-0 snap-start text-left sm:w-[38vw] md:w-[26vw] lg:w-[19vw]"
+            data-reel-card
+            className="relative w-[62vw] shrink-0 snap-start sm:w-[38vw] md:w-[26vw] lg:w-[19vw]"
           >
-            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border">
-              <VimeoEmbed
-                url={reel.vimeoUrl as string}
-                aspect={parseAspect(reel.aspectRatio) || reel.aspect || 9 / 16}
-                poster={reel.poster}
-                className="bg-bg-card"
-              />
-            </div>
+            <ReelPlayer
+              vimeoUrl={reel.vimeoUrl as string}
+              poster={reel.poster}
+              caption={reel.caption}
+              active={active === i}
+              onPlay={() => setActive(i)}
+            />
             {reel.caption && (
-              <p className="mt-3 text-[0.8rem] leading-[1.5] text-text-secondary">
-                {reel.caption}
-              </p>
+              <p className="mt-3 text-[0.8rem] leading-[1.5] text-text-secondary">{reel.caption}</p>
             )}
-          </button>
+          </div>
         ))}
       </div>
-
-      {/* Lightbox — the same clip, but Vimeo's native player so it has sound
-          and controls. */}
-      <AnimatePresence>
-        {active && (
-          <motion.div
-            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 px-[var(--gutter)] py-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            onClick={() => setOpen(null)}
-            role="dialog"
-            aria-modal="true"
-          >
-            <button
-              type="button"
-              onClick={() => setOpen(null)}
-              className="absolute right-[var(--gutter)] top-6 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-white/70 transition-colors duration-200 hover:text-white"
-            >
-              {closeLabel}
-            </button>
-
-            <motion.div
-              className="w-full max-w-[min(420px,80vw)]"
-              initial={{ scale: 0.96, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.98, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              // Clicks inside the player must not fall through to the backdrop.
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="overflow-hidden rounded-[var(--radius-lg)]">
-                <VimeoEmbed
-                  url={active.vimeoUrl as string}
-                  aspect={parseAspect(active.aspectRatio)}
-                  feature
-                  className="bg-bg-card"
-                />
-              </div>
-              {active.caption && (
-                <p className="mt-4 text-center text-[0.85rem] leading-[1.6] text-white/70">
-                  {active.caption}
-                </p>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   )
 }
