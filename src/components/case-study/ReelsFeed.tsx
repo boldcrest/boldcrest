@@ -335,6 +335,11 @@ export default function ReelsFeed({
   const standing = () => {
     const onFirst = current === 0
     const alone = reels.length <= 1
+    // Only ever on the reel the feed opened on. `hint` is cleared by an effect
+    // once `current` moves, which is one render late: the corner had already
+    // moved to the next reel and painted SCROLL UP/DOWN there for a frame
+    // before fading it. Checked here, the next reel never gets it at all.
+    const shown = hint && !alone && current === startAt
     return (
       <span
         // The slow fade is for going of its own accord. When an answer takes
@@ -343,7 +348,7 @@ export default function ReelsFeed({
         // together.
         className={`flex items-center gap-2 text-[0.8rem] uppercase tracking-[0.2em] text-white/55 transition-opacity ${
           edge ? 'duration-0' : 'duration-[600ms]'
-        } ${hint && !alone ? 'opacity-100' : 'opacity-0'}`}
+        } ${shown ? 'opacity-100' : 'opacity-0'}`}
       >
         {onLast ? (
           <>
@@ -567,7 +572,11 @@ export default function ReelsFeed({
                   onSoundOff={onSoundOff}
                   // on a phone the lines sit in the reel's corner, on a shade
                   // that comes and goes with whichever of them is showing
-                  shadeTop={narrow && i === current ? edge !== null || (hint && reels.length > 1) : undefined}
+                  shadeTop={
+                    narrow && i === current
+                      ? edge !== null || (hint && reels.length > 1 && current === startAt)
+                      : undefined
+                  }
                   shadeQuick={edge !== null}
                 />
               </div>
