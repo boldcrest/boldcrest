@@ -318,11 +318,13 @@ export default function ReelsFeed({
    *  VIDEO flashed to SCROLL DOWN on its way off. */
   const answer = (where: 'top' | 'end') => (
     <span
-      className={`text-[0.8rem] uppercase tracking-[0.2em] text-white/70 transition-opacity duration-[160ms] ${
+      className={`flex items-center gap-2 text-[0.8rem] uppercase tracking-[0.2em] text-white/70 transition-opacity duration-[160ms] ${
         edge === where ? 'opacity-100' : 'opacity-0'
       }`}
     >
       {t(where === 'top' ? 'atTop' : 'atEnd')}
+      {/* and the one way on from here: down from the first, up from the last */}
+      <Arrow up={where === 'end'} />
     </span>
   )
 

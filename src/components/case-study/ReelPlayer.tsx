@@ -891,6 +891,14 @@ export default function ReelPlayer({
                   strokeWidth={fill ? 1.6 : 1.8}
                   strokeLinecap="round"
                   aria-hidden
+                  // Bare on a phone, with no disc, the mark needs its own
+                  // ground: a soft shadow, so it holds on a white frame when
+                  // the top shade is not there.
+                  style={
+                    fill
+                      ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(0,0,0,0.35))' }
+                      : undefined
+                  }
                 >
                   <path d="M6 6l12 12M18 6 6 18" />
                 </svg>
