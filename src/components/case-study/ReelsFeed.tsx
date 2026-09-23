@@ -280,8 +280,8 @@ export default function ReelsFeed({
         style={{ height: GAP }}
       >
         <span
-          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
-            said === 'top' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
+          className={`flex items-center gap-2 text-[1rem] uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
+            said === 'top' ? 'text-white' : 'text-white/55'
           } ${edge === 'top' || (onLast && hint) ? 'opacity-100' : 'opacity-0'}`}
         >
           {said === 'top' ? (
@@ -299,8 +299,8 @@ export default function ReelsFeed({
         style={{ height: GAP }}
       >
         <span
-          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
-            said === 'end' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
+          className={`flex items-center gap-2 text-[1rem] uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
+            said === 'end' ? 'text-white' : 'text-white/55'
           } ${edge === 'end' || (hint && !onLast) ? 'opacity-100' : 'opacity-0'}`}
         >
           {said === 'end' ? (
