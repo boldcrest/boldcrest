@@ -113,9 +113,19 @@ export default function ReelsFeed({
    *  left alone. It is over in under half a second and further pushes during it
    *  are ignored, so a long flick makes one clean bounce instead of a stutter. */
   const bouncing = useRef(false)
+  const pushedAt = useRef(0)
   const bounce = (down: boolean) => {
     const el = scroller.current
-    if (!el || bouncing.current) return
+    if (!el) return
+    // A flick keeps arriving for longer than the bounce lasts, so by the time
+    // the animation had finished the tail was still coming and the first event
+    // past it started a second one — the same give twice over. The next bounce
+    // waits until the pushing has actually stopped, which every event pushes
+    // back, whether it is acted on or not.
+    const now = performance.now()
+    const stopped = now - pushedAt.current > 220
+    pushedAt.current = now
+    if (bouncing.current || !stopped) return
     bouncing.current = true
     setEdge(down ? 'end' : 'top')
     const to = down ? -MAX_PULL : MAX_PULL
