@@ -413,6 +413,18 @@ export default function ReelPlayer({
             if (!cancelled) setMuted(m || v === 0)
           })
           .catch(() => {})
+      // Sound refused without a gesture on this reel: start it muted instead,
+      // the way a feed behaves once you scroll past the one you tapped. Not
+      // if it has been scrolled past in the meantime — the retry would start
+      // it again behind the visitor.
+      const mutedRetry = () => {
+        if (cancelled || !wantsPlay.current) return
+        setMuted(true)
+        void p
+          .setMuted(true)
+          .then(() => p.play())
+          .catch(() => {})
+      }
       media.current = {
         play: () => {
           void p
@@ -424,22 +436,17 @@ export default function ReelPlayer({
                     void p
                       .getPaused()
                       .then((still) => {
-                        // it may have been scrolled past in the meantime, and
-                        // the retry would start it again behind the visitor
-                        if (still && !cancelled && wantsPlay.current) {
-                          setMuted(true)
-                          void p
-                            .setMuted(true)
-                            .then(() => p.play())
-                            .catch(() => {})
-                        }
+                        if (still) mutedRetry()
                       })
                       .catch(() => {})
                       .finally(done)
                   }, 900),
                 ),
             )
-            .catch(() => {})
+            // On a phone the refusal is a REJECTION, not a resolved play that
+            // turns out paused — and a rejection skipped the retry above
+            // entirely, so a reel opened from a phone never started at all.
+            .catch(mutedRetry)
         },
         pause: () => void p.pause().catch(() => {}),
         seek: (s) => p.setCurrentTime(s).then(() => {}).catch(() => {}),
