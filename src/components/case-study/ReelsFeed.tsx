@@ -96,25 +96,6 @@ export default function ReelsFeed({
         onClick={onClose}
       />
 
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label={t('exitFullscreen')}
-        className="absolute right-[var(--gutter)] top-6 z-20 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)]"
-        style={{
-          borderRadius: 'var(--radius-pill)',
-          borderWidth: '1px',
-          borderStyle: 'solid',
-          borderColor: 'rgba(255,255,255,0.45)',
-          backgroundColor: 'rgba(10,10,10,0.72)',
-          backdropFilter: 'blur(24px) saturate(1.5)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-        }}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-          <path d="M6 6l12 12M18 6 6 18" />
-        </svg>
-      </button>
 
       {/* one reel per screen; snapping so a flick lands on a whole one */}
       <div
@@ -144,6 +125,7 @@ export default function ReelsFeed({
                   autoPlay
                   inFeed
                   onPlay={() => setCurrent(i)}
+                  onClose={onClose}
                 />
               </div>
             </div>

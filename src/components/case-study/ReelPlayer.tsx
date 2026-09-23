@@ -153,6 +153,7 @@ export default function ReelPlayer({
   onExpand,
   inFeed = false,
   autoPlay = false,
+  onClose,
 }: {
   vimeoUrl: string
   poster?: string | null
@@ -167,6 +168,9 @@ export default function ReelPlayer({
   inFeed?: boolean
   /** Inside the feed: this is the slide in view, so it should be playing. */
   autoPlay?: boolean
+  /** Inside the feed: closes it. The control lives in the reel's own top-right
+   *  corner rather than the viewport's, so it belongs to the picture. */
+  onClose?: () => void
 }) {
   const t = useTranslations('CaseStudy')
   const frame = useRef<HTMLIFrameElement>(null)
@@ -539,6 +543,32 @@ export default function ReelPlayer({
                       : 'z-30 cursor-pointer opacity-0'
                 }`}
               />
+            )}
+
+            {/* Close, in the reel's own top-right corner. It sits inside the
+                clipped frame so it reads as part of the picture, and above the
+                player (z-40) so it stays pressable while the invisible iframe
+                is taking taps over the cover. */}
+            {inFeed && onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t('exitFullscreen')}
+                className="absolute right-3 top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)]"
+                style={{
+                  borderRadius: 'var(--radius-pill)',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: 'rgba(255,255,255,0.45)',
+                  backgroundColor: 'rgba(10,10,10,0.72)',
+                  backdropFilter: 'blur(24px) saturate(1.5)',
+                  WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
             )}
 
             {/* the poster, before and after the reel */}
