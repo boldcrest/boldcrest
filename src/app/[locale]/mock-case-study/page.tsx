@@ -1,8 +1,6 @@
 /* Draft preview only. Renders the case-study template with stand-in content so
    the design can be reviewed before any caseStudy document exists in Sanity.
    The client, the figures and the imagery are invented. */
-import { existsSync } from 'fs'
-import { join } from 'path'
 import type { Metadata } from 'next'
 import CaseStudyArticle, {
   type CaseStudy,
@@ -16,16 +14,15 @@ export const metadata: Metadata = {
 }
 
 
-// A real 9:16 reel (720x1280, 52s), four times over so the feed can be walked
-// first / middle / last on a true reel. Served as a file from /public/reels —
-// which is gitignored: it is patient footage and the repo is public. On a
-// deploy this would be a Vimeo address like everything else.
-const JOKADENT_REEL = '/reels/jokadent-reel.mp4'
-// Where the file is not there — every deploy, since it is never committed —
-// SanFest's 3:4 clip stands in, so the preview still has four reels to walk.
-const HAVE_LOCAL_REEL = existsSync(join(process.cwd(), 'public', JOKADENT_REEL))
-const REEL = HAVE_LOCAL_REEL ? JOKADENT_REEL : 'https://vimeo.com/1228749430'
-const REELS = [REEL, REEL, REEL, REEL]
+// Four of JokaDent's patient reels, already on Vimeo as true 9:16 (1080x1920),
+// hidden from Vimeo with embedding public — so the hash is part of the
+// address. Stand-ins while the page is drafted; nothing here is BoldCrest's.
+const REELS = [
+  'https://player.vimeo.com/video/1227407847?h=728c7ba028',
+  'https://player.vimeo.com/video/1227408134?h=4abbb98f05',
+  'https://player.vimeo.com/video/1227408228?h=0bb1634446',
+  'https://player.vimeo.com/video/1227408330?h=3eeff3d9a7',
+]
 
 const FEED_REFS = [
   'image-06326fe2d03e0b8cb17f06bf38717214f99d58d7-2918x2917-png',
@@ -77,14 +74,13 @@ const STUDY: CaseStudy = {
   reels: REELS.map((vimeoUrl, i) => ({
     vimeoUrl,
     aspectRatio: '9:16',
-    poster: HAVE_LOCAL_REEL ? '/reels/jokadent-reel.jpg' : undefined,
     // the second one is long on purpose: a title has to share its row with
     // the seconds, and this is what shows whether it wraps, clips or shoves
     caption: [
-      'Marian, Lombardia',
-      'Marian came from Lombardia for a full smile makeover and left in four days',
-      'Third',
-      'Fourth',
+      'Angelo di Girolamo',
+      'Patrizia came from Lombardia for a full smile makeover and left in four days',
+      'Sabrina Cecchetti',
+      'Almerico Di Meglio',
     ][i],
   })),
   feed: FEED_REFS.map((ref, i) => ({
