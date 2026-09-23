@@ -29,16 +29,32 @@ export default function ReelsFeed({
   const [current, setCurrent] = useState(startAt)
 
   // Escape closes, and the page underneath does not scroll while this is up.
+  //
+  // Lenis is what actually matters here: it hijacks wheel for smooth page
+  // scroll, so overflow:hidden alone did nothing and the wheel went to the page
+  // behind. But it must NOT be stopped either — a STOPPED Lenis still
+  // preventDefaults wheel (the same trap the People deck documents), which
+  // swallows the event before `data-lenis-prevent` on the scroller can let the
+  // feed have it: measured, the feed could not scroll at all while it was
+  // stopped, and scrolled the moment it was started again.
+  //
+  // So Lenis keeps running and is told to ignore this subtree, and the page
+  // behind is pinned with overflow + overscroll-behavior on BODY (not <html>,
+  // and deliberately not the position:fixed-body trick, which suppresses iOS
+  // Safari's visualViewport keyboard resize).
   useEffect(() => {
-    const html = document.documentElement
-    const saved = html.style.overflow
-    html.style.overflow = 'hidden'
+    const body = document.body
+    const prevOverflow = body.style.overflow
+    const prevOverscroll = body.style.overscrollBehavior
+    body.style.overflow = 'hidden'
+    body.style.overscrollBehavior = 'none'
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', onKey)
     return () => {
-      html.style.overflow = saved
+      body.style.overflow = prevOverflow
+      body.style.overscrollBehavior = prevOverscroll
       document.removeEventListener('keydown', onKey)
     }
   }, [onClose])
@@ -103,6 +119,10 @@ export default function ReelsFeed({
       {/* one reel per screen; snapping so a flick lands on a whole one */}
       <div
         ref={scroller}
+        // Lenis ignores wheel/touch that starts inside a [data-lenis-prevent],
+        // which is how the chat body scrolls inside the start-a-project panel.
+        // Without it this scroller gets nothing and the page moves instead.
+        data-lenis-prevent
         className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {reels.map((reel, i) => (
