@@ -375,6 +375,9 @@
     "seek": "Seek",
     "fullscreen": "Full screen",
     "exitFullscreen": "Exit full screen",
-    "lastSeen": "Last seen"
+    "lastSeen": "Last seen",
+    "scrollDown": "Scroll down",
+    "atTop": "Top",
+    "atEnd": "Last"
   }
 }
