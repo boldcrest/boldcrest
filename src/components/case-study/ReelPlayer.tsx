@@ -513,9 +513,25 @@ export default function ReelPlayer({
                   its centroid on the icon's centre, which is where the eye puts
                   the middle of a triangle, so extra left padding pushed it off */}
               {showCorner && (
-                <span className="relative flex size-12 items-center justify-center rounded-full bg-white text-black transition group-hover:scale-105">
+                <span
+                  // Same treatment as the header's floating CTA: frosted rather
+                  // than a solid fill. Over a poster a white disc read as a
+                  // sticker sitting on the image; this darkens and blurs
+                  // whatever is behind it instead, so it belongs to the page the
+                  // way the header button does.
+                  className="relative flex size-12 items-center justify-center text-white/80 transition-all duration-300 group-hover:scale-105 group-hover:text-white group-hover:[border-color:rgba(255,255,255,0.6)]"
+                  style={{
+                    borderRadius: 'var(--radius-pill)',
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: 'rgba(255,255,255,0.45)',
+                    backgroundColor: 'rgba(10,10,10,0.72)',
+                    backdropFilter: 'blur(24px) saturate(1.5)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                  }}
+                >
                   {loading ? (
-                    <span className="size-5 animate-spin rounded-full border-2 border-black/30 border-t-black" aria-hidden />
+                    <span className="size-5 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden />
                   ) : ended ? (
                     <ReplayIcon />
                   ) : (
