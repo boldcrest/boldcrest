@@ -159,6 +159,7 @@ export default function ReelPlayer({
   resumeFrom,
   preload = false,
   suspend = false,
+  fill = false,
   lastSeen = false,
 }: {
   vimeoUrl: string
@@ -189,6 +190,10 @@ export default function ReelPlayer({
   /** The reel this visitor opened last. Marked on the rail so they can find
    *  their way back to it. */
   lastSeen?: boolean
+  /** Fill whatever it is given rather than holding 9:16, cropping the video to
+   *  cover it. The feed uses this on a phone, where a reel is the whole screen
+   *  and a 9:16 box would sit in the middle of it with bars either side. */
+  fill?: boolean
   /** Build the player now, before this reel is on screen. The feed does this
    *  for the neighbours either side, so arriving on one starts it instead of
    *  waiting on Vimeo and showing the cover meanwhile. */
@@ -579,7 +584,7 @@ export default function ReelPlayer({
 
   return (
     // the reel's place in the rail, kept while it is grown over the page
-    <div className="relative aspect-[9/16] w-full">
+    <div className={`relative w-full ${fill ? 'h-full' : 'aspect-[9/16]'}`}>
       <div
         ref={box}
         className={
@@ -588,7 +593,7 @@ export default function ReelPlayer({
             : // no dark ground behind the cover: it showed as a thin line round
               // the rounded corners, where the edge is anti-aliased. The dark
               // only while a reel plays, under the video.
-              `group absolute inset-0 overflow-hidden border border-border ${showControls ? 'bg-bg-card' : ''} ${full ? 'bg-bg' : 'rounded-[var(--radius-lg)]'}`
+              `group absolute inset-0 overflow-hidden ${fill ? 'bg-bg' : 'border border-border'} ${showControls && !fill ? 'bg-bg-card' : ''} ${full || fill ? 'bg-bg' : 'rounded-[var(--radius-lg)]'}`
         }
       >
         {/* Full screen: the reel large in the middle. As the lightbox, over the
@@ -650,7 +655,7 @@ export default function ReelPlayer({
           {/* rounded by a clip on its own layer, not a transform-free overflow:
               the playing video under a plain rounded overflow shimmered along
               the curve */}
-          <div className={`absolute inset-0 overflow-hidden ${full ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}>
+          <div className={`absolute inset-0 overflow-hidden ${full && !fill ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}>
             {mounted && (
               <iframe
                 ref={frame}
@@ -667,13 +672,31 @@ export default function ReelPlayer({
                 // instead: pressing on the player hands it focus straight away,
                 // which started the reel when the press was the start of a drag
                 // through the rail.
-                className={`absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] border-0 ${
-                  showControls
+                // A rail card never uses it either, whatever the pointer: a tap
+                // there opens the feed, and a tap that lands inside the player
+                // is a tap we have given away — on a phone that is what handed
+                // the reel to the browser's own video player.
+                className={`absolute border-0 ${
+                  fill ? 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2' : '-inset-px h-[calc(100%+2px)] w-[calc(100%+2px)]'
+                } ${
+                  showControls || (!inFeed && onExpand)
                     ? 'pointer-events-none'
                     : mouse
                       ? 'pointer-events-none opacity-0'
                       : 'z-30 cursor-pointer opacity-0'
                 }`}
+                // Cover, not contain: whichever way the screen is out of 9:16,
+                // the reel grows past it on that axis and is cropped, so there
+                // is never a bar. The overlay is the screen, so the screen's
+                // own units are the container's measurements.
+                style={
+                  fill
+                    ? {
+                        width: 'max(100vw, calc(100vh * 9 / 16))',
+                        height: 'max(100vh, calc(100vw * 16 / 9))',
+                      }
+                    : undefined
+                }
               />
             )}
 
@@ -729,7 +752,16 @@ export default function ReelPlayer({
 
             <button
               type="button"
-              onClick={toggle}
+              onClick={() => {
+                // A rail card on a phone is a thumbnail: pressing it goes
+                // straight to the reels, full screen, rather than playing a
+                // 62vw video in the middle of the page.
+                if (!mouse && !inFeed && onExpand) {
+                  onExpand(time)
+                  return
+                }
+                toggle()
+              }}
               // Double-click a running reel to open it full screen — the
               // same route as the corner button, so both land on the feed at
               // the same second. The two single clicks that precede the double

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
 import ReelPlayer from './ReelPlayer'
 import type { Reel } from './ReelsCarousel'
@@ -9,6 +9,15 @@ import type { Reel } from './ReelsCarousel'
  *  left once the reel has taken its height, which is the screen minus the two
  *  3.25rem bands, or 960px, whichever is less. */
 const GAP = 'calc((100% - min(100% - 6.5rem, 960px)) / 2)'
+
+/** A reel fills a phone, so there is no clear space above or below it to put a
+ *  line in: on a narrow screen the line goes inside the picture instead. */
+const NARROW = '(max-width: 767px)'
+const subscribeNarrow = (cb: () => void) => {
+  const q = window.matchMedia(NARROW)
+  q.addEventListener('change', cb)
+  return () => q.removeEventListener('change', cb)
+}
 
 /** Points the way the feed can still go, beside the line that says so. Drawn
  *  on the same stroke as the player's own icons, at the cap height of the
@@ -82,6 +91,11 @@ export default function ReelsFeed({
   /** On the last reel the only way on is back up, so the standing hint moves to
    *  the top and turns round. */
   const onLast = current === reels.length - 1
+  const narrow = useSyncExternalStore(
+    subscribeNarrow,
+    () => window.matchMedia(NARROW).matches,
+    () => false,
+  )
 
   // The reel this opened on decides what plays, not the observer. The slides
   // are still being scrolled into place when the feed appears, and the observer
@@ -257,6 +271,35 @@ export default function ReelsFeed({
     return () => io.disconnect()
   }, [reels.length])
 
+  /** One of the four lines, wherever it is being put. `where` is the end this
+   *  line belongs to: the top one answers a push above the first reel and
+   *  carries SCROLL UP on the last, the bottom one the other way round. */
+  const line = (where: 'top' | 'end') => {
+    const answering = said === where
+    const standing = where === 'top' ? onLast : !onLast
+    return (
+      <span
+        className={`flex items-center gap-2 text-[1rem] uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
+          answering ? 'text-white' : 'text-white/55'
+        } ${edge === where || (hint && standing) ? 'opacity-100' : 'opacity-0'}`}
+      >
+        {answering ? (
+          t(where === 'top' ? 'atTop' : 'atEnd')
+        ) : where === 'top' ? (
+          <>
+            <Arrow up />
+            {t('scrollUp')}
+          </>
+        ) : (
+          <>
+            {t('scrollDown')}
+            <Arrow />
+          </>
+        )}
+      </span>
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-[1800]" role="dialog" aria-modal="true">
       {/* the same dim and blur start-a-project puts over the site */}
@@ -274,45 +317,27 @@ export default function ReelsFeed({
           They stand outside the scroller, so they hold still while the reels
           give, but BEFORE it, so a reel scrolling past covers them rather than
           riding under them. Neither takes a click: the space around a reel
-          closes the feed. */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-center"
-        style={{ height: GAP }}
-      >
-        <span
-          className={`flex items-center gap-2 text-[1rem] uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
-            said === 'top' ? 'text-white' : 'text-white/55'
-          } ${edge === 'top' || (onLast && hint) ? 'opacity-100' : 'opacity-0'}`}
-        >
-          {said === 'top' ? (
-            t('atTop')
-          ) : (
-            <>
-              <Arrow up />
-              {t('scrollUp')}
-            </>
-          )}
-        </span>
-      </div>
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center"
-        style={{ height: GAP }}
-      >
-        <span
-          className={`flex items-center gap-2 text-[1rem] uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
-            said === 'end' ? 'text-white' : 'text-white/55'
-          } ${edge === 'end' || (hint && !onLast) ? 'opacity-100' : 'opacity-0'}`}
-        >
-          {said === 'end' ? (
-            t('atEnd')
-          ) : (
-            <>
-              {t('scrollDown')}
-              <Arrow />
-            </>
-          )}
-        </span>
-      </div>
+          closes the feed.
+
+          On a phone there is no such space — the reel fills the screen — so
+          both lines move inside the picture instead, top left, and these are
+          not rendered at all. */}
+      {!narrow && (
+        <>
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-center"
+            style={{ height: GAP }}
+          >
+            {line('top')}
+          </div>
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center"
+            style={{ height: GAP }}
+          >
+            {line('end')}
+          </div>
+        </>
+      )}
 
       {/* one reel per screen; snapping so a flick lands on a whole one */}
       <div
@@ -357,11 +382,43 @@ export default function ReelsFeed({
             onClick={(e) => {
               if (e.target === e.currentTarget) onClose()
             }}
-            className="flex h-full snap-start snap-always items-center justify-center px-[var(--gutter)] py-[3.25rem]"
+            className={`flex h-full snap-start snap-always items-center justify-center ${
+              narrow ? '' : 'px-[var(--gutter)] py-[3.25rem]'
+            }`}
           >
-            <div className="h-full max-h-[min(100%,960px)] w-auto max-w-full">
-              {/* the 9:16 frame, as tall as the screen allows */}
-              <div className="mx-auto h-full" style={{ aspectRatio: '9 / 16' }}>
+            <div
+              className={
+                narrow ? 'h-full w-full' : 'h-full max-h-[min(100%,960px)] w-auto max-w-full'
+              }
+            >
+              {/* On a phone the reel IS the screen, so the frame takes all of
+                  it and the player crops to cover. Anywhere else it is a 9:16
+                  frame, as tall as the screen allows but no wider than it is —
+                  height alone gave a 398px reel on a 375px phone, cropped
+                  either side, and with the height definite and an aspect ratio
+                  set, max-width cannot claw it back, so the width limit has to
+                  be folded into the height itself. */}
+              <div
+                className={narrow ? 'relative h-full w-full' : 'relative mx-auto'}
+                style={
+                  narrow
+                    ? undefined
+                    : {
+                        aspectRatio: '9 / 16',
+                        height: 'min(100%, calc((100vw - 2 * var(--gutter)) * 16 / 9))',
+                      }
+                }
+              >
+                {/* On a phone the line lives in the picture's top-left corner,
+                    over the player but clear of its close button on the right.
+                    Only for the reel in view: the ones either side are built
+                    ahead and would carry a line of their own into sight. */}
+                {narrow && i === current && (
+                  <div className="pointer-events-none absolute left-4 top-4 z-[45] flex flex-col items-start gap-1">
+                    {line('top')}
+                    {line('end')}
+                  </div>
+                )}
                 <ReelPlayer
                   vimeoUrl={reel.vimeoUrl as string}
                   poster={reel.poster}
@@ -383,6 +440,7 @@ export default function ReelsFeed({
                   // the one either side is built ahead of time, so scrolling
                   // onto it starts the video rather than the cover
                   preload={Math.abs(i - current) <= 1}
+                  fill={narrow}
                 />
               </div>
             </div>
