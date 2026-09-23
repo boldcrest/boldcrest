@@ -368,7 +368,7 @@
     "exitFullscreen": "Quitter le plein écran",
     "lastSeen": "Vu en dernier",
     "scrollDown": "Faites défiler",
-    "atTop": "Début",
-    "atEnd": "Dernier"
+    "atTop": "Première vidéo",
+    "atEnd": "Dernière vidéo"
   }
 }

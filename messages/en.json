@@ -377,7 +377,7 @@
     "exitFullscreen": "Exit full screen",
     "lastSeen": "Last seen",
     "scrollDown": "Scroll down",
-    "atTop": "Top",
-    "atEnd": "Last"
+    "atTop": "First video",
+    "atEnd": "Last video"
   }
 }

@@ -60,8 +60,17 @@ export default function ReelsFeed({
   // blocked: this is the feed answering a gesture it cannot act on.
   const [pull, setPull] = useState(0)
   const [edge, setEdge] = useState<'top' | 'end' | null>(null)
+  // SCROLL DOWN has said its piece once the feed has moved off the reel it
+  // opened on, and does not come back if the visitor scrolls up again.
+  const [hint, setHint] = useState(true)
   const release = useRef(0)
   const lastTouch = useRef<number | null>(null)
+  // A flick carries on arriving for half a second after the fingers have gone,
+  // and left to itself would run through three reels. One gesture moves one
+  // reel: the step is taken on the first event and the rest of the tail is
+  // swallowed, the window pushed back for as long as events keep coming, so a
+  // deliberate second flick still steps.
+  const lockUntil = useRef(0)
   // The reel this opened on decides what plays, not the observer. The slides
   // are still being scrolled into place when the feed appears, and the observer
   // fires for whichever one it passes on the way — which would leave the feed
@@ -97,9 +106,47 @@ export default function ReelsFeed({
     release.current = window.setTimeout(() => {
       setPull(0)
       setEdge(null)
-    }, 260)
+    }, 150)
   }
   useEffect(() => () => window.clearTimeout(release.current), [])
+
+  // The wheel steps, one reel per gesture. It has to be a native listener:
+  // React's onWheel is passive, and this preventDefaults so the scroller's own
+  // momentum does not race the step. Snapping stays on for touch, which already
+  // moves a screen at a time.
+  useEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.deltaY === 0) return
+      e.preventDefault()
+      const now = performance.now()
+      const down = e.deltaY > 0
+      const here = Math.round(el.scrollTop / el.clientHeight)
+      const next = down ? here + 1 : here - 1
+      // nothing that way: the feed gives instead of moving
+      if (next < 0 || next > reels.length - 1) {
+        pullBy(e.deltaY)
+        return
+      }
+      if (now < lockUntil.current) {
+        // still the same gesture — hold the window open rather than stepping
+        lockUntil.current = now + 110
+        return
+      }
+      lockUntil.current = now + 460
+      setHint(false)
+      el.scrollTo({ top: next * el.clientHeight, behavior: 'smooth' })
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reels.length])
+
+  // a swipe moves the feed itself, so the hint goes the moment it lands
+  useEffect(() => {
+    if (current !== startAt) setHint(false)
+  }, [current, startAt])
 
   // Escape closes, and the page underneath does not scroll while this is up.
   //
@@ -169,6 +216,50 @@ export default function ReelsFeed({
         onClick={onClose}
       />
 
+      {/* The two lines sit in the clear space above and below the reel, each
+          centred in it. That space is not the padding alone: a reel is capped
+          at 960px, so on a tall screen it stops short of the padding and the
+          gap is larger — hence the height is worked out from the same numbers
+          the reel is, rather than fixed to the padding and left looking high.
+          They stand outside the scroller, so they hold still while the reels
+          give, but BEFORE it, so a reel scrolling past covers them rather than
+          riding under them. Neither takes a click: the space around a reel
+          closes the feed. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-center"
+        style={{ height: GAP }}
+      >
+        {/* only while the visitor is asking for something above the first reel */}
+        <span
+          // Matched to the give's own return, not the 200ms it went out on:
+          // TOP is the only one of the two that fades from nothing, so a fade
+          // outlasting the movement is visible as the top being slow to let go.
+          className={`text-[1rem] uppercase tracking-[0.2em] text-white transition-opacity duration-[130ms] ${
+            edge === 'top' ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {t('atTop')}
+        </span>
+      </div>
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center"
+        style={{ height: GAP }}
+      >
+        <span
+          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-200 ${
+            edge === 'end' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
+          } ${edge === 'end' || hint ? 'opacity-100' : 'opacity-0'}`}
+        >
+          {edge === 'end' ? (
+            t('atEnd')
+          ) : (
+            <>
+              {t('scrollDown')}
+              <DownArrow />
+            </>
+          )}
+        </span>
+      </div>
 
       {/* one reel per screen; snapping so a flick lands on a whole one */}
       <div
@@ -178,7 +269,6 @@ export default function ReelsFeed({
         // Without it this scroller gets nothing and the page moves instead.
         data-lenis-prevent
         data-current={current}
-        onWheel={(e) => pullBy(e.deltaY)}
         onTouchStart={(e) => {
           lastTouch.current = e.touches[0].clientY
         }}
@@ -248,46 +338,6 @@ export default function ReelsFeed({
         ))}
       </div>
 
-      {/* The two lines sit in the clear space above and below the reel, each
-          centred in it. That space is not the padding alone: a reel is capped
-          at 960px, so on a tall screen it stops short of the padding and the
-          gap is larger — hence the height is worked out from the same numbers
-          the reel is, rather than fixed to the padding and left looking high.
-          Both stand outside the scroller, so they hold still while the reels
-          give, and neither takes a click: the space around a reel closes the
-          feed. */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-center"
-        style={{ height: GAP }}
-      >
-        {/* only while the visitor is asking for something above the first reel */}
-        <span
-          className={`text-[1rem] uppercase tracking-[0.2em] text-white transition-opacity duration-200 ${
-            edge === 'top' ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          {t('atTop')}
-        </span>
-      </div>
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center"
-        style={{ height: GAP }}
-      >
-        <span
-          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-colors duration-200 ${
-            edge === 'end' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
-          }`}
-        >
-          {edge === 'end' ? (
-            t('atEnd')
-          ) : (
-            <>
-              {t('scrollDown')}
-              <DownArrow />
-            </>
-          )}
-        </span>
-      </div>
     </div>
   )
 }
