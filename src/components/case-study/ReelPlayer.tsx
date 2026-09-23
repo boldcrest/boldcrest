@@ -713,7 +713,15 @@ export default function ReelPlayer({
                 type="button"
                 onClick={onClose}
                 aria-label={t('exitFullscreen')}
-                className="absolute right-3 top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)]"
+                // Filling the screen, the mark's INK ends where the seconds
+                // do, 20px in from the edge. Its strokes run 6→18 of a 24 grid
+                // and carry round caps, so at 26px they stop 5.6px short of
+                // the glyph box, which sits 11px inside the 48px button: the
+                // button's own edge lands 3px in. Aligning box to box put the
+                // mark visibly further in than the text it was meant to meet.
+                className={`absolute top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)] ${
+                  fill ? 'right-[3px]' : 'right-3'
+                }`}
                 // Filling the screen, the mark stands on its own: a disc is
                 // what lifts a control off a page it is sitting on, and here
                 // there is no page under it — just the picture, edge to edge.

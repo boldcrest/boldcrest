@@ -105,8 +105,11 @@ export default function ReelsFeed({
     return () => window.clearTimeout(id)
   }, [startAt])
 
-  /** How far the reels give when there is nothing past them. */
+  /** How far the reels give when there is nothing past them. On a phone the
+   *  give is what uncovers LAST VIDEO, so it is sized to that line and no
+   *  more: the line, with the same room above it as below. */
   const MAX_PULL = 52
+  const LIFT_NARROW = 40
 
   /** A gesture the feed cannot act on because there is nothing that way.
    *
@@ -137,7 +140,8 @@ export default function ReelsFeed({
     if (bouncing.current || !stopped) return
     bouncing.current = true
     setEdge(down ? 'end' : 'top')
-    const to = down ? -MAX_PULL : MAX_PULL
+    const lift = narrow ? LIFT_NARROW : MAX_PULL
+    const to = down ? -lift : lift
     // Held a second and a half on a phone, where the line it uncovers is only
     // there while it is held. On a desktop the line has a band of its own that
     // is always there, so the give can be the brief answer it was.
@@ -387,7 +391,12 @@ export default function ReelsFeed({
           mark centred in it, so matching the button's own left edge left the
           line 10px to the left of the triangle above it. */}
       {narrow && (
-        <div className="pointer-events-none absolute bottom-3 left-[1.375rem] z-0">
+        // Exactly as tall as the lift, on the player's own ground: the reel
+        // lifting off it must read as the player opening a strip, not as the
+        // page behind showing through the gap — which it did, blurred, with
+        // the rail's captions in it. The line is centred in the strip, so it
+        // has the same room above it as below.
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex items-center bg-bg pl-[1.375rem]" style={{ height: LIFT_NARROW }}>
           {answer('end')}
         </div>
       )}
