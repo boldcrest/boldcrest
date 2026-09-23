@@ -72,7 +72,14 @@ const STUDY: CaseStudy = {
     vimeoUrl,
     aspectRatio: '9:16',
     poster: '/reels/jokadent-reel.jpg',
-    caption: ['Marian, Lombardia', 'Second', 'Third', 'Fourth'][i],
+    // the second one is long on purpose: a title has to share its row with
+    // the seconds, and this is what shows whether it wraps, clips or shoves
+    caption: [
+      'Marian, Lombardia',
+      'Marian came from Lombardia for a full smile makeover and left in four days',
+      'Third',
+      'Fourth',
+    ][i],
   })),
   feed: FEED_REFS.map((ref, i) => ({
     _key: String(i),
