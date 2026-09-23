@@ -71,15 +71,14 @@ export default function ReelsFeed({
       setSaid(edge)
       return
     }
-    const id = window.setTimeout(() => setSaid(null), 170)
+    const id = window.setTimeout(() => setSaid(null), 200)
     return () => window.clearTimeout(id)
   }, [edge])
   // SCROLL DOWN has said its piece once the feed has moved off the reel it
   // opened on, and does not come back if the visitor scrolls up again.
   const [hint, setHint] = useState(true)
-  const pull = useRef(0)
-  const spring = useRef(0)
   const lastTouch = useRef<number | null>(null)
+  const scrolledAt = useRef(0)
   /** On the last reel the only way on is back up, so the standing hint moves to
    *  the top and turns round. */
   const onLast = current === reels.length - 1
@@ -98,49 +97,43 @@ export default function ReelsFeed({
     return () => window.clearTimeout(id)
   }, [startAt])
 
-  // How far the reels give, how much of a push reaches them, and how much of
-  // the give is left after each frame once the pushing stops.
-  const MAX_PULL = 56
-  const RESISTANCE = 0.32
-  const RELAX = 0.84
+  /** How far the reels give when there is nothing past them. */
+  const MAX_PULL = 52
 
-  const paint = () => {
+  /** A gesture the feed cannot act on because there is nothing that way.
+   *
+   *  This used to follow the gesture: every wheel event fed a value that a
+   *  rAF loop eased back, painted frame by frame. It was never smooth, and
+   *  could not be — a trackpad's deltas are irregular, so a give that tracks
+   *  them is irregular too, and it was moving a box holding every reel's
+   *  iframe on the main thread while it did.
+   *
+   *  So the give is now a fixed movement rather than a followed one: out and
+   *  back, the same every time, handed to the compositor as one animation and
+   *  left alone. It is over in under half a second and further pushes during it
+   *  are ignored, so a long flick makes one clean bounce instead of a stutter. */
+  const bouncing = useRef(false)
+  const bounce = (down: boolean) => {
     const el = scroller.current
-    if (el) el.style.transform = `translate3d(0, ${-pull.current}px, 0)`
-  }
-
-  /** One frame of the give easing back. Runs only while there is give. */
-  const relax = () => {
-    pull.current *= RELAX
-    if (Math.abs(pull.current) < 0.6) {
-      pull.current = 0
-      spring.current = 0
-      paint()
-      setEdge(null)
-      return
-    }
-    paint()
-    spring.current = requestAnimationFrame(relax)
-  }
-
-  /** A gesture the feed cannot act on because there is nothing that way. */
-  const pullBy = (dy: number) => {
-    const el = scroller.current
-    if (!el) return
-    const down = dy > 0
-    const stuck = down
-      ? el.scrollTop + el.clientHeight >= el.scrollHeight - 1
-      : el.scrollTop <= 1
-    if (!stuck) return
-    pull.current = Math.max(-MAX_PULL, Math.min(MAX_PULL, pull.current + dy * RESISTANCE))
-    paint()
+    if (!el || bouncing.current) return
+    bouncing.current = true
     setEdge(down ? 'end' : 'top')
-    // Every frame takes some of the give back and every push puts some in, so
-    // it settles where the two balance for as long as the gesture lasts, and is
-    // home about a tenth of a second after it stops. Nothing waits on a timer,
-    // which is what made this stutter: a flick's tail kept resetting one and
-    // the reels hung at full stretch until the very last event had landed.
-    if (!spring.current) spring.current = requestAnimationFrame(relax)
+    const to = down ? -MAX_PULL : MAX_PULL
+    const run = el.animate(
+      [
+        { transform: 'translateY(0)' },
+        { transform: `translateY(${to}px)`, offset: 0.36 },
+        { transform: 'translateY(0)' },
+      ],
+      { duration: 440, easing: 'cubic-bezier(.33, 1, .68, 1)' },
+    )
+    // the line is gone by the time the reel is back, not after it
+    window.setTimeout(() => setEdge(null), 270)
+    const done = () => {
+      bouncing.current = false
+    }
+    run.onfinish = done
+    run.oncancel = done
   }
 
   // The browser does the scrolling. It is instant, it is smooth, and with
@@ -155,6 +148,9 @@ export default function ReelsFeed({
   useEffect(() => {
     const el = scroller.current
     if (!el) return
+    const onScroll = () => {
+      scrolledAt.current = performance.now()
+    }
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || !e.deltaY) return
       const down = e.deltaY > 0
@@ -162,13 +158,23 @@ export default function ReelsFeed({
         ? el.scrollTop + el.clientHeight >= el.scrollHeight - 1
         : el.scrollTop <= 1
       if (!stuck) return
+      // Landing on the first or last reel does not mean the visitor is asking
+      // for more. A flick that ends there keeps arriving for a moment after the
+      // scroller has stopped, and taking that as a push made the reel bob the
+      // instant it settled. Once it has been still, a push is a push.
+      if (performance.now() - scrolledAt.current < 220) return
+      // ...and a trackpad reports specks of movement in the axis you are not
+      // using. They are not a gesture, and acting on them made the reel twitch
+      // while it was sitting at the top doing nothing.
+      if (Math.abs(e.deltaY) < 8) return
       e.preventDefault()
-      pullBy(e.deltaY)
+      bounce(down)
     }
+    el.addEventListener('scroll', onScroll, { passive: true })
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => {
+      el.removeEventListener('scroll', onScroll)
       el.removeEventListener('wheel', onWheel)
-      cancelAnimationFrame(spring.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -260,7 +266,7 @@ export default function ReelsFeed({
         style={{ height: GAP }}
       >
         <span
-          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-[130ms] ${
+          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
             said === 'top' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
           } ${edge === 'top' || (onLast && hint) ? 'opacity-100' : 'opacity-0'}`}
         >
@@ -279,7 +285,7 @@ export default function ReelsFeed({
         style={{ height: GAP }}
       >
         <span
-          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-[130ms] ${
+          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
             said === 'end' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
           } ${edge === 'end' || (hint && !onLast) ? 'opacity-100' : 'opacity-0'}`}
         >
@@ -306,9 +312,17 @@ export default function ReelsFeed({
           lastTouch.current = e.touches[0].clientY
         }}
         onTouchMove={(e) => {
+          const el = scroller.current
           const y = e.touches[0].clientY
-          pullBy((lastTouch.current ?? y) - y)
+          const dy = (lastTouch.current ?? y) - y
           lastTouch.current = y
+          if (!el || Math.abs(dy) < 4) return
+          if (performance.now() - scrolledAt.current < 220) return
+          const down = dy > 0
+          const stuck = down
+            ? el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+            : el.scrollTop <= 1
+          if (stuck) bounce(down)
         }}
         onTouchEnd={() => {
           lastTouch.current = null
