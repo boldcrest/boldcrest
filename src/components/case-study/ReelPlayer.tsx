@@ -715,7 +715,10 @@ export default function ReelPlayer({
                   gradient is only under this card: it is what makes the label
                   legible over a bright poster, and it doubles as the marker
                   that sets this card apart from the rest of the rail. */}
-              {lastSeen && (
+              {/* Only while the card is idle. Once it is playing the transport
+                  owns that row, and the marker sat on top of it with its own
+                  gradient doubling the transport's. */}
+              {lastSeen && showCorner && (
                 <>
                   <span
                     aria-hidden
