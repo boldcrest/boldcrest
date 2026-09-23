@@ -137,6 +137,9 @@ export default function ReelsFeed({
                   onPlay={() => setCurrent(i)}
                   onClose={onClose}
                   resumeFrom={i === startAt ? resumeFrom : undefined}
+                  // the one either side is built ahead of time, so scrolling
+                  // onto it starts the video rather than the cover
+                  preload={Math.abs(i - current) <= 1}
                 />
               </div>
             </div>

@@ -155,6 +155,7 @@ export default function ReelPlayer({
   autoPlay = false,
   onClose,
   resumeFrom,
+  preload = false,
 }: {
   vimeoUrl: string
   poster?: string | null
@@ -175,6 +176,10 @@ export default function ReelPlayer({
   /** Inside the feed: carry on from where the rail card had got to, instead of
    *  restarting. */
   resumeFrom?: number
+  /** Build the player now, before this reel is on screen. The feed does this
+   *  for the neighbours either side, so arriving on one starts it instead of
+   *  waiting on Vimeo and showing the cover meanwhile. */
+  preload?: boolean
 }) {
   const t = useTranslations('CaseStudy')
   const frame = useRef<HTMLIFrameElement>(null)
@@ -207,6 +212,8 @@ export default function ReelPlayer({
   // a press on our button driving it from outside started it muted, or not
   // at all until a second press.
   const [inView, setInView] = useState(false)
+  // the feed asks for neighbours up front; otherwise the observer decides
+  const mounted = inView || preload
   const onPlayRef = useRef(onPlay)
   useEffect(() => {
     onPlayRef.current = onPlay
@@ -233,7 +240,7 @@ export default function ReelPlayer({
   // muted if the browser refuses sound that way.
   useEffect(() => {
     const el = frame.current
-    if (!inView || !el) return
+    if (!mounted || !el) return
     let cancelled = false
     let player: import('@vimeo/player').default | null = null
     let isPaused = true
@@ -343,7 +350,7 @@ export default function ReelPlayer({
       void player?.destroy().catch(() => {})
       media.current = null
     }
-  }, [inView])
+  }, [mounted])
 
   // grown over the page: Escape shrinks it back, the page does not scroll
   // under it, and the two things round the reel that would hold a fixed box
@@ -533,7 +540,7 @@ export default function ReelPlayer({
               the playing video under a plain rounded overflow shimmered along
               the curve */}
           <div className={`absolute inset-0 overflow-hidden ${full ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}>
-            {inView && (
+            {mounted && (
               <iframe
                 ref={frame}
                 src={vimeoSrc(vimeoUrl)}
@@ -602,7 +609,7 @@ export default function ReelPlayer({
                       // pause; once the reel has started, pausing should hold
                       // the frame you stopped on and the end should hold the
                       // last one, the way a reel does.
-                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-500 ${started ? 'opacity-0' : 'opacity-100'}`
+                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-200 ${started ? 'opacity-0' : 'opacity-100'}`
                     : 'absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]'
                 }
                 style={{ backgroundImage: `url(${poster})` }}
