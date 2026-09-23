@@ -33,8 +33,9 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
   const scrollerRef = useRef<HTMLDivElement>(null)
   // which reel owns playback; null until one is started
   const [active, setActive] = useState<number | null>(null)
-  // the full-screen feed, open at the reel whose button was pressed
-  const [feedAt, setFeedAt] = useState<number | null>(null)
+  // the full-screen feed: which reel it opened on, and how far that reel had
+  // already played, so it carries on instead of starting again
+  const [feed, setFeed] = useState<{ index: number; at: number } | null>(null)
 
   const items = (reels ?? []).filter((r) => r.vimeoUrl)
   if (items.length === 0) return null
@@ -98,7 +99,12 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
               caption={reel.caption}
               active={active === i}
               onPlay={() => setActive(i)}
-              onExpand={() => setFeedAt(i)}
+              onExpand={(at) => {
+                // stop the card behind before the feed takes over, or both
+                // players are running and you hear two of them
+                setActive(null)
+                setFeed({ index: i, at })
+              }}
             />
             {reel.caption && (
               <p className="mt-3 text-[0.8rem] leading-[1.5] text-text-secondary">{reel.caption}</p>
@@ -107,12 +113,13 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
         ))}
       </div>
 
-      {feedAt !== null && (
+      {feed !== null && (
         <ReelsFeed
           reels={items}
-          startAt={feedAt}
+          startAt={feed.index}
+          resumeFrom={feed.at}
           onClose={() => {
-            setFeedAt(null)
+            setFeed(null)
             // nothing in the rail resumes on its own when the feed closes
             setActive(null)
           }}

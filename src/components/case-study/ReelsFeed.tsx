@@ -17,10 +17,13 @@ import type { Reel } from './ReelsCarousel'
 export default function ReelsFeed({
   reels,
   startAt,
+  resumeFrom,
   onClose,
 }: {
   reels: Reel[]
   startAt: number
+  /** how far the rail card had played the reel this opened on */
+  resumeFrom?: number
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
@@ -112,6 +115,13 @@ export default function ReelsFeed({
             ref={(el) => {
               slides.current[i] = el
             }}
+            // Clicking the space around the reel closes the feed. Only when
+            // the slide ITSELF is the target: a click that bubbles up from the
+            // player, its controls or the title must not close it, and this is
+            // steadier than stopPropagation on everything inside.
+            onClick={(e) => {
+              if (e.target === e.currentTarget) onClose()
+            }}
             className="flex h-full snap-start snap-always items-center justify-center px-[var(--gutter)] py-6"
           >
             <div className="h-full max-h-[min(100%,960px)] w-auto max-w-full">
@@ -126,6 +136,7 @@ export default function ReelsFeed({
                   inFeed
                   onPlay={() => setCurrent(i)}
                   onClose={onClose}
+                  resumeFrom={i === startAt ? resumeFrom : undefined}
                 />
               </div>
             </div>

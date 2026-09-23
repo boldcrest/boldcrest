@@ -154,6 +154,7 @@ export default function ReelPlayer({
   inFeed = false,
   autoPlay = false,
   onClose,
+  resumeFrom,
 }: {
   vimeoUrl: string
   poster?: string | null
@@ -163,7 +164,7 @@ export default function ReelPlayer({
   /** Given by the rail: the full-screen button opens the reels feed instead of
    *  growing this one reel over the page. Without it the player expands itself,
    *  which is what a reel outside a feed should do. */
-  onExpand?: () => void
+  onExpand?: (atSeconds: number) => void
   /** Inside the feed: it is already full screen, so no full-screen button. */
   inFeed?: boolean
   /** Inside the feed: this is the slide in view, so it should be playing. */
@@ -171,6 +172,9 @@ export default function ReelPlayer({
   /** Inside the feed: closes it. The control lives in the reel's own top-right
    *  corner rather than the viewport's, so it belongs to the picture. */
   onClose?: () => void
+  /** Inside the feed: carry on from where the rail card had got to, instead of
+   *  restarting. */
+  resumeFrom?: number
 }) {
   const t = useTranslations('CaseStudy')
   const frame = useRef<HTMLIFrameElement>(null)
@@ -400,12 +404,19 @@ export default function ReelPlayer({
   // may refuse sound without a gesture on this particular reel — play() already
   // handles that by muting and retrying, which is how a reels feed behaves
   // anyway once you scroll past the one you tapped.
+  const resumed = useRef(false)
   useEffect(() => {
     if (!autoPlay || !ready || !active) return
     const m = media.current
     if (!m) return
+    // the reel this feed was opened from carries on where the card left off
+    if (!resumed.current && resumeFrom && resumeFrom > 0.5) {
+      resumed.current = true
+      m.seek(resumeFrom)
+      setTime(resumeFrom)
+    }
     if (m.paused()) m.play()
-  }, [autoPlay, ready, active])
+  }, [autoPlay, ready, active, resumeFrom])
 
   const play = () => {
     const m = media.current
@@ -442,8 +453,11 @@ export default function ReelPlayer({
   }
 
   const progress = duration ? Math.min(1, time / duration) : 0
-  const showControls = started && !ended
-  const showCorner = !started || ended
+  // In the feed a reel plays as soon as you land on it, so it never sits in a
+  // "press to start" state: its transport is up from the first frame and the
+  // corner button is only ever the replay at the end.
+  const showControls = inFeed ? !ended : started && !ended
+  const showCorner = ended || (!inFeed && !started)
 
   return (
     // the reel's place in the rail, kept while it is grown over the page
@@ -571,11 +585,26 @@ export default function ReelPlayer({
               </button>
             )}
 
-            {/* the poster, before and after the reel */}
-            {!showControls && poster && (
+            {/* The cover. On a rail card it is the thing you press. In the
+                feed it is only there so the frame is never black while the
+                player gets going: it sits OVER the iframe (which is opaque
+                black until it plays) and fades out on the first frame, so
+                scrolling onto a reel shows the picture and then the video,
+                never a hole. pointer-events-none so the tap still reaches the
+                player underneath. */}
+            {poster && (inFeed ? !started : !showControls) && (
               <span
                 aria-hidden
-                className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]"
+                className={
+                  inFeed
+                    ? // Only until the first frame exists. Keying this off
+                      // `playing` instead brought the cover back on every
+                      // pause; once the reel has started, pausing should hold
+                      // the frame you stopped on and the end should hold the
+                      // last one, the way a reel does.
+                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-500 ${started ? 'opacity-0' : 'opacity-100'}`
+                    : 'absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]'
+                }
                 style={{ backgroundImage: `url(${poster})` }}
               />
             )}
@@ -645,7 +674,9 @@ export default function ReelPlayer({
                       // it asks the player for its own full screen, the only
                       // one iOS gives a video.
                       if (onExpand) {
-                        onExpand()
+                        // hand the playhead over so the feed carries on rather
+                        // than starting the reel again
+                        onExpand(time)
                         return
                       }
                       if (/iPhone|iPod/.test(navigator.userAgent) && media.current)
