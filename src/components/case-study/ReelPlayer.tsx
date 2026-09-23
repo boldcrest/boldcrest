@@ -111,6 +111,9 @@ const vimeoSrc = (url: string) => {
   if (hash) u.searchParams.set('h', hash)
   const params: Record<string, string> = {
     autoplay: '0',
+    // round and round: a reel that has ended does not sit on a replay button,
+    // it starts again, and with this on the player never reports an end
+    loop: '1',
     controls: '0',
     title: '0',
     byline: '0',
@@ -758,6 +761,7 @@ export default function ReelPlayer({
                 ref={clip}
                 src={vimeoUrl}
                 playsInline
+                loop
                 preload="metadata"
                 aria-label={caption || t('reels')}
                 // the same footprint and the same say over taps as the iframe

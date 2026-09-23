@@ -143,7 +143,14 @@ export default function ReelsFeed({
     if (bouncing.current || !stopped) return
     bouncing.current = true
     setEdge(down ? 'end' : 'top')
-    const lift = narrow ? LIFT_NARROW : MAX_PULL
+    // On a phone with letterbox bars the line has somewhere to appear without
+    // the reel moving at all — and moving it was the wrong answer there: the
+    // reel slid up under a bar that shrank to 33px while the other grew to
+    // 113, and the frame read as cut top and bottom. So with bars the reel
+    // holds still and only the line comes and goes; without bars (a 16:9
+    // screen) the give still uncovers the strip, as it has to.
+    const barH = narrow ? (window.innerHeight - Math.min(window.innerHeight, (window.innerWidth * 16) / 9)) / 2 : 0
+    const lift = narrow ? (barH >= 24 ? 0 : LIFT_NARROW) : MAX_PULL
     const to = down ? -lift : lift
     // Held a second and a half on a phone, where the line it uncovers is only
     // there while it is held. On a desktop the line has a band of its own that
@@ -152,17 +159,21 @@ export default function ReelsFeed({
     const out = 220
     const back = 360
     const duration = out + hold + back
+    // with nothing to move, the same timing still runs so pushes are paced
+    // and the line's coming and going match the other layouts exactly
     const run = el.animate(
-      [
-        { transform: 'translateY(0)', easing: 'cubic-bezier(.22, 1, .36, 1)' },
-        { transform: `translateY(${to}px)`, offset: out / duration, easing: 'linear' },
-        {
-          transform: `translateY(${to}px)`,
-          offset: (out + hold) / duration,
-          easing: 'cubic-bezier(.4, 0, .2, 1)',
-        },
-        { transform: 'translateY(0)' },
-      ],
+      lift
+        ? [
+            { transform: 'translateY(0)', easing: 'cubic-bezier(.22, 1, .36, 1)' },
+            { transform: `translateY(${to}px)`, offset: out / duration, easing: 'linear' },
+            {
+              transform: `translateY(${to}px)`,
+              offset: (out + hold) / duration,
+              easing: 'cubic-bezier(.4, 0, .2, 1)',
+            },
+            { transform: 'translateY(0)' },
+          ]
+        : [{ transform: 'translateY(0)' }, { transform: 'translateY(0)' }],
       { duration, easing: 'linear' },
     )
     // in as the reel lifts, out before it comes back down: the line is gone by
