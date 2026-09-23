@@ -1,6 +1,8 @@
 /* Draft preview only. Renders the case-study template with stand-in content so
    the design can be reviewed before any caseStudy document exists in Sanity.
    The client, the figures and the imagery are invented. */
+import { existsSync } from 'fs'
+import { join } from 'path'
 import type { Metadata } from 'next'
 import CaseStudyArticle, {
   type CaseStudy,
@@ -19,7 +21,11 @@ export const metadata: Metadata = {
 // which is gitignored: it is patient footage and the repo is public. On a
 // deploy this would be a Vimeo address like everything else.
 const JOKADENT_REEL = '/reels/jokadent-reel.mp4'
-const REELS = [JOKADENT_REEL, JOKADENT_REEL, JOKADENT_REEL, JOKADENT_REEL]
+// Where the file is not there — every deploy, since it is never committed —
+// SanFest's 3:4 clip stands in, so the preview still has four reels to walk.
+const HAVE_LOCAL_REEL = existsSync(join(process.cwd(), 'public', JOKADENT_REEL))
+const REEL = HAVE_LOCAL_REEL ? JOKADENT_REEL : 'https://vimeo.com/1228749430'
+const REELS = [REEL, REEL, REEL, REEL]
 
 const FEED_REFS = [
   'image-06326fe2d03e0b8cb17f06bf38717214f99d58d7-2918x2917-png',
@@ -71,7 +77,7 @@ const STUDY: CaseStudy = {
   reels: REELS.map((vimeoUrl, i) => ({
     vimeoUrl,
     aspectRatio: '9:16',
-    poster: '/reels/jokadent-reel.jpg',
+    poster: HAVE_LOCAL_REEL ? '/reels/jokadent-reel.jpg' : undefined,
     // the second one is long on purpose: a title has to share its row with
     // the seconds, and this is what shows whether it wraps, clips or shoves
     caption: [

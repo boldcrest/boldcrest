@@ -149,6 +149,10 @@ export default function ReelsFeed({
     if (bouncing.current || !stopped) return
     bouncing.current = true
     setEdge(down ? 'end' : 'top')
+    // the answer and the standing hint share one spot on a phone: a push is
+    // the visitor already scrolling, so the hint has nothing left to say and
+    // goes for good rather than sitting under LAST VIDEO
+    setHint(false)
     // On a phone with letterbox bars the line has somewhere to appear without
     // the reel moving at all — and moving it was the wrong answer there: the
     // reel slid up under a bar that shrank to 33px while the other grew to
@@ -331,9 +335,13 @@ export default function ReelsFeed({
     const alone = reels.length <= 1
     return (
       <span
-        className={`flex items-center gap-2 text-[0.8rem] uppercase tracking-[0.2em] text-white/55 transition-opacity duration-[600ms] ${
-          hint && !alone ? 'opacity-100' : 'opacity-0'
-        }`}
+        // The slow fade is for going of its own accord. When an answer takes
+        // the cell it shares on a phone, the hint has to be gone at once —
+        // 600ms of it dissolving under LAST VIDEO read as the two smeared
+        // together.
+        className={`flex items-center gap-2 text-[0.8rem] uppercase tracking-[0.2em] text-white/55 transition-opacity ${
+          edge ? 'duration-0' : 'duration-[600ms]'
+        } ${hint && !alone ? 'opacity-100' : 'opacity-0'}`}
       >
         {onLast ? (
           <>
