@@ -98,6 +98,10 @@ type Media = {
  * which still counts as a press inside its frame and plays with sound. The
  * rest of its interface is switched off too, in case a setting brings it back.
  */
+/** A clip served as a file rather than through Vimeo — a path on this site or
+ *  a plain video URL. The same player, driven through a <video> element. */
+const isFile = (url: string) => /^\/(?!\/)|\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url)
+
 const vimeoSrc = (url: string) => {
   // The privacy hash is part of the address for an unlisted video — drop it and
   // the player simply refuses. Reels are uploaded "Hide from Vimeo" with
@@ -201,6 +205,7 @@ export default function ReelPlayer({
 }) {
   const t = useTranslations('CaseStudy')
   const frame = useRef<HTMLIFrameElement>(null)
+  const clip = useRef<HTMLVideoElement>(null)
   const media = useRef<Media | null>(null)
   const track = useRef<HTMLSpanElement>(null)
   const box = useRef<HTMLDivElement>(null)
@@ -278,9 +283,101 @@ export default function ReelPlayer({
   // inside it; our own buttons (the keyboard, a replay) drive it from outside,
   // muted if the browser refuses sound that way.
   useEffect(() => {
-    const el = frame.current
-    if (!mounted || !el) return
+    if (!mounted) return
     let cancelled = false
+
+    // The same transport over a <video> element. It answers at once and
+    // never from another window, so none of the waiting the Vimeo branch does
+    // is needed here — but the play/timeupdate handling is the same, so the
+    // feed's resume and the neighbour nudge behave identically on both.
+    const v = clip.current
+    if (isFile(vimeoUrl) && v) {
+      const syncMuted = () => setMuted(v.muted || v.volume === 0)
+      media.current = {
+        play: () => {
+          void v.play().catch(() => {
+            // sound refused without a gesture on this reel: the way a feed
+            // behaves once you scroll past the one you tapped
+            if (cancelled || !wantsPlay.current) return
+            v.muted = true
+            setMuted(true)
+            void v.play().catch(() => {})
+          })
+        },
+        pause: () => v.pause(),
+        seek: (s) => {
+          v.currentTime = s
+          return Promise.resolve()
+        },
+        setMuted: (m) => {
+          v.muted = m
+          syncMuted()
+        },
+        paused: () => v.paused,
+        fullscreen: () => {
+          // iOS gives a <video> its own full screen and nothing else
+          const w = v as HTMLVideoElement & { webkitEnterFullscreen?: () => void }
+          if (v.requestFullscreen) return v.requestFullscreen()
+          if (w.webkitEnterFullscreen) {
+            w.webkitEnterFullscreen()
+            return Promise.resolve()
+          }
+          return Promise.reject(new Error('no full screen'))
+        },
+      }
+      const onMeta = () => {
+        setReady(true)
+        if (v.duration) setDuration(v.duration)
+      }
+      const onPlay = () => {
+        if (priming.current || !claimed.current) return
+        onPlayRef.current()
+        syncMuted()
+        setLoading(false)
+        setStarted(true)
+        setEnded(false)
+        setPlaying(true)
+      }
+      const onPause = () => setPlaying(false)
+      const onTime = () => {
+        if (v.duration) setDuration(v.duration)
+        const target = resumeTarget.current
+        if (target !== null) {
+          if (v.currentTime >= target - 1) resumeTarget.current = null
+          else if (v.currentTime < 2 && resumeTries.current < 4) {
+            resumeTries.current += 1
+            v.currentTime = target
+            return
+          } else resumeTarget.current = null
+        }
+        setTime(v.currentTime)
+      }
+      const onEnded = () => {
+        setPlaying(false)
+        setEnded(true)
+      }
+      v.addEventListener('loadedmetadata', onMeta)
+      v.addEventListener('play', onPlay)
+      v.addEventListener('pause', onPause)
+      v.addEventListener('timeupdate', onTime)
+      v.addEventListener('ended', onEnded)
+      v.addEventListener('volumechange', syncMuted)
+      if (v.readyState >= 1) onMeta()
+      return () => {
+        cancelled = true
+        setReady(false)
+        v.removeEventListener('loadedmetadata', onMeta)
+        v.removeEventListener('play', onPlay)
+        v.removeEventListener('pause', onPause)
+        v.removeEventListener('timeupdate', onTime)
+        v.removeEventListener('ended', onEnded)
+        v.removeEventListener('volumechange', syncMuted)
+        media.current = null
+      }
+    }
+
+    const el = frame.current
+    if (!el) return
     let player: import('@vimeo/player').default | null = null
     let isPaused = true
     void import('@vimeo/player').then(({ default: Player }) => {
@@ -413,7 +510,7 @@ export default function ReelPlayer({
       void player?.destroy().catch(() => {})
       media.current = null
     }
-  }, [mounted])
+  }, [mounted, vimeoUrl])
 
   // grown over the page: Escape shrinks it back, the page does not scroll
   // under it, and the two things round the reel that would hold a fixed box
@@ -656,7 +753,24 @@ export default function ReelPlayer({
               the playing video under a plain rounded overflow shimmered along
               the curve */}
           <div className={`absolute inset-0 overflow-hidden ${full && !fill ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}>
-            {mounted && (
+            {mounted && isFile(vimeoUrl) && (
+              <video
+                ref={clip}
+                src={vimeoUrl}
+                playsInline
+                preload="metadata"
+                aria-label={caption || t('reels')}
+                // the same footprint and the same say over taps as the iframe
+                className={`absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] border-0 object-contain ${
+                  showControls || (!inFeed && onExpand)
+                    ? 'pointer-events-none'
+                    : mouse
+                      ? 'pointer-events-none opacity-0'
+                      : 'z-30 cursor-pointer opacity-0'
+                }`}
+              />
+            )}
+            {mounted && !isFile(vimeoUrl) && (
               <iframe
                 ref={frame}
                 src={vimeoSrc(vimeoUrl)}

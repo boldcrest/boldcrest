@@ -14,17 +14,12 @@ export const metadata: Metadata = {
 }
 
 
-const REELS = [
-  // SanFest's 34s reel (1080x1440, the tallest clip in the portfolio) stands
-  // in first, so the full-screen player can be judged on a real tall frame:
-  // the placeholder clips below are 1:1 and sit letterboxed inside 9:16.
-  'https://vimeo.com/1228749430',
-  'https://vimeo.com/903992289',
-  'https://vimeo.com/903992305',
-  'https://vimeo.com/903992326',
-  'https://vimeo.com/903992370',
-  'https://vimeo.com/903992425',
-]
+// A real 9:16 reel (720x1280, 52s), four times over so the feed can be walked
+// first / middle / last on a true reel. Served as a file from /public/reels —
+// which is gitignored: it is patient footage and the repo is public. On a
+// deploy this would be a Vimeo address like everything else.
+const JOKADENT_REEL = '/reels/jokadent-reel.mp4'
+const REELS = [JOKADENT_REEL, JOKADENT_REEL, JOKADENT_REEL, JOKADENT_REEL]
 
 const FEED_REFS = [
   'image-06326fe2d03e0b8cb17f06bf38717214f99d58d7-2918x2917-png',
@@ -76,7 +71,8 @@ const STUDY: CaseStudy = {
   reels: REELS.map((vimeoUrl, i) => ({
     vimeoUrl,
     aspectRatio: '9:16',
-    caption: ['SanFest reel', '7:40 queue', 'The second coffee', 'Steam', 'Hands', 'Closing'][i],
+    poster: '/reels/jokadent-reel.jpg',
+    caption: ['Marian, Lombardia', 'Second', 'Third', 'Fourth'][i],
   })),
   feed: FEED_REFS.map((ref, i) => ({
     _key: String(i),

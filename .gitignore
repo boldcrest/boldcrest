@@ -56,3 +56,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+
+# local test clips — never committed (patient footage, public repo); the real ones live on Vimeo
+public/reels/

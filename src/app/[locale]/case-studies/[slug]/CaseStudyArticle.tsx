@@ -46,7 +46,8 @@ export default async function CaseStudyArticle({
   const reels = await Promise.all(
     (study.reels ?? []).map(async (reel) => {
       const meta = await getVimeoMeta(reel.vimeoUrl)
-      return { ...reel, poster: meta.poster, aspect: meta.aspect }
+      // a clip served as a file has no Vimeo cover to fetch; it brings its own
+      return { ...reel, poster: meta.poster ?? reel.poster ?? null, aspect: meta.aspect }
     }),
   )
 

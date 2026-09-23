@@ -127,6 +127,8 @@ export function proxy(req: NextRequest) {
 export const config = {
   // Run on page requests but skip Next internals and static assets.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpe?g|gif|svg|webp|ico|txt|xml|webmanifest|woff2?|ttf|otf)$).*)',
+    // video too: a clip under /public was being routed as a page and 404ing
+    // while the poster beside it served fine
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpe?g|gif|svg|webp|ico|txt|xml|webmanifest|woff2?|ttf|otf|mp4|webm|mov|m4v)$).*)',
   ],
 }
