@@ -331,7 +331,12 @@ export default function ReelPlayer({
     const html = document.documentElement
     const saved = { overflow: html.style.overflow, z: card?.style.zIndex ?? '' }
     html.style.overflow = 'hidden'
-    if (card) card.style.zIndex = '200'
+    // 1800: over the header (999 / 1002) so the reel covers the floating menu,
+    // and under the start-a-project overlay (1900) so that still wins if it is
+    // opened. The card is `relative`, so giving it a z-index makes it a
+    // stacking context — the fixed reel inside can only rise as far as the
+    // card's own slot, which is why this is set here and not on the reel.
+    if (card) card.style.zIndex = '1800'
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setExpanded(false)
     document.addEventListener('keydown', onKey)
     return () => {
@@ -428,7 +433,11 @@ export default function ReelPlayer({
             stays in the tree, so the player never reloads. */}
         {expanded && (
           <div aria-hidden className="absolute inset-0" onClick={() => setExpanded(false)}>
-            <div className="absolute inset-0 bg-black/90 [-webkit-backdrop-filter:blur(6px)_grayscale(1)_brightness(0.4)] [backdrop-filter:blur(6px)_grayscale(1)_brightness(0.4)]" />
+            {/* The same dim and blur the start-a-project panel puts over the
+                site, so both overlays treat the page the same way: bg-black/40
+                with a 6px blur, and the blur only where it is cheap — a fine
+                pointer, or a screen big enough that it is not a phone. */}
+            <div className="absolute inset-0 bg-black/40 [@media(min-width:700px)_and_(min-height:700px)]:backdrop-blur-[6px] [@media(pointer:fine)]:backdrop-blur-[6px]" />
           </div>
         )}
         {full && !expanded && poster && (
@@ -456,7 +465,17 @@ export default function ReelPlayer({
               type="button"
               onClick={() => (expanded ? setExpanded(false) : void document.exitFullscreen())}
               aria-label={t('exitFullscreen')}
-              className="absolute right-3 top-3 z-40 flex size-12 items-center justify-center rounded-full border border-white bg-white text-black transition hover:bg-transparent hover:text-white sm:left-full sm:right-auto sm:top-0 sm:ml-4"
+              // Same frosted treatment as the play button and the header CTA.
+              className="group/x absolute right-3 top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)] sm:left-full sm:right-auto sm:top-0 sm:ml-4"
+              style={{
+                borderRadius: 'var(--radius-pill)',
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: 'rgba(255,255,255,0.45)',
+                backgroundColor: 'rgba(10,10,10,0.72)',
+                backdropFilter: 'blur(24px) saturate(1.5)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+              }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
                 <path d="M6 6l12 12M18 6 6 18" />
