@@ -193,8 +193,14 @@ export default function ReelsFeed({
           setPull(0)
           setEdge(null)
         }}
-        style={{ transform: `translate3d(0, ${-pull}px, 0)` }}
-        className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain transition-transform duration-200 ease-out [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{
+          transform: `translate3d(0, ${-pull}px, 0)`,
+          // Going out, the reels follow the gesture and want damping. Coming
+          // back there is no gesture left to follow, so the same 200ms read as
+          // the feed taking its time about it.
+          transitionDuration: pull === 0 ? '130ms' : '200ms',
+        }}
+        className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain transition-transform ease-out [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {reels.map((reel, i) => (
           <div
@@ -256,7 +262,7 @@ export default function ReelsFeed({
       >
         {/* only while the visitor is asking for something above the first reel */}
         <span
-          className={`text-[0.7rem] uppercase tracking-[0.2em] text-white transition-opacity duration-200 ${
+          className={`text-[1rem] uppercase tracking-[0.2em] text-white transition-opacity duration-200 ${
             edge === 'top' ? 'opacity-100' : 'opacity-0'
           }`}
         >
@@ -268,8 +274,8 @@ export default function ReelsFeed({
         style={{ height: GAP }}
       >
         <span
-          className={`flex items-center gap-2 text-[0.7rem] uppercase tracking-[0.2em] transition-colors duration-200 ${
-            edge === 'end' ? 'text-white' : 'text-white/55'
+          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-colors duration-200 ${
+            edge === 'end' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
           }`}
         >
           {edge === 'end' ? (
