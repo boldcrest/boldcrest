@@ -12,10 +12,6 @@ export interface Reel {
    *  box until the player is touched, and the whole rail reads as empty on
    *  first scroll — the site never shows a bare video box. */
   poster?: string | null
-  /** Width over height, read from Vimeo alongside the poster. A reel is meant
-   *  to be 9:16, but a clip that is not (SanFest's is 3:4) must still fill the
-   *  screen rather than sit letterboxed in a 9:16 player. */
-  aspect?: number | null
 }
 
 interface ReelsCarouselProps {
@@ -103,7 +99,6 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
             <ReelPlayer
               vimeoUrl={reel.vimeoUrl as string}
               poster={reel.poster}
-              aspect={reel.aspect}
               caption={reel.caption}
               active={active === i}
               onPlay={() => setActive(i)}

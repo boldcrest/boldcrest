@@ -110,6 +110,9 @@ export default function ReelsFeed({
    *  more: the line, with the same room above it as below. */
   const MAX_PULL = 52
   const LIFT_NARROW = 40
+  /** The bar above or below a 9:16 reel on this screen, and never less than
+   *  the give. */
+  const STRIP_NARROW = `max(${LIFT_NARROW}px, calc((100% - min(100%, 100vw * 16 / 9)) / 2))`
 
   /** A gesture the feed cannot act on because there is nothing that way.
    *
@@ -391,23 +394,23 @@ export default function ReelsFeed({
           mark centred in it, so matching the button's own left edge left the
           line 10px to the left of the triangle above it. */}
       {narrow && (
-        // A strip at each end, exactly as tall as the give, on the player's own
-        // ground: the reel moving off it must read as the player opening a
-        // strip, not as the page behind showing through the gap — which it
-        // did, blurred, with the rail's captions in it. Pushing down at the
-        // first reel uncovers the top one, pushing up at the last uncovers the
-        // bottom one. Each line is centred in its strip, so it has the same
-        // room above it as below, and both sit on the play button's own left.
+        // A strip at each end, on the player's own ground. Where the screen is
+        // taller than 9:16 the strip IS the bar above or below the reel, and
+        // the line is centred in it; on a screen with no bars it is exactly as
+        // tall as the give, and the reel moving off it uncovers it. Either way
+        // it reads as the player's, never as the page behind showing through
+        // — which it did once, blurred, with the rail's captions in it. Each
+        // line has the same room above it as below, on the play button's left.
         <>
           <div
             className="pointer-events-none absolute inset-x-0 top-0 z-0 flex items-center bg-bg pl-[1.375rem]"
-            style={{ height: LIFT_NARROW }}
+            style={{ height: STRIP_NARROW }}
           >
             {answer('top')}
           </div>
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex items-center bg-bg pl-[1.375rem]"
-            style={{ height: LIFT_NARROW }}
+            style={{ height: STRIP_NARROW }}
           >
             {answer('end')}
           </div>
@@ -458,33 +461,40 @@ export default function ReelsFeed({
               if (e.target === e.currentTarget) onClose()
             }}
             className={`relative flex h-full snap-start snap-always items-center justify-center ${
-              narrow ? '' : 'px-[var(--gutter)] py-[3.25rem]'
+              // On a phone the reel is 9:16 at the full width and whatever the
+              // screen has left over is bars, above and below, on the player's
+              // own ground — the way a video player letterboxes, rather than
+              // the page showing through round a picture.
+              narrow ? 'bg-bg' : 'px-[var(--gutter)] py-[3.25rem]'
             }`}
           >
             <div
               className={
-                narrow ? 'h-full w-full' : 'h-full max-h-[min(100%,960px)] w-auto max-w-full'
+                narrow
+                  ? // full height, and centring the frame in it: the frame is
+                    // shorter than the screen, and the bars must be even
+                    'flex h-full w-full items-center justify-center'
+                  : 'h-full max-h-[min(100%,960px)] w-auto max-w-full'
               }
             >
-              {/* On a phone the reel IS the screen, so the frame takes all of
-                  it and the player crops to cover. Anywhere else it is a 9:16
-                  frame, as tall as the screen allows but no wider than it is —
-                  height alone gave a 398px reel on a 375px phone, cropped
-                  either side, and with the height definite and an aspect ratio
-                  set, max-width cannot claw it back, so the width limit has to
-                  be folded into the height itself. */}
+              {/* A 9:16 frame, as tall as the screen allows but no wider than
+                  it is — height alone gave a 398px reel on a 375px phone,
+                  cropped either side, and with the height definite and an
+                  aspect ratio set, max-width cannot claw it back, so the width
+                  limit has to be folded into the height itself. On a phone
+                  there is no gutter, so the frame runs edge to edge and the
+                  screen's extra height falls into bars above and below. A clip
+                  that is not 9:16 itself (SanFest's is 3:4) sits letterboxed
+                  INSIDE the frame: the reel keeps its shape, the clip keeps
+                  its own, and nothing is cropped. */}
               <div
-                className={narrow ? 'relative h-full w-full' : 'relative mx-auto'}
-                style={
-                  narrow
-                    ? undefined
-                    : {
-                        // the clip's own shape, so a 3:4 clip gets a 3:4 frame
-                        // rather than bars inside a 9:16 one
-                        aspectRatio: String(reel.aspect || 9 / 16),
-                        height: `min(100%, calc((100vw - 2 * var(--gutter)) / ${reel.aspect || 9 / 16}))`,
-                      }
-                }
+                className="relative mx-auto"
+                style={{
+                  aspectRatio: '9 / 16',
+                  height: narrow
+                    ? 'min(100%, calc(100vw * 16 / 9))'
+                    : 'min(100%, calc((100vw - 2 * var(--gutter)) * 16 / 9))',
+                }}
               >
                 {/* On a phone the line lives in the picture's top-left corner,
                     over the player but clear of its close button on the right.
@@ -508,7 +518,6 @@ export default function ReelsFeed({
                 <ReelPlayer
                   vimeoUrl={reel.vimeoUrl as string}
                   poster={reel.poster}
-                  aspect={reel.aspect}
                   caption={reel.caption}
                   active={current === i}
                   autoPlay

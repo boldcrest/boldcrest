@@ -160,7 +160,6 @@ export default function ReelPlayer({
   preload = false,
   suspend = false,
   fill = false,
-  aspect,
   lastSeen = false,
 }: {
   vimeoUrl: string
@@ -191,13 +190,9 @@ export default function ReelPlayer({
   /** The reel this visitor opened last. Marked on the rail so they can find
    *  their way back to it. */
   lastSeen?: boolean
-  /** The clip's width over height, from Vimeo. Only the cover in `fill` needs
-   *  it: a player sized for 9:16 letterboxes a clip of any other shape inside
-   *  itself, bars and all. Falls back to 9:16, which is what a reel should be. */
-  aspect?: number | null
-  /** Fill whatever it is given rather than holding 9:16, cropping the video to
-   *  cover it. The feed uses this on a phone, where a reel is the whole screen
-   *  and a 9:16 box would sit in the middle of it with bars either side. */
+  /** The phone's full-screen dress: no card edge, no rounding, the close mark
+   *  bare and lined up with the seconds. The frame is still 9:16 — the feed
+   *  sizes it — and the clip is not cropped. */
   fill?: boolean
   /** Build the player now, before this reel is on screen. The feed does this
    *  for the neighbours either side, so arriving on one starts it instead of
@@ -589,7 +584,7 @@ export default function ReelPlayer({
 
   return (
     // the reel's place in the rail, kept while it is grown over the page
-    <div className={`relative w-full ${fill ? 'h-full' : 'aspect-[9/16]'}`}>
+    <div className="relative aspect-[9/16] w-full">
       <div
         ref={box}
         className={
@@ -681,34 +676,13 @@ export default function ReelPlayer({
                 // there opens the feed, and a tap that lands inside the player
                 // is a tap we have given away — on a phone that is what handed
                 // the reel to the browser's own video player.
-                className={`absolute border-0 ${
-                  fill ? 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2' : '-inset-px h-[calc(100%+2px)] w-[calc(100%+2px)]'
-                } ${
+                className={`absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] border-0 ${
                   showControls || (!inFeed && onExpand)
                     ? 'pointer-events-none'
                     : mouse
                       ? 'pointer-events-none opacity-0'
                       : 'z-30 cursor-pointer opacity-0'
                 }`}
-                // Cover, not contain: whichever way the screen is out of 9:16,
-                // the reel grows past it on that axis and is cropped, so there
-                // is never a bar. The overlay is the screen, so the screen's
-                // own units are the container's measurements.
-                style={
-                  fill
-                    ? {
-                        // Tall enough to cover the box, and as wide as the
-                        // clip's own shape makes it — the ratio does the width,
-                        // so no percentage has to cross from one axis to the
-                        // other. The clip's REAL ratio, not 9:16: sized for
-                        // 9:16, Vimeo letterboxed a 3:4 clip inside the player
-                        // and the bars came with it.
-                        height: `max(100%, calc(100vw / ${aspect || 9 / 16}))`,
-                        width: 'auto',
-                        aspectRatio: String(aspect || 9 / 16),
-                      }
-                    : undefined
-                }
               />
             )}
 
