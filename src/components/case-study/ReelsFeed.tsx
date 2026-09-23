@@ -18,18 +18,39 @@ export default function ReelsFeed({
   reels,
   startAt,
   resumeFrom,
+  standby = false,
   onClose,
 }: {
   reels: Reel[]
   startAt: number
   /** how far the rail card had played the reel this opened on */
   resumeFrom?: number
+  /** Up but not shown: the rail card is grown over the page and still playing,
+   *  and this is waiting behind it with the neighbouring reels primed so the
+   *  first scroll lands on a frame instead of a load. Nothing plays yet. */
+  standby?: boolean
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
   const scroller = useRef<HTMLDivElement>(null)
   const slides = useRef<(HTMLDivElement | null)[]>([])
-  const [current, setCurrent] = useState(startAt)
+  // Nothing plays while on standby — the reel the visitor is watching is the
+  // grown card in front of us, not one of these.
+  const [current, setCurrent] = useState(standby ? -1 : startAt)
+  // The reveal decides which reel plays, not the observer. Coming off standby
+  // the slides are still being scrolled into place, and the observer fired for
+  // whichever one it passed on the way — leaving the feed showing one reel and
+  // playing another. It is ignored until the scroll has settled.
+  const settling = useRef(false)
+  useEffect(() => {
+    if (standby) return
+    settling.current = true
+    setCurrent(startAt)
+    const id = window.setTimeout(() => {
+      settling.current = false
+    }, 500)
+    return () => window.clearTimeout(id)
+  }, [standby, startAt])
 
   // Escape closes, and the page underneath does not scroll while this is up.
   //
@@ -46,6 +67,7 @@ export default function ReelsFeed({
   // and deliberately not the position:fixed-body trick, which suppresses iOS
   // Safari's visualViewport keyboard resize).
   useEffect(() => {
+    if (standby) return
     const body = document.body
     const prevOverflow = body.style.overflow
     const prevOverscroll = body.style.overscrollBehavior
@@ -60,7 +82,7 @@ export default function ReelsFeed({
       body.style.overscrollBehavior = prevOverscroll
       document.removeEventListener('keydown', onKey)
     }
-  }, [onClose])
+  }, [onClose, standby])
 
   // Open on the reel that was tapped, without animating through the ones above
   // it — `instant`, before the observer below is wired.
@@ -80,7 +102,7 @@ export default function ReelsFeed({
         for (const e of entries) {
           if (e.isIntersecting && e.intersectionRatio > 0.6) {
             const i = slides.current.indexOf(e.target as HTMLDivElement)
-            if (i >= 0) setCurrent(i)
+            if (i >= 0 && !standby && !settling.current) setCurrent(i)
           }
         }
       },
@@ -88,10 +110,15 @@ export default function ReelsFeed({
     )
     for (const el of slides.current) if (el) io.observe(el)
     return () => io.disconnect()
-  }, [reels.length])
+  }, [reels.length, standby])
 
   return (
-    <div className="fixed inset-0 z-[1800]" role="dialog" aria-modal="true">
+    <div
+      className={`fixed inset-0 z-[1800] ${standby ? 'pointer-events-none opacity-0' : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-hidden={standby || undefined}
+    >
       {/* the same dim and blur start-a-project puts over the site */}
       <div
         aria-hidden
@@ -139,7 +166,13 @@ export default function ReelsFeed({
                   resumeFrom={i === startAt ? resumeFrom : undefined}
                   // the one either side is built ahead of time, so scrolling
                   // onto it starts the video rather than the cover
-                  preload={Math.abs(i - current) <= 1}
+                  preload={
+                    standby
+                      ? Math.abs(i - startAt) === 1
+                      : Math.abs(i - current) <= 1
+                  }
+                  // the reel being watched is the grown rail card, not this
+                  suspend={standby && i === startAt}
                 />
               </div>
             </div>

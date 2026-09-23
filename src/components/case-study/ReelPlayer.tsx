@@ -154,8 +154,10 @@ export default function ReelPlayer({
   inFeed = false,
   autoPlay = false,
   onClose,
+  onHandoff,
   resumeFrom,
   preload = false,
+  suspend = false,
   lastSeen = false,
 }: {
   vimeoUrl: string
@@ -163,10 +165,13 @@ export default function ReelPlayer({
   caption?: string
   active: boolean
   onPlay: () => void
-  /** Given by the rail: the full-screen button opens the reels feed instead of
-   *  growing this one reel over the page. Without it the player expands itself,
-   *  which is what a reel outside a feed should do. */
+  /** Given by the rail: this reel is going full screen. It still grows ITSELF
+   *  over the page — the same element, so nothing reloads and playback carries
+   *  straight on — and this tells the rail to bring the feed up behind it,
+   *  ready for the first scroll. */
   onExpand?: (atSeconds: number) => void
+  /** The first scroll while grown: hand over to the feed, in this direction. */
+  onHandoff?: (direction: 1 | -1) => void
   /** Inside the feed: it is already full screen, so no full-screen button. */
   inFeed?: boolean
   /** Inside the feed: this is the slide in view, so it should be playing. */
@@ -177,6 +182,11 @@ export default function ReelPlayer({
   /** Inside the feed: carry on from where the rail card had got to, instead of
    *  restarting. */
   resumeFrom?: number
+  /** Do not build a player at all. The feed uses this for the reel that is
+   *  currently grown over the page as a rail card: it is already loaded there,
+   *  and the observer would otherwise mount a second copy of the same clip
+   *  because the hidden slide is still laid out. */
+  suspend?: boolean
   /** The reel this visitor opened last. Marked on the rail so they can find
    *  their way back to it. */
   lastSeen?: boolean
@@ -213,6 +223,9 @@ export default function ReelPlayer({
   // happens the player fires 'play', which must NOT make this the reel in view
   const priming = useRef(false)
   const [primed, setPrimed] = useState(false)
+  // the grown reel hands over to the feed once, on the first gesture
+  const handedOff = useRef(false)
+  const touchY = useRef<number | null>(null)
 
   // The player is put on the page once the reel comes near the screen,
   // invisible over the cover, so the first tap lands inside the player. A
@@ -221,7 +234,7 @@ export default function ReelPlayer({
   // at all until a second press.
   const [inView, setInView] = useState(false)
   // the feed asks for neighbours up front; otherwise the observer decides
-  const mounted = inView || preload
+  const mounted = !suspend && (inView || preload)
   const onPlayRef = useRef(onPlay)
   useEffect(() => {
     onPlayRef.current = onPlay
@@ -514,6 +527,34 @@ export default function ReelPlayer({
     <div className="relative aspect-[9/16] w-full">
       <div
         ref={box}
+        // While grown, the first real scroll (or swipe) leaves this reel for the
+        // next one, which the feed behind us has had time to prime. One gesture
+        // only — `handedOff` — or a trackpad's momentum fires it repeatedly.
+        onWheel={
+          expanded && onHandoff
+            ? (e) => {
+                if (handedOff.current || Math.abs(e.deltaY) < 12) return
+                handedOff.current = true
+                setExpanded(false)
+                onHandoff(e.deltaY > 0 ? 1 : -1)
+              }
+            : undefined
+        }
+        onTouchStart={
+          expanded && onHandoff ? (e) => { touchY.current = e.touches[0].clientY } : undefined
+        }
+        onTouchMove={
+          expanded && onHandoff
+            ? (e) => {
+                if (handedOff.current || touchY.current === null) return
+                const dy = touchY.current - e.touches[0].clientY
+                if (Math.abs(dy) < 40) return
+                handedOff.current = true
+                setExpanded(false)
+                onHandoff(dy > 0 ? 1 : -1)
+              }
+            : undefined
+        }
         className={
           expanded
             ? 'group fixed inset-0 z-[200]'
@@ -765,8 +806,11 @@ export default function ReelPlayer({
                       // it asks the player for its own full screen, the only
                       // one iOS gives a video.
                       if (onExpand) {
-                        // hand the playhead over so the feed carries on rather
-                        // than starting the reel again
+                        // Grow THIS player over the page rather than building a
+                        // new one in the feed: same element, so the reel never
+                        // reloads and does not stutter. The rail brings the feed
+                        // up behind us, primed, for the first scroll.
+                        setExpanded(true)
                         onExpand(time)
                         return
                       }

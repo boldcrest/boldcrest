@@ -35,7 +35,14 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
   const [active, setActive] = useState<number | null>(null)
   // the full-screen feed: which reel it opened on, and how far that reel had
   // already played, so it carries on instead of starting again
-  const [feed, setFeed] = useState<{ index: number; at: number } | null>(null)
+  // The full screen happens in two stages. First the rail card grows itself
+  // over the page (same element, so the reel never reloads) and the feed comes
+  // up BEHIND it on standby, priming the reels either side. Then the first
+  // scroll reveals the feed at the next reel — which by then has a frame ready
+  // — and the grown card collapses. The load never lands where the eye is.
+  const [feed, setFeed] = useState<{ index: number; at: number; standby: boolean } | null>(
+    null,
+  )
   // the reel they opened last — kept after the feed closes so the rail shows
   // where they got to
   const [lastSeen, setLastSeen] = useState<number | null>(null)
@@ -103,12 +110,19 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
               active={active === i}
               onPlay={() => setActive(i)}
               lastSeen={lastSeen === i}
+              onHandoff={(dir) => {
+                const next = Math.min(items.length - 1, Math.max(0, i + dir))
+                // the card has collapsed itself; stop it and show the feed on
+                // the reel the visitor scrolled towards
+                setActive(null)
+                setFeed({ index: next, at: 0, standby: false })
+              }}
               onExpand={(at) => {
                 // stop the card behind before the feed takes over, or both
                 // players are running and you hear two of them
-                setActive(null)
+                // the card keeps playing, grown over the page; the feed waits
                 setLastSeen(i)
-                setFeed({ index: i, at })
+                setFeed({ index: i, at, standby: true })
               }}
             />
             {reel.caption && (
@@ -123,6 +137,7 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
           reels={items}
           startAt={feed.index}
           resumeFrom={feed.at}
+          standby={feed.standby}
           onClose={() => {
             setFeed(null)
             // nothing in the rail resumes on its own when the feed closes
