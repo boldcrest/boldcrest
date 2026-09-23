@@ -232,6 +232,12 @@ export default function ReelPlayer({
   // from the slide in view and sent it back to 0:00. Only a press, a tap
   // inside the frame, or the feed arriving on this slide sets this.
   const claimed = useRef(false)
+  // Whether this reel is MEANT to be playing. The player's own paused flag
+  // cannot answer that: it trails the real player by however long Vimeo takes
+  // to answer, and a nudged neighbour leaves it reading "playing" when nothing
+  // has started. Intent is written down here and acted on, rather than read
+  // back off the player.
+  const wantsPlay = useRef(false)
   const [primed, setPrimed] = useState(false)
 
   // The player is put on the page once the reel comes near the screen,
@@ -295,7 +301,9 @@ export default function ReelPlayer({
                     void p
                       .getPaused()
                       .then((still) => {
-                        if (still && !cancelled) {
+                        // it may have been scrolled past in the meantime, and
+                        // the retry would start it again behind the visitor
+                        if (still && !cancelled && wantsPlay.current) {
                           setMuted(true)
                           void p
                             .setMuted(true)
@@ -381,6 +389,7 @@ export default function ReelPlayer({
       window.clearTimeout(waiting)
       window.clearTimeout(giveUp)
       claimed.current = true
+      wantsPlay.current = true
       waiting = window.setTimeout(() => {
         const m = media.current
         if (!cancelled && m?.paused()) m.play()
@@ -432,6 +441,7 @@ export default function ReelPlayer({
   useEffect(() => {
     if (active) return
     const m = media.current
+    wantsPlay.current = false
     m?.pause()
     m?.seek(0)
     const id = requestAnimationFrame(() => {
@@ -467,6 +477,7 @@ export default function ReelPlayer({
     if (!m) return
     let cancelled = false
     priming.current = true
+    wantsPlay.current = false
     m.setMuted(true)
     m.play()
     const id = window.setTimeout(() => {
@@ -493,6 +504,15 @@ export default function ReelPlayer({
     const m = media.current
     if (!m) return
     claimed.current = true
+    wantsPlay.current = true
+    // Stated, not asked for. A slide in view is playing as far as the page is
+    // concerned, so its transport is up from the first frame rather than
+    // waiting on a 'play' event that may never come: the reel can already be
+    // running from its neighbour nudge, and Vimeo then has nothing new to
+    // report. 'pause' and 'ended' still correct this if it turns out wrong.
+    setStarted(true)
+    setEnded(false)
+    setPlaying(true)
     // The reel this feed was opened from carries on where the card left off.
     // One seek is not enough: asked for before playback has really begun, Vimeo
     // takes it and then starts from the top anyway — measured, a card at 0:13
@@ -505,17 +525,16 @@ export default function ReelPlayer({
       resumeTarget.current = resumeFrom
       resumeTries.current = 0
       setTime(resumeFrom)
-      void m.seek(resumeFrom).then(() => {
-        if (m.paused()) m.play()
-      })
+      void m.seek(resumeFrom).then(() => m.play())
       return
     }
-    if (m.paused()) m.play()
+    m.play()
   }, [autoPlay, ready, active, resumeFrom])
 
   const play = () => {
     const m = media.current
     claimed.current = true
+    wantsPlay.current = true
     onPlay()
     setEnded(false)
     if (!started) {
@@ -530,7 +549,10 @@ export default function ReelPlayer({
   const toggle = () => {
     const m = media.current
     if (!m || m.paused() || ended || !started) play()
-    else m.pause()
+    else {
+      wantsPlay.current = false
+      m.pause()
+    }
   }
 
   const seek = (clientX: number) => {

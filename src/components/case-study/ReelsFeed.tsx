@@ -120,6 +120,7 @@ export default function ReelsFeed({
         // which is how the chat body scrolls inside the start-a-project panel.
         // Without it this scroller gets nothing and the page moves instead.
         data-lenis-prevent
+        data-current={current}
         className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {reels.map((reel, i) => (
@@ -147,7 +148,15 @@ export default function ReelsFeed({
                   active={current === i}
                   autoPlay
                   inFeed
-                  onPlay={() => setCurrent(i)}
+                  // Deliberately nothing. In the feed the slide on screen is
+                  // the one that plays, and the scroller decides which that is.
+                  // A player announcing itself cannot be trusted for this:
+                  // Vimeo emits 'play' whenever it gets round to it, often a
+                  // second or more after the reel was asked to start, by which
+                  // time the visitor has already scrolled on — and that stale
+                  // event dragged `current` back to the reel behind, leaving
+                  // the next one sitting at 0:00 under its cover.
+                  onPlay={() => {}}
                   onClose={onClose}
                   resumeFrom={i === startAt ? resumeFrom : undefined}
                   // the one either side is built ahead of time, so scrolling
