@@ -80,7 +80,9 @@ const subscribeMouse = (onChange: () => void) => {
 type Media = {
   play: () => void
   pause: () => void
-  seek: (seconds: number) => void
+  /** Resolves once the player is actually at that second, so a resume can
+   *  wait for the seek before it starts playing. */
+  seek: (seconds: number) => Promise<void>
   setMuted: (muted: boolean) => void
   paused: () => boolean
   /** the player's own full screen, where the page cannot take the reel there;
@@ -154,7 +156,6 @@ export default function ReelPlayer({
   inFeed = false,
   autoPlay = false,
   onClose,
-  onHandoff,
   resumeFrom,
   preload = false,
   suspend = false,
@@ -165,13 +166,12 @@ export default function ReelPlayer({
   caption?: string
   active: boolean
   onPlay: () => void
-  /** Given by the rail: this reel is going full screen. It still grows ITSELF
-   *  over the page — the same element, so nothing reloads and playback carries
-   *  straight on — and this tells the rail to bring the feed up behind it,
-   *  ready for the first scroll. */
+  /** Given by the rail: open this reel full screen, in the feed, from where it
+   *  has got to. Both the corner button and a double-click on a running reel
+   *  go through here, so full screen is the same thing however it is asked
+   *  for. Without it — a reel on its own, no feed around it — the player grows
+   *  itself over the page instead. */
   onExpand?: (atSeconds: number) => void
-  /** The first scroll while grown: hand over to the feed, in this direction. */
-  onHandoff?: (direction: 1 | -1) => void
   /** Inside the feed: it is already full screen, so no full-screen button. */
   inFeed?: boolean
   /** Inside the feed: this is the slide in view, so it should be playing. */
@@ -182,10 +182,9 @@ export default function ReelPlayer({
   /** Inside the feed: carry on from where the rail card had got to, instead of
    *  restarting. */
   resumeFrom?: number
-  /** Do not build a player at all. The feed uses this for the reel that is
-   *  currently grown over the page as a rail card: it is already loaded there,
-   *  and the observer would otherwise mount a second copy of the same clip
-   *  because the hidden slide is still laid out. */
+  /** Do not build a player at all, even in view. Kept for a slide that must
+   *  stay laid out without loading a second copy of a clip already playing
+   *  elsewhere. */
   suspend?: boolean
   /** The reel this visitor opened last. Marked on the rail so they can find
    *  their way back to it. */
@@ -222,10 +221,18 @@ export default function ReelPlayer({
   // the neighbour reels are nudged into showing their first frame; while that
   // happens the player fires 'play', which must NOT make this the reel in view
   const priming = useRef(false)
+  // Where a resumed reel must be. Vimeo will accept a seek made before it is
+  // really playing and then start from the top anyway, so the position is held
+  // against the player's own clock rather than asked for once and trusted.
+  const resumeTarget = useRef<number | null>(null)
+  const resumeTries = useRef(0)
+  // Playback this reel actually asked for. A nudged neighbour's 'play' can
+  // arrive long after the nudge is over — Vimeo answers when it answers — and
+  // was then taken for the visitor starting that reel, which stole the feed
+  // from the slide in view and sent it back to 0:00. Only a press, a tap
+  // inside the frame, or the feed arriving on this slide sets this.
+  const claimed = useRef(false)
   const [primed, setPrimed] = useState(false)
-  // the grown reel hands over to the feed once, on the first gesture
-  const handedOff = useRef(false)
-  const touchY = useRef<number | null>(null)
 
   // The player is put on the page once the reel comes near the screen,
   // invisible over the cover, so the first tap lands inside the player. A
@@ -304,7 +311,7 @@ export default function ReelPlayer({
             .catch(() => {})
         },
         pause: () => void p.pause().catch(() => {}),
-        seek: (s) => void p.setCurrentTime(s).catch(() => {}),
+        seek: (s) => p.setCurrentTime(s).then(() => {}).catch(() => {}),
         setMuted: (m) => {
           void p
             .setMuted(m)
@@ -324,7 +331,7 @@ export default function ReelPlayer({
       p.on('play', () => {
         isPaused = false
         // a priming play only exists to paint frame 0; it is not playback
-        if (priming.current) return
+        if (priming.current || !claimed.current) return
         // a tap inside the player started it: this reel becomes the one playing
         onPlayRef.current()
         syncMuted()
@@ -340,8 +347,20 @@ export default function ReelPlayer({
         setPlaying(false)
       })
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
-        setTime(d.seconds)
         if (d.duration) setDuration(d.duration)
+        const target = resumeTarget.current
+        if (target !== null) {
+          // near enough: the resume has taken, and the reel runs on untouched
+          if (d.seconds >= target - 1) resumeTarget.current = null
+          else if (d.seconds < 2 && resumeTries.current < 4) {
+            // it started from the top after all — put it back, and keep the
+            // transport where the visitor left it meanwhile
+            resumeTries.current += 1
+            void p.setCurrentTime(target).catch(() => {})
+            return
+          } else resumeTarget.current = null
+        }
+        setTime(d.seconds)
       })
       p.on('ended', () => {
         isPaused = true
@@ -361,6 +380,7 @@ export default function ReelPlayer({
       setLoading(true)
       window.clearTimeout(waiting)
       window.clearTimeout(giveUp)
+      claimed.current = true
       waiting = window.setTimeout(() => {
         const m = media.current
         if (!cancelled && m?.paused()) m.play()
@@ -472,17 +492,30 @@ export default function ReelPlayer({
     if (!autoPlay || !ready || !active) return
     const m = media.current
     if (!m) return
-    // the reel this feed was opened from carries on where the card left off
+    claimed.current = true
+    // The reel this feed was opened from carries on where the card left off.
+    // One seek is not enough: asked for before playback has really begun, Vimeo
+    // takes it and then starts from the top anyway — measured, a card at 0:13
+    // opened at 0:00 both when the seek was fired alongside play and when play
+    // waited for it. So the position is also held from `timeupdate` above,
+    // until the player's own clock agrees. The transport is moved straight away
+    // so it never flashes 0:00 in the meantime.
     if (!resumed.current && resumeFrom && resumeFrom > 0.5) {
       resumed.current = true
-      m.seek(resumeFrom)
+      resumeTarget.current = resumeFrom
+      resumeTries.current = 0
       setTime(resumeFrom)
+      void m.seek(resumeFrom).then(() => {
+        if (m.paused()) m.play()
+      })
+      return
     }
     if (m.paused()) m.play()
   }, [autoPlay, ready, active, resumeFrom])
 
   const play = () => {
     const m = media.current
+    claimed.current = true
     onPlay()
     setEnded(false)
     if (!started) {
@@ -527,34 +560,6 @@ export default function ReelPlayer({
     <div className="relative aspect-[9/16] w-full">
       <div
         ref={box}
-        // While grown, the first real scroll (or swipe) leaves this reel for the
-        // next one, which the feed behind us has had time to prime. One gesture
-        // only — `handedOff` — or a trackpad's momentum fires it repeatedly.
-        onWheel={
-          expanded && onHandoff
-            ? (e) => {
-                if (handedOff.current || Math.abs(e.deltaY) < 12) return
-                handedOff.current = true
-                setExpanded(false)
-                onHandoff(e.deltaY > 0 ? 1 : -1)
-              }
-            : undefined
-        }
-        onTouchStart={
-          expanded && onHandoff ? (e) => { touchY.current = e.touches[0].clientY } : undefined
-        }
-        onTouchMove={
-          expanded && onHandoff
-            ? (e) => {
-                if (handedOff.current || touchY.current === null) return
-                const dy = touchY.current - e.touches[0].clientY
-                if (Math.abs(dy) < 40) return
-                handedOff.current = true
-                setExpanded(false)
-                onHandoff(dy > 0 ? 1 : -1)
-              }
-            : undefined
-        }
         className={
           expanded
             ? 'group fixed inset-0 z-[200]'
@@ -703,10 +708,11 @@ export default function ReelPlayer({
             <button
               type="button"
               onClick={toggle}
-              // Double-click a running reel to open it full screen. The two
-              // single clicks that precede the double still fire, but they are
-              // a pause and a play, so they cancel out and the reel is handed
-              // over still running.
+              // Double-click a running reel to open it full screen — the
+              // same route as the corner button, so both land on the feed at
+              // the same second. The two single clicks that precede the double
+              // still fire, but they are a pause and a play, so they cancel
+              // out and the reel is still running when it is handed over.
               onDoubleClick={
                 !inFeed && onExpand
                   ? (e) => {
@@ -801,16 +807,13 @@ export default function ReelPlayer({
                     type="button"
                     onClick={() => {
                       // From the rail this opens the reels feed, so scrolling
-                      // moves to the next clip. On its own (no feed around it)
-                      // the reel grows over the page instead, and on an iPhone
-                      // it asks the player for its own full screen, the only
-                      // one iOS gives a video.
+                      // moves to the next clip — the same thing a double-click
+                      // does, so full screen behaves one way however it is
+                      // asked for. On its own (no feed around it) the reel
+                      // grows over the page instead, and on an iPhone it asks
+                      // the player for its own full screen, the only one iOS
+                      // gives a video.
                       if (onExpand) {
-                        // Grow THIS player over the page rather than building a
-                        // new one in the feed: same element, so the reel never
-                        // reloads and does not stutter. The rail brings the feed
-                        // up behind us, primed, for the first scroll.
-                        setExpanded(true)
                         onExpand(time)
                         return
                       }
