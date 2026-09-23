@@ -98,6 +98,17 @@ type Media = {
  * which still counts as a press inside its frame and plays with sound. The
  * rest of its interface is switched off too, in case a setting brings it back.
  */
+/**
+ * The shade under the transport and the one over the corner lines. Solid in
+ * the player's own colour AT the frame's edge, so where the frame meets a
+ * letterbox bar there is no step — a 70% black over a light picture was
+ * visibly lighter than the bar beside it — and explicit sRGB stops to a fully
+ * transparent end, because the utility gradient (an oklab run to
+ * `transparent`) banded on iOS and its last stop drew as a line.
+ */
+const shade = (to: 'top' | 'bottom') =>
+  `linear-gradient(in srgb to ${to}, rgb(10 10 10 / 1) 0%, rgb(10 10 10 / 0.55) 42%, rgb(10 10 10 / 0.18) 78%, rgb(10 10 10 / 0) 100%)`
+
 /** A clip served as a file rather than through Vimeo — a path on this site or
  *  a plain video URL. The same player, driven through a <video> element. */
 const isFile = (url: string) => /^\/(?!\/)|\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url)
@@ -416,6 +427,8 @@ export default function ReelPlayer({
     if (!el) return
     let player: import('@vimeo/player').default | null = null
     let isPaused = true
+    // the play watchdog's timer, so the teardown can stop it
+    const watchdogRef = { current: 0 }
     void import('@vimeo/player').then(({ default: Player }) => {
       if (cancelled) return
       const p = new Player(el)
@@ -432,35 +445,39 @@ export default function ReelPlayer({
       // the way a feed behaves once you scroll past the one you tapped. Not
       // if it has been scrolled past in the meantime — the retry would start
       // it again behind the visitor.
+      let retries = 0
       const mutedRetry = () => {
-        if (cancelled || !wantsPlay.current) return
+        if (cancelled || !wantsPlay.current || retries >= 2) return
+        retries += 1
         setMuted(true)
         void p
           .setMuted(true)
           .then(() => p.play())
           .catch(() => {})
       }
+      // The player's own word on whether it is playing cannot be trusted on a
+      // phone: it says yes while the phone has blocked the start, and the reel
+      // sits there. So a play request is judged by the clock — if the reel
+      // has not moved within a moment and a half of being asked, it was
+      // blocked, whatever was reported.
+      let watchdog = 0
+      let progressed = false
+      const askAndWatch = () => {
+        progressed = false
+        window.clearTimeout(watchdog)
+        watchdog = window.setTimeout(() => {
+          if (!progressed) mutedRetry()
+        }, 1500)
+        watchdogRef.current = watchdog
+      }
       media.current = {
         play: () => {
+          askAndWatch()
           void p
             .play()
-            .then(
-              () =>
-                new Promise<void>((done) =>
-                  setTimeout(() => {
-                    void p
-                      .getPaused()
-                      .then((still) => {
-                        if (still) mutedRetry()
-                      })
-                      .catch(() => {})
-                      .finally(done)
-                  }, 900),
-                ),
-            )
-            // On a phone the refusal is a REJECTION, not a resolved play that
-            // turns out paused — and a rejection skipped the retry above
-            // entirely, so a reel opened from a phone never started at all.
+            // On a phone the refusal can be a REJECTION — and a rejection
+            // skipped every check but this one, so a reel opened from a phone
+            // never started at all.
             .catch(mutedRetry)
         },
         pause: () => void p.pause().catch(() => {}),
@@ -483,6 +500,12 @@ export default function ReelPlayer({
       })
       p.on('play', () => {
         isPaused = false
+        // 'play' is the player's word again, not the reel moving: keep watching
+        window.clearTimeout(watchdog)
+        watchdog = window.setTimeout(() => {
+          if (!progressed) mutedRetry()
+        }, 1500)
+        watchdogRef.current = watchdog
         // a priming play only exists to paint frame 0; it is not playback
         if (priming.current || !claimed.current) return
         // a tap inside the player started it: this reel becomes the one playing
@@ -500,6 +523,7 @@ export default function ReelPlayer({
         setPlaying(false)
       })
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
+        if (d.seconds > 0) progressed = true
         if (d.duration) setDuration(d.duration)
         const target = resumeTarget.current
         if (target !== null) {
@@ -553,6 +577,7 @@ export default function ReelPlayer({
       window.clearTimeout(waiting)
       window.clearTimeout(giveUp)
       window.removeEventListener('blur', onBlur)
+      window.clearTimeout(watchdogRef.current)
       void player?.destroy().catch(() => {})
       media.current = null
     }
@@ -1100,23 +1125,25 @@ export default function ReelPlayer({
                   </button>
                 )}
                 <div
-                  className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/40 to-transparent ${
-                    inFeed ? '' : 'h-24'
-                  }`}
+                  className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 ${inFeed ? '' : 'h-24'}`}
                   // In the feed the shade reaches as far up as the title does,
                   // plus room for the fade to finish above it: the row sits
                   // 56px up, so a one-line title gets the 144px it always had
                   // and a three-line one gets 56 + 73 + 72 = 201.
-                  style={inFeed ? { height: Math.max(144, 56 + titleH + 72) } : undefined}
+                  style={{
+                    backgroundImage: shade('top'),
+                    ...(inFeed ? { height: Math.max(144, 56 + titleH + 72) } : {}),
+                  }}
                 />
                 {shadeTop !== undefined && (
                   <div
                     aria-hidden
                     // shorter than the one under the transport: there is one
                     // line up here, not a title, a clock and a bar
-                    className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-black/70 via-black/40 to-transparent transition-opacity ${
+                    className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-32 transition-opacity ${
                       shadeQuick ? 'duration-[160ms]' : 'duration-[600ms]'
                     } ${shadeTop ? 'opacity-100' : 'opacity-0'}`}
+                    style={{ backgroundImage: shade('bottom') }}
                   />
                 )}
 
