@@ -156,6 +156,7 @@ export default function ReelPlayer({
   onClose,
   resumeFrom,
   preload = false,
+  lastSeen = false,
 }: {
   vimeoUrl: string
   poster?: string | null
@@ -176,6 +177,9 @@ export default function ReelPlayer({
   /** Inside the feed: carry on from where the rail card had got to, instead of
    *  restarting. */
   resumeFrom?: number
+  /** The reel this visitor opened last. Marked on the rail so they can find
+   *  their way back to it. */
+  lastSeen?: boolean
   /** Build the player now, before this reel is on screen. The feed does this
    *  for the neighbours either side, so arriving on one starts it instead of
    *  waiting on Vimeo and showing the cover meanwhile. */
@@ -268,16 +272,19 @@ export default function ReelPlayer({
               () =>
                 new Promise<void>((done) =>
                   setTimeout(() => {
-                    void p.getPaused().then((still) => {
-                      if (still && !cancelled) {
-                        setMuted(true)
-                        void p
-                          .setMuted(true)
-                          .then(() => p.play())
-                          .catch(() => {})
-                      }
-                      done()
-                    })
+                    void p
+                      .getPaused()
+                      .then((still) => {
+                        if (still && !cancelled) {
+                          setMuted(true)
+                          void p
+                            .setMuted(true)
+                            .then(() => p.play())
+                            .catch(() => {})
+                        }
+                      })
+                      .catch(() => {})
+                      .finally(done)
                   }, 900),
                 ),
             )
@@ -296,7 +303,10 @@ export default function ReelPlayer({
       }
       p.on('loaded', () => {
         setReady(true)
-        void p.getDuration().then(setDuration)
+        // every call has to swallow its own rejection: the player can be torn
+        // down mid-flight (a reel scrolled past, the feed closed) and Vimeo
+        // rejects with "Unknown player. Probably unloaded."
+        void p.getDuration().then(setDuration).catch(() => {})
       })
       p.on('play', () => {
         isPaused = false
@@ -686,27 +696,31 @@ export default function ReelPlayer({
                 </span>
               )}
 
-              {/* Across from the play button, where JokaDent puts the patient's
-                  language. The reel's length: the caption already sits under
-                  the card, so repeating it here would say nothing new, and a
-                  duration is what a reel thumbnail is expected to carry.
-                  Only once the player has reported one. */}
-              {showCorner && !inFeed && duration > 0 && (
-                <span
-                  className="flex h-8 items-center px-3 text-[0.7rem] font-semibold tabular-nums text-white/80"
-                  style={{
-                    borderRadius: 'var(--radius-pill)',
-                    borderWidth: '1px',
-                    borderStyle: 'solid',
-                    borderColor: 'rgba(255,255,255,0.45)',
-                    backgroundColor: 'rgba(10,10,10,0.72)',
-                    backdropFilter: 'blur(24px) saturate(1.5)',
-                    WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-                  }}
-                >
-                  {clock(duration)}
-                </span>
+              {/* The reel they opened last, so they can pick the rail back up
+                  where they left it. Plain text in the play button's own
+                  colour rather than another pill — two pills in one corner
+                  read as two controls, and this one is not pressable. The
+                  gradient is only under this card: it is what makes the label
+                  legible over a bright poster, and it doubles as the marker
+                  that sets this card apart from the rest of the rail. */}
+              {lastSeen && (
+                <>
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-32 bg-gradient-to-t from-black/75 via-black/35 to-transparent"
+                  />
+                  {/* Across from the play button, where JokaDent puts the
+                      patient's language. Plain text in the button's own colour,
+                      not another pill — two pills in one corner read as two
+                      controls, and this one is not pressable. h-12 matches the
+                      button so the line sits on its centre rather than its
+                      baseline. */}
+                  <span className="pointer-events-none flex h-12 items-center text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-white/80">
+                    {t('lastSeen')}
+                  </span>
+                </>
               )}
+
             </button>
 
             {showControls && (

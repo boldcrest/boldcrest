@@ -36,6 +36,9 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
   // the full-screen feed: which reel it opened on, and how far that reel had
   // already played, so it carries on instead of starting again
   const [feed, setFeed] = useState<{ index: number; at: number } | null>(null)
+  // the reel they opened last — kept after the feed closes so the rail shows
+  // where they got to
+  const [lastSeen, setLastSeen] = useState<number | null>(null)
 
   const items = (reels ?? []).filter((r) => r.vimeoUrl)
   if (items.length === 0) return null
@@ -99,10 +102,12 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
               caption={reel.caption}
               active={active === i}
               onPlay={() => setActive(i)}
+              lastSeen={lastSeen === i}
               onExpand={(at) => {
                 // stop the card behind before the feed takes over, or both
                 // players are running and you hear two of them
                 setActive(null)
+                setLastSeen(i)
                 setFeed({ index: i, at })
               }}
             />

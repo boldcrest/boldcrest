@@ -365,6 +365,7 @@
     "unmute": "Attiva audio",
     "seek": "Scorri",
     "fullscreen": "Schermo intero",
-    "exitFullscreen": "Esci da schermo intero"
+    "exitFullscreen": "Esci da schermo intero",
+    "lastSeen": "Visto per ultimo"
   }
 }

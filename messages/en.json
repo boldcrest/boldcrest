@@ -374,6 +374,7 @@
     "unmute": "Unmute",
     "seek": "Seek",
     "fullscreen": "Full screen",
-    "exitFullscreen": "Exit full screen"
+    "exitFullscreen": "Exit full screen",
+    "lastSeen": "Last seen"
   }
 }

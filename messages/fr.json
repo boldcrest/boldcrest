@@ -365,6 +365,7 @@
     "unmute": "Activer le son",
     "seek": "Parcourir",
     "fullscreen": "Plein écran",
-    "exitFullscreen": "Quitter le plein écran"
+    "exitFullscreen": "Quitter le plein écran",
+    "lastSeen": "Vu en dernier"
   }
 }
