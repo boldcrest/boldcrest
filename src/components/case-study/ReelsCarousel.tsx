@@ -36,8 +36,9 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
   // the full-screen feed: which reel it opened on, and how far that reel had
   // already played, so it carries on from there instead of starting again
   const [feed, setFeed] = useState<{ index: number; at: number } | null>(null)
-  // the reel they opened last — kept after the feed closes so the rail shows
-  // where they got to
+  // The reel they were on last, wherever that was: the last one watched in
+  // the feed before closing it, or the last card played in the rail since.
+  // It follows the visitor rather than freezing on whatever opened the feed.
   const [lastSeen, setLastSeen] = useState<number | null>(null)
   // One sound setting for every reel, rail and feed alike: mute one and the
   // next starts muted, unmute one and the next starts with sound. Sound on
@@ -105,7 +106,10 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
               poster={reel.poster}
               caption={reel.caption}
               active={active === i}
-              onPlay={() => setActive(i)}
+              onPlay={() => {
+                setActive(i)
+                setLastSeen(i)
+              }}
               lastSeen={lastSeen === i}
               soundOff={soundOff}
               onSoundOff={setSoundOff}
@@ -131,6 +135,7 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
           resumeFrom={feed.at}
           soundOff={soundOff}
           onSoundOff={setSoundOff}
+          onWatched={setLastSeen}
           onClose={() => {
             setFeed(null)
             // nothing in the rail resumes on its own when the feed closes

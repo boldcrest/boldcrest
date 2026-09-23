@@ -56,6 +56,7 @@ export default function ReelsFeed({
   resumeFrom,
   soundOff,
   onSoundOff,
+  onWatched,
   onClose,
 }: {
   reels: Reel[]
@@ -66,6 +67,9 @@ export default function ReelsFeed({
    *  feed closing and opening again */
   soundOff: boolean
   onSoundOff: (off: boolean) => void
+  /** the reel in view, every time it changes: the rail marks the LAST one
+   *  watched here, not the one that opened the feed */
+  onWatched: (index: number) => void
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
@@ -245,6 +249,10 @@ export default function ReelsFeed({
   useEffect(() => {
     if (current !== startAt) setHint(false)
   }, [current, startAt])
+
+  useEffect(() => {
+    onWatched(current)
+  }, [current, onWatched])
 
   // ...and an answer about one end does not belong on a reel at the other
   useEffect(() => {
