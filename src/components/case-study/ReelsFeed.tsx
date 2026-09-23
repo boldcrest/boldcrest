@@ -270,17 +270,29 @@ export default function ReelsFeed({
   // Safari's visualViewport keyboard resize).
   useEffect(() => {
     const body = document.body
-    const prevOverflow = body.style.overflow
-    const prevOverscroll = body.style.overscrollBehavior
+    const html = document.documentElement
+    const prev = {
+      overflow: body.style.overflow,
+      overscroll: body.style.overscrollBehavior,
+      htmlOverscroll: html.style.overscrollBehavior,
+      htmlBg: html.style.backgroundColor,
+    }
     body.style.overflow = 'hidden'
     body.style.overscrollBehavior = 'none'
+    // iOS can still rubber-band the PAGE under a hard drag, and the colour it
+    // shows beyond the document is the root's — light unless told otherwise.
+    // Neither the bounce nor a light ground has any place under a reel.
+    html.style.overscrollBehavior = 'none'
+    html.style.backgroundColor = '#0a0a0a'
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', onKey)
     return () => {
-      body.style.overflow = prevOverflow
-      body.style.overscrollBehavior = prevOverscroll
+      body.style.overflow = prev.overflow
+      body.style.overscrollBehavior = prev.overscroll
+      html.style.overscrollBehavior = prev.htmlOverscroll
+      html.style.backgroundColor = prev.htmlBg
       document.removeEventListener('keydown', onKey)
     }
   }, [onClose])
@@ -379,7 +391,15 @@ export default function ReelsFeed({
       {/* the same dim and blur start-a-project puts over the site */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-black/40 [@media(min-width:700px)_and_(min-height:700px)]:backdrop-blur-[6px] [@media(pointer:fine)]:backdrop-blur-[6px]"
+        // On a phone the reel is the whole screen, so the dim-and-blur is never
+        // seen — except when iOS drags the scroller past its end and shows
+        // what is under it, which was the site. Solid ground there instead:
+        // whatever is uncovered is black.
+        className={`absolute inset-0 ${
+          narrow
+            ? 'bg-bg'
+            : 'bg-black/40 [@media(min-width:700px)_and_(min-height:700px)]:backdrop-blur-[6px] [@media(pointer:fine)]:backdrop-blur-[6px]'
+        }`}
         onClick={onClose}
       />
 
@@ -473,7 +493,11 @@ export default function ReelsFeed({
           lastTouch.current = null
         }}
         // no transition on the transform: the give is painted frame by frame
-        className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        // overscroll NONE, not contain: contain only stops the scroll reaching
+        // the page, it keeps the rubber-band, and on iOS that dragged the reel
+        // a screen's worth off its end and showed the site behind. None stops
+        // the bounce too; the only give at the ends is the feed's own.
+        className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {reels.map((reel, i) => (
           <div
