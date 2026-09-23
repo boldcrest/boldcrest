@@ -162,11 +162,11 @@ export default function ReelsFeed({
     const barH = narrow ? (window.innerHeight - Math.min(window.innerHeight, (window.innerWidth * 16) / 9)) / 2 : 0
     const lift = narrow ? (barH >= 24 ? 0 : LIFT_NARROW) : MAX_PULL
     const to = down ? -lift : lift
-    // Held a second and a half everywhere. The line goes with the hold — in as
+    // Held just over a second everywhere. The line goes with the hold — in as
     // the reel moves, out just before it comes back — so the hold IS the
     // reading time: a 300ms one on the desktop had FIRST/LAST VIDEO gone
-    // before it registered.
-    const hold = 1500
+    // before it registered, and a second and a half read as waiting.
+    const hold = 1100
     const out = 220
     const back = 360
     const duration = out + hold + back
