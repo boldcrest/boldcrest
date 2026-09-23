@@ -593,12 +593,18 @@ export default function ReelPlayer({
                 {/* full screen, top right: the reel with these same controls
                     where the browser allows it, the player's own full screen
                     otherwise (an iPhone only takes a video element or Vimeo there) */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black/35 to-transparent" />
-                {/* the time, top left across from full screen, leaving the
-                    bottom row's width to the timeline */}
-                <span className="pointer-events-none absolute left-5 top-3 z-20 flex h-8 items-center text-[0.7rem] font-medium tabular-nums text-white/90">
-                  {clock(time)} / {clock(duration)}
-                </span>
+                {/* In the feed the top of the frame is left clear: the title
+                    and the time both sit on one row above the transport, so
+                    nothing covers the picture up there. On a rail card there is
+                    no room for that row, so the time stays top-left. */}
+                {!inFeed && (
+                  <>
+                    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black/35 to-transparent" />
+                    <span className="pointer-events-none absolute left-5 top-3 z-20 flex h-8 items-center text-[0.7rem] font-medium tabular-nums text-white/90">
+                      {clock(time)} / {clock(duration)}
+                    </span>
+                  </>
+                )}
                 {!full && !inFeed && (
                   <button
                     type="button"
@@ -622,7 +628,31 @@ export default function ReelPlayer({
                     <FullscreenIcon exit={false} />
                   </button>
                 )}
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-black/55 to-transparent" />
+                <div
+                  className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/40 to-transparent ${
+                    inFeed ? 'h-48' : 'h-24'
+                  }`}
+                />
+
+                {/* The title, inside the picture and above the transport, with
+                    the time opposite it. Set near the body copy's size (the
+                    description section is 1.15rem) rather than a caption size,
+                    because in the feed this line is the only thing naming the
+                    reel. */}
+                {inFeed && (caption || duration > 0) && (
+                  <div className="pointer-events-none absolute inset-x-5 bottom-14 z-20 flex items-end justify-between gap-6">
+                    {caption ? (
+                      <p className="max-w-[26ch] text-[1.05rem] font-medium leading-[1.45] text-white">
+                        {caption}
+                      </p>
+                    ) : (
+                      <span />
+                    )}
+                    <span className="shrink-0 text-[0.8rem] font-medium tabular-nums text-white/70">
+                      {clock(time)} / {clock(duration)}
+                    </span>
+                  </div>
+                )}
                 <div className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2 text-white">
                   <button
                     type="button"

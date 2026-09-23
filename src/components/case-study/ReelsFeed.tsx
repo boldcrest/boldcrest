@@ -146,11 +146,6 @@ export default function ReelsFeed({
                   onPlay={() => setCurrent(i)}
                 />
               </div>
-              {reel.caption && (
-                <p className="mt-3 text-center text-[0.8rem] leading-[1.5] text-white/70">
-                  {reel.caption}
-                </p>
-              )}
             </div>
           </div>
         ))}
