@@ -662,6 +662,18 @@ export default function ReelPlayer({
             <button
               type="button"
               onClick={toggle}
+              // Double-click a running reel to open it full screen. The two
+              // single clicks that precede the double still fire, but they are
+              // a pause and a play, so they cancel out and the reel is handed
+              // over still running.
+              onDoubleClick={
+                !inFeed && onExpand
+                  ? (e) => {
+                      e.preventDefault()
+                      onExpand(time)
+                    }
+                  : undefined
+              }
               aria-label={ended ? t('replay') : playing ? t('pause') : t('play')}
               className="absolute inset-0 z-10 flex items-end justify-between p-[7%]"
             >
