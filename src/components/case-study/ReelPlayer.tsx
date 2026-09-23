@@ -735,7 +735,9 @@ export default function ReelPlayer({
             : // no dark ground behind the cover: it showed as a thin line round
               // the rounded corners, where the edge is anti-aliased. The dark
               // only while a reel plays, under the video.
-              `group absolute inset-0 overflow-hidden ${fill ? 'bg-bg' : 'border border-border'} ${showControls && !fill ? 'bg-bg-card' : ''} ${full || fill ? 'bg-bg' : 'rounded-[var(--radius-lg)]'}`
+              // the hairline is a card's edge on the rail; a reel full screen,
+              // boxed or filling, has no card to be the edge of
+              `group absolute inset-0 overflow-hidden ${fill || inFeed ? 'bg-bg' : 'border border-border'} ${showControls && !fill ? 'bg-bg-card' : ''} ${full || fill ? 'bg-bg' : 'rounded-[var(--radius-lg)]'}`
         }
       >
         {/* Full screen: the reel large in the middle. As the lightbox, over the
