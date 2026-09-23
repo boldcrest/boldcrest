@@ -10,9 +10,10 @@ import type { Reel } from './ReelsCarousel'
  *  3.25rem bands, or 960px, whichever is less. */
 const GAP = 'calc((100% - min(100% - 6.5rem, 960px)) / 2)'
 
-/** Points the way the feed goes, beside the line that says so. Drawn on the
- *  same stroke as the player's own icons, at the cap height of the text. */
-function DownArrow() {
+/** Points the way the feed can still go, beside the line that says so. Drawn
+ *  on the same stroke as the player's own icons, at the cap height of the
+ *  text. */
+function Arrow({ up = false }: { up?: boolean }) {
   return (
     <svg
       width="11"
@@ -24,6 +25,7 @@ function DownArrow() {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
+      style={up ? { transform: 'rotate(180deg)' } : undefined}
     >
       <path d="M12 4.5v15M5.5 13l6.5 6.5 6.5-6.5" />
     </svg>
@@ -55,28 +57,33 @@ export default function ReelsFeed({
   const scroller = useRef<HTMLDivElement>(null)
   const slides = useRef<(HTMLDivElement | null)[]>([])
   const [current, setCurrent] = useState(startAt)
-  // The reels give a little when there is nothing past them, the way a list
-  // does, and the line beneath says which end has been reached. Nothing is
-  // blocked: this is the feed answering a gesture it cannot act on.
-  const [pull, setPull] = useState(0)
+  // The reels give a little when there is nothing past them, and the line at
+  // that end says which one has been reached. Nothing is blocked: this is the
+  // feed answering a gesture it cannot act on.
   const [edge, setEdge] = useState<'top' | 'end' | null>(null)
+  // What the line SAYS, which lags what the line shows. The end of a give sets
+  // `edge` back to null, and the text went straight back to SCROLL DOWN while
+  // the span was still fading out — so LAST VIDEO flashed back to SCROLL DOWN
+  // on its way off the screen. This holds the wording until the fade is over.
+  const [said, setSaid] = useState<'top' | 'end' | null>(null)
+  useEffect(() => {
+    if (edge) {
+      setSaid(edge)
+      return
+    }
+    const id = window.setTimeout(() => setSaid(null), 170)
+    return () => window.clearTimeout(id)
+  }, [edge])
   // SCROLL DOWN has said its piece once the feed has moved off the reel it
   // opened on, and does not come back if the visitor scrolls up again.
   const [hint, setHint] = useState(true)
-  const release = useRef(0)
-  const quiet = useRef(0)
-  const pulling = useRef(false)
-  const spent = useRef(false)
+  const pull = useRef(0)
+  const spring = useRef(0)
   const lastTouch = useRef<number | null>(null)
-  // A flick carries on arriving for half a second after the fingers have gone,
-  // and left to itself would run through three reels. One gesture moves one
-  // reel: the step is taken on the first event and the tail is swallowed, while
-  // a genuine second push still steps. See onWheel for how the two are told
-  // apart.
-  const lastAt = useRef(0)
-  const lastDelta = useRef(0)
-  const steppedAt = useRef(0)
-  const target = useRef<number | null>(null)
+  /** On the last reel the only way on is back up, so the standing hint moves to
+   *  the top and turns round. */
+  const onLast = current === reels.length - 1
+
   // The reel this opened on decides what plays, not the observer. The slides
   // are still being scrolled into place when the feed appears, and the observer
   // fires for whichever one it passes on the way — which would leave the feed
@@ -91,13 +98,30 @@ export default function ReelsFeed({
     return () => window.clearTimeout(id)
   }, [startAt])
 
-  // How far the reels give, and how much of the gesture reaches them: enough to
-  // read as an answer, not enough to look like a page coming loose.
+  // How far the reels give, how much of a push reaches them, and how much of
+  // the give is left after each frame once the pushing stops.
   const MAX_PULL = 56
-  const RESISTANCE = 0.3
+  const RESISTANCE = 0.32
+  const RELAX = 0.84
 
-  /** How long the give is held, measured from the first push of the gesture. */
-  const HOLD = 320
+  const paint = () => {
+    const el = scroller.current
+    if (el) el.style.transform = `translate3d(0, ${-pull.current}px, 0)`
+  }
+
+  /** One frame of the give easing back. Runs only while there is give. */
+  const relax = () => {
+    pull.current *= RELAX
+    if (Math.abs(pull.current) < 0.6) {
+      pull.current = 0
+      spring.current = 0
+      paint()
+      setEdge(null)
+      return
+    }
+    paint()
+    spring.current = requestAnimationFrame(relax)
+  }
 
   /** A gesture the feed cannot act on because there is nothing that way. */
   const pullBy = (dy: number) => {
@@ -108,88 +132,46 @@ export default function ReelsFeed({
       ? el.scrollTop + el.clientHeight >= el.scrollHeight - 1
       : el.scrollTop <= 1
     if (!stuck) return
-
-    // A gap this long means the fingers have gone and the next push is a fresh
-    // ask rather than the tail of this one.
-    window.clearTimeout(quiet.current)
-    quiet.current = window.setTimeout(() => {
-      spent.current = false
-    }, 180)
-    if (spent.current) return
-
-    // The give is held for a fixed span from the FIRST push, not for a quiet
-    // period after the last. A flick keeps arriving for half a second after the
-    // fingers have gone, and letting that extend the hold left the reels
-    // sitting out there for the whole tail.
-    if (!pulling.current) {
-      pulling.current = true
-      window.clearTimeout(release.current)
-      release.current = window.setTimeout(() => {
-        spent.current = true
-        pulling.current = false
-        setPull(0)
-        setEdge(null)
-      }, HOLD)
-    }
+    pull.current = Math.max(-MAX_PULL, Math.min(MAX_PULL, pull.current + dy * RESISTANCE))
+    paint()
     setEdge(down ? 'end' : 'top')
-    setPull((p) => Math.max(-MAX_PULL, Math.min(MAX_PULL, p + dy * RESISTANCE)))
+    // Every frame takes some of the give back and every push puts some in, so
+    // it settles where the two balance for as long as the gesture lasts, and is
+    // home about a tenth of a second after it stops. Nothing waits on a timer,
+    // which is what made this stutter: a flick's tail kept resetting one and
+    // the reels hung at full stretch until the very last event had landed.
+    if (!spring.current) spring.current = requestAnimationFrame(relax)
   }
-  useEffect(
-    () => () => {
-      window.clearTimeout(release.current)
-      window.clearTimeout(quiet.current)
-    },
-    [],
-  )
 
-  // The wheel steps, one reel per gesture. It has to be a native listener:
-  // React's onWheel is passive, and this preventDefaults so the scroller's own
-  // momentum does not race the step. Snapping stays on for touch, which already
-  // moves a screen at a time.
+  // The browser does the scrolling. It is instant, it is smooth, and with
+  // `scroll-snap-stop: always` on the slides it already stops at every reel
+  // rather than flying through three. Taking the wheel over and stepping the
+  // scroller by hand, as this did, put every move behind a programmatic smooth
+  // scroll and behind guesses about which events were a gesture and which were
+  // its tail — which is what made it feel unresponsive and late.
+  //
+  // All that is left to us is the two ends, where there is nothing to scroll
+  // and so nothing to interfere with.
   useEffect(() => {
     const el = scroller.current
     if (!el) return
     const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.deltaY === 0) return
-      e.preventDefault()
-      const now = performance.now()
-      const mag = Math.abs(e.deltaY)
-      const gap = now - lastAt.current
-      const prev = lastDelta.current
-      lastAt.current = now
-      lastDelta.current = mag
-
-      // Telling a flick's tail from the visitor pushing again. A tail streams —
-      // events a frame or two apart, each smaller than the last. A push, from a
-      // mouse wheel or a second flick, comes after a real gap or harder than
-      // what came before. Holding the window open for as long as events kept
-      // arriving, as this used to, meant a continuous stream never let go and
-      // the feed stopped moving altogether.
-      const tail = gap < 40 && mag <= prev * 1.3
-      if (tail) return
-      // ...and two steps cannot be closer together than this, whatever arrives
-      if (now - steppedAt.current < 130) return
-
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || !e.deltaY) return
       const down = e.deltaY > 0
-      // mid-flight, the scroller's own position is between two reels: step from
-      // where it is going, not from where it has got to
-      const flying = now - steppedAt.current < 420 && target.current !== null
-      const here = flying ? (target.current as number) : Math.round(el.scrollTop / el.clientHeight)
-      const next = down ? here + 1 : here - 1
-      // nothing that way: the feed gives instead of moving
-      if (next < 0 || next > reels.length - 1) {
-        pullBy(e.deltaY)
-        return
-      }
-      target.current = next
-      steppedAt.current = now
-      setHint(false)
-      el.scrollTo({ top: next * el.clientHeight, behavior: 'smooth' })
+      const stuck = down
+        ? el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+        : el.scrollTop <= 1
+      if (!stuck) return
+      e.preventDefault()
+      pullBy(e.deltaY)
     }
     el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      cancelAnimationFrame(spring.current)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reels.length])
+  }, [])
 
   // a swipe moves the feed itself, so the hint goes the moment it lands
   useEffect(() => {
@@ -277,16 +259,19 @@ export default function ReelsFeed({
         className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-center"
         style={{ height: GAP }}
       >
-        {/* only while the visitor is asking for something above the first reel */}
         <span
-          // Matched to the give's own return, not the 200ms it went out on:
-          // TOP is the only one of the two that fades from nothing, so a fade
-          // outlasting the movement is visible as the top being slow to let go.
-          className={`text-[1rem] uppercase tracking-[0.2em] text-white transition-opacity duration-[130ms] ${
-            edge === 'top' ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-[130ms] ${
+            said === 'top' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
+          } ${edge === 'top' || (onLast && hint) ? 'opacity-100' : 'opacity-0'}`}
         >
-          {t('atTop')}
+          {said === 'top' ? (
+            t('atTop')
+          ) : (
+            <>
+              <Arrow up />
+              {t('scrollUp')}
+            </>
+          )}
         </span>
       </div>
       <div
@@ -294,16 +279,16 @@ export default function ReelsFeed({
         style={{ height: GAP }}
       >
         <span
-          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-200 ${
-            edge === 'end' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
-          } ${edge === 'end' || hint ? 'opacity-100' : 'opacity-0'}`}
+          className={`flex items-center gap-2 uppercase tracking-[0.2em] transition-opacity duration-[130ms] ${
+            said === 'end' ? 'text-[1rem] text-white' : 'text-[0.7rem] text-white/55'
+          } ${edge === 'end' || (hint && !onLast) ? 'opacity-100' : 'opacity-0'}`}
         >
-          {edge === 'end' ? (
+          {said === 'end' ? (
             t('atEnd')
           ) : (
             <>
               {t('scrollDown')}
-              <DownArrow />
+              <Arrow />
             </>
           )}
         </span>
@@ -327,21 +312,9 @@ export default function ReelsFeed({
         }}
         onTouchEnd={() => {
           lastTouch.current = null
-          window.clearTimeout(release.current)
-          window.clearTimeout(quiet.current)
-          pulling.current = false
-          spent.current = false
-          setPull(0)
-          setEdge(null)
         }}
-        style={{
-          transform: `translate3d(0, ${-pull}px, 0)`,
-          // Going out, the reels follow the gesture and want damping. Coming
-          // back there is no gesture left to follow, so the same 200ms read as
-          // the feed taking its time about it.
-          transitionDuration: pull === 0 ? '130ms' : '200ms',
-        }}
-        className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain transition-transform ease-out [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        // no transition on the transform: the give is painted frame by frame
+        className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {reels.map((reel, i) => (
           <div

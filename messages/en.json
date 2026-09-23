@@ -378,6 +378,7 @@
     "lastSeen": "Last seen",
     "scrollDown": "Scroll down",
     "atTop": "First video",
-    "atEnd": "Last video"
+    "atEnd": "Last video",
+    "scrollUp": "Scroll up"
   }
 }

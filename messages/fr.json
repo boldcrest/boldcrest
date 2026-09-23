@@ -369,6 +369,7 @@
     "lastSeen": "Vu en dernier",
     "scrollDown": "Faites défiler",
     "atTop": "Première vidéo",
-    "atEnd": "Dernière vidéo"
+    "atEnd": "Dernière vidéo",
+    "scrollUp": "Remontez"
   }
 }
