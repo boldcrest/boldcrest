@@ -692,8 +692,12 @@ export default function ReelPlayer({
                 style={
                   fill
                     ? {
-                        width: 'max(100vw, calc(100vh * 9 / 16))',
-                        height: 'max(100vh, calc(100vw * 16 / 9))',
+                        // Tall enough to cover the box, and as wide as 9:16
+                        // makes it — the ratio does the width, so there is no
+                        // percentage having to cross from one axis to the other.
+                        height: 'max(100%, calc(100vw * 16 / 9))',
+                        width: 'auto',
+                        aspectRatio: '9 / 16',
                       }
                     : undefined
                 }

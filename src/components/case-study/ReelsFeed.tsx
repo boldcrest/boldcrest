@@ -70,19 +70,6 @@ export default function ReelsFeed({
   // that end says which one has been reached. Nothing is blocked: this is the
   // feed answering a gesture it cannot act on.
   const [edge, setEdge] = useState<'top' | 'end' | null>(null)
-  // What the line SAYS, which lags what the line shows. The end of a give sets
-  // `edge` back to null, and the text went straight back to SCROLL DOWN while
-  // the span was still fading out — so LAST VIDEO flashed back to SCROLL DOWN
-  // on its way off the screen. This holds the wording until the fade is over.
-  const [said, setSaid] = useState<'top' | 'end' | null>(null)
-  useEffect(() => {
-    if (edge) {
-      setSaid(edge)
-      return
-    }
-    const id = window.setTimeout(() => setSaid(null), 200)
-    return () => window.clearTimeout(id)
-  }, [edge])
   // The standing hint says its piece and goes: once the feed has moved off the
   // reel it opened on, and in any case after a few seconds. It does not come
   // back. Long enough to read a line of caps without hurrying, short enough
@@ -135,6 +122,7 @@ export default function ReelsFeed({
    *  are ignored, so a long flick makes one clean bounce instead of a stutter. */
   const bouncing = useRef(false)
   const pushedAt = useRef(0)
+  const clearAnswer = useRef(0)
   const bounce = (down: boolean) => {
     const el = scroller.current
     if (!el) return
@@ -150,20 +138,30 @@ export default function ReelsFeed({
     bouncing.current = true
     setEdge(down ? 'end' : 'top')
     const to = down ? -MAX_PULL : MAX_PULL
+    // Held a second and a half on a phone, where the line it uncovers is only
+    // there while it is held. On a desktop the line has a band of its own that
+    // is always there, so the give can be the brief answer it was.
+    const hold = narrow ? 1500 : 300
+    const out = 220
+    const back = 360
+    const duration = out + hold + back
     const run = el.animate(
       [
-        // out, quickly and then settling
         { transform: 'translateY(0)', easing: 'cubic-bezier(.22, 1, .36, 1)' },
-        // and held there a moment, which is what makes it read as an answer
-        // rather than a twitch
-        { transform: `translateY(${to}px)`, offset: 0.26, easing: 'linear' },
-        { transform: `translateY(${to}px)`, offset: 0.56, easing: 'cubic-bezier(.4, 0, .2, 1)' },
+        { transform: `translateY(${to}px)`, offset: out / duration, easing: 'linear' },
+        {
+          transform: `translateY(${to}px)`,
+          offset: (out + hold) / duration,
+          easing: 'cubic-bezier(.4, 0, .2, 1)',
+        },
         { transform: 'translateY(0)' },
       ],
-      { duration: 620, easing: 'linear' },
+      { duration, easing: 'linear' },
     )
-    // the line is gone as the reel lands, not after it
-    window.setTimeout(() => setEdge(null), 460)
+    // in as the reel lifts, out before it comes back down: the line is gone by
+    // the time what it was sitting in is covered over again
+    window.clearTimeout(clearAnswer.current)
+    clearAnswer.current = window.setTimeout(() => setEdge(null), out + hold - 200)
     const done = () => {
       bouncing.current = false
     }
@@ -218,6 +216,14 @@ export default function ReelsFeed({
   useEffect(() => {
     if (current !== startAt) setHint(false)
   }, [current, startAt])
+
+  // ...and an answer about one end does not belong on a reel at the other
+  useEffect(() => {
+    window.clearTimeout(clearAnswer.current)
+    setEdge(null)
+  }, [current])
+
+  useEffect(() => () => window.clearTimeout(clearAnswer.current), [])
 
   // Escape closes, and the page underneath does not scroll while this is up.
   //
@@ -278,32 +284,34 @@ export default function ReelsFeed({
     return () => io.disconnect()
   }, [reels.length])
 
-  /** One of the lines, wherever it is being put. `where` is the end it belongs
-   *  to: the top one answers a push above the first reel, the bottom one a push
-   *  past the last. Between the two they also carry the standing hint, which
-   *  says which ways there are to go from the reel in view — down from the
-   *  first, up from the last, and both from anywhere in between. */
-  const line = (where: 'top' | 'end') => {
-    const answering = said === where
+  /** FIRST VIDEO or LAST VIDEO: the answer to a push at that end. It is a line
+   *  of its own rather than a change of wording in the hint — sharing one span
+   *  meant the wording had to be held back while the span faded out, or LAST
+   *  VIDEO flashed to SCROLL DOWN on its way off. */
+  const answer = (where: 'top' | 'end') => (
+    <span
+      className={`text-[0.8rem] uppercase tracking-[0.2em] text-white/70 transition-opacity duration-[160ms] ${
+        edge === where ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
+      {t(where === 'top' ? 'atTop' : 'atEnd')}
+    </span>
+  )
+
+  /** Which ways there are to go from the reel in view: down from the first, up
+   *  from the last, both from anywhere in between. Every arrow sits after the
+   *  words, whichever way it points — one ahead and one behind read as brackets
+   *  round the line rather than as the two ways out of it. */
+  const standing = () => {
     const onFirst = current === 0
     const alone = reels.length <= 1
-    // the top line carries the hint only when up is the ONLY way on
-    const standing =
-      !alone && (where === 'top' ? onLast && !onFirst : !onLast)
     return (
       <span
-        className={`flex items-center gap-2 text-[0.8rem] uppercase tracking-[0.2em] transition-opacity ${
-          answering ? 'duration-[160ms]' : 'duration-[600ms]'
-        } ${
-          answering ? 'text-white' : 'text-white/55'
-        } ${edge === where || (hint && standing) ? 'opacity-100' : 'opacity-0'}`}
+        className={`flex items-center gap-2 text-[0.8rem] uppercase tracking-[0.2em] text-white/55 transition-opacity duration-[600ms] ${
+          hint && !alone ? 'opacity-100' : 'opacity-0'
+        }`}
       >
-        {answering ? (
-          t(where === 'top' ? 'atTop' : 'atEnd')
-        ) : where === 'top' ? (
-          // every arrow sits after the words, whichever way it points: one
-          // ahead and one behind read as brackets round the line rather than
-          // as the two ways out of it
+        {onLast ? (
           <>
             {t('scrollUp')}
             <Arrow up />
@@ -314,7 +322,6 @@ export default function ReelsFeed({
             <Arrow />
           </>
         ) : (
-          // anywhere in the middle, both ways are open
           <>
             {t('scrollBoth')}
             <span className="flex items-center gap-1">
@@ -355,15 +362,34 @@ export default function ReelsFeed({
             className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-center"
             style={{ height: GAP }}
           >
-            {line('top')}
+            <div className="grid justify-items-center">
+              <div className="[grid-area:1/1]">{answer('top')}</div>
+              {onLast && <div className="[grid-area:1/1]">{standing()}</div>}
+            </div>
           </div>
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center"
             style={{ height: GAP }}
           >
-            {line('end')}
+            <div className="grid justify-items-center">
+              <div className="[grid-area:1/1]">{answer('end')}</div>
+              {!onLast && <div className="[grid-area:1/1]">{standing()}</div>}
+            </div>
           </div>
         </>
+      )}
+
+      {/* On a phone there is no standing band: the reel fills the screen. LAST
+          VIDEO lives UNDER the scroller, so pushing past the last reel lifts
+          the reel off it and uncovers it for as long as the push is held, and
+          putting the reel back covers it again. Lined up with the play GLYPH,
+          not the button round it — the button is a 40px tap target with a 20px
+          mark centred in it, so matching the button's own left edge left the
+          line 10px to the left of the triangle above it. */}
+      {narrow && (
+        <div className="pointer-events-none absolute bottom-3 left-[1.375rem] z-0">
+          {answer('end')}
+        </div>
       )}
 
       {/* one reel per screen; snapping so a flick lands on a whole one */}
@@ -409,7 +435,7 @@ export default function ReelsFeed({
             onClick={(e) => {
               if (e.target === e.currentTarget) onClose()
             }}
-            className={`flex h-full snap-start snap-always items-center justify-center ${
+            className={`relative flex h-full snap-start snap-always items-center justify-center ${
               narrow ? '' : 'px-[var(--gutter)] py-[3.25rem]'
             }`}
           >
@@ -441,15 +467,20 @@ export default function ReelsFeed({
                     Only for the reel in view: the ones either side are built
                     ahead and would carry a line of their own into sight. */}
                 {narrow && i === current && (
-                  // Level with the close mark opposite: the same 12px inset,
-                  // and the same 48px tall box so whichever line is showing
-                  // centres on the X rather than sitting above it. The two are
-                  // stacked in one grid cell, not a column — a column's height
-                  // depends on which of them is there.
-                  <div className="pointer-events-none absolute left-3 top-3 z-[45] grid h-12 items-center justify-items-start">
-                    <div className="[grid-area:1/1]">{line('top')}</div>
-                    <div className="[grid-area:1/1]">{line('end')}</div>
-                  </div>
+                  <>
+                    {/* Level with the close mark opposite: the same 12px inset
+                        and the same 48px box, so whichever line is showing
+                        centres on the X rather than sitting above it. Stacked
+                        in one grid cell, not a column — a column's height
+                        depends on which of them is there. */}
+                    <div className="pointer-events-none absolute left-3 top-3 z-[45] grid h-12 items-center justify-items-start">
+                      <div className="[grid-area:1/1]">{answer('top')}</div>
+                      <div className="[grid-area:1/1]">{standing()}</div>
+                    </div>
+                    {/* and the other end's answer under the play button, in the
+                        band the transport leaves when it lifts off the bottom
+                        edge on a phone */}
+                  </>
                 )}
                 <ReelPlayer
                   vimeoUrl={reel.vimeoUrl as string}
@@ -476,6 +507,7 @@ export default function ReelsFeed({
                 />
               </div>
             </div>
+
           </div>
         ))}
       </div>
