@@ -131,14 +131,18 @@ export default function ReelsFeed({
     const to = down ? -MAX_PULL : MAX_PULL
     const run = el.animate(
       [
-        { transform: 'translateY(0)' },
-        { transform: `translateY(${to}px)`, offset: 0.36 },
+        // out, quickly and then settling
+        { transform: 'translateY(0)', easing: 'cubic-bezier(.22, 1, .36, 1)' },
+        // and held there a moment, which is what makes it read as an answer
+        // rather than a twitch
+        { transform: `translateY(${to}px)`, offset: 0.26, easing: 'linear' },
+        { transform: `translateY(${to}px)`, offset: 0.56, easing: 'cubic-bezier(.4, 0, .2, 1)' },
         { transform: 'translateY(0)' },
       ],
-      { duration: 440, easing: 'cubic-bezier(.33, 1, .68, 1)' },
+      { duration: 620, easing: 'linear' },
     )
-    // the line is gone by the time the reel is back, not after it
-    window.setTimeout(() => setEdge(null), 270)
+    // the line is gone as the reel lands, not after it
+    window.setTimeout(() => setEdge(null), 460)
     const done = () => {
       bouncing.current = false
     }
