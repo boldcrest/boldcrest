@@ -652,6 +652,28 @@ export default function ReelPlayer({
                   )}
                 </span>
               )}
+
+              {/* Across from the play button, where JokaDent puts the patient's
+                  language. The reel's length: the caption already sits under
+                  the card, so repeating it here would say nothing new, and a
+                  duration is what a reel thumbnail is expected to carry.
+                  Only once the player has reported one. */}
+              {showCorner && !inFeed && duration > 0 && (
+                <span
+                  className="flex h-8 items-center px-3 text-[0.7rem] font-semibold tabular-nums text-white/80"
+                  style={{
+                    borderRadius: 'var(--radius-pill)',
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: 'rgba(255,255,255,0.45)',
+                    backgroundColor: 'rgba(10,10,10,0.72)',
+                    backdropFilter: 'blur(24px) saturate(1.5)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                  }}
+                >
+                  {clock(duration)}
+                </span>
+              )}
             </button>
 
             {showControls && (
