@@ -6,8 +6,29 @@
  * on any failure so callers fall back to 16:9.
  */
 export function extractVimeoId(url: string): string | null {
-  const m = url?.match(/(?:vimeo\.com\/(?:video\/)?)(\d+)/)
-  return m ? m[1] : null
+  return extractVimeoRef(url).id
+}
+
+/**
+ * The id AND the privacy hash, because for an unlisted video the hash is part
+ * of the address: without it the player refuses to play and oEmbed 404s. Our
+ * reels are uploaded "Hide from Vimeo" with embedding public, which is exactly
+ * that case. Handles every shape the URL arrives in:
+ *   https://vimeo.com/123456789
+ *   https://vimeo.com/123456789/abcdef1234      (unlisted share link)
+ *   https://player.vimeo.com/video/123456789?h=abcdef1234
+ */
+export function extractVimeoRef(url?: string | null): {
+  id: string | null
+  hash: string | null
+} {
+  if (!url) return { id: null, hash: null }
+  const id = url.match(/(?:vimeo\.com\/(?:video\/)?)(\d+)/)?.[1] ?? null
+  const hash =
+    url.match(/[?&]h=([0-9a-zA-Z]+)/)?.[1] ??
+    url.match(/vimeo\.com\/(?:video\/)?\d+\/([0-9a-zA-Z]+)/)?.[1] ??
+    null
+  return { id, hash }
 }
 
 /**
@@ -42,11 +63,13 @@ export async function getVimeoMeta(
   url?: string | null,
 ): Promise<{ aspect: number | null; poster: string | null }> {
   if (!url) return { aspect: null, poster: null }
-  const id = extractVimeoId(url)
+  const { id, hash } = extractVimeoRef(url)
   if (!id) return { aspect: null, poster: null }
   try {
     const res = await fetch(
-      `https://vimeo.com/api/oembed.json?url=https://vimeo.com/${id}&width=1280`,
+      `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(
+        `https://vimeo.com/${id}${hash ? `/${hash}` : ''}`,
+      )}&width=1280`,
       { next: { revalidate: 604800 } }, // 1 week
     )
     if (!res.ok) return { aspect: null, poster: null }

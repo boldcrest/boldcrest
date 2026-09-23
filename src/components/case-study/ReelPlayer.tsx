@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
 } from 'react'
 import { useTranslations } from 'next-intl'
+import { extractVimeoRef } from '@/lib/vimeo'
 
 /* ────────────────────────────────────────────────────────────────────────────
    Ported from the JokaDent patient reel (src/components/site/Testimonials.tsx).
@@ -96,8 +97,12 @@ type Media = {
  * rest of its interface is switched off too, in case a setting brings it back.
  */
 const vimeoSrc = (url: string) => {
-  const id = url.match(/(?:vimeo\.com\/)(?:video\/)?(\d+)/)?.[1]
+  // The privacy hash is part of the address for an unlisted video — drop it and
+  // the player simply refuses. Reels are uploaded "Hide from Vimeo" with
+  // embedding public, so they always carry one.
+  const { id, hash } = extractVimeoRef(url)
   const u = new URL(`https://player.vimeo.com/video/${id ?? ''}`)
+  if (hash) u.searchParams.set('h', hash)
   const params: Record<string, string> = {
     autoplay: '0',
     controls: '0',
@@ -411,7 +416,10 @@ export default function ReelPlayer({
         className={
           expanded
             ? 'group fixed inset-0 z-[200]'
-            : `group absolute inset-0 overflow-hidden border border-border ${full ? 'bg-bg' : 'rounded-[var(--radius-lg)] bg-bg-card'}`
+            : // no dark ground behind the cover: it showed as a thin line round
+              // the rounded corners, where the edge is anti-aliased. The dark
+              // only while a reel plays, under the video.
+              `group absolute inset-0 overflow-hidden border border-border ${showControls ? 'bg-bg-card' : ''} ${full ? 'bg-bg' : 'rounded-[var(--radius-lg)]'}`
         }
       >
         {/* Full screen: the reel large in the middle. As the lightbox, over the
