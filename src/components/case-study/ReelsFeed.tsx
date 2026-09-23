@@ -54,12 +54,18 @@ export default function ReelsFeed({
   reels,
   startAt,
   resumeFrom,
+  soundOff,
+  onSoundOff,
   onClose,
 }: {
   reels: Reel[]
   startAt: number
   /** how far the rail card had played the reel this opened on */
   resumeFrom?: number
+  /** the sound setting every reel shares, held by the rail so it survives the
+   *  feed closing and opening again */
+  soundOff: boolean
+  onSoundOff: (off: boolean) => void
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
@@ -405,26 +411,21 @@ export default function ReelsFeed({
           mark centred in it, so matching the button's own left edge left the
           line 10px to the left of the triangle above it. */}
       {narrow && (
-        // A strip at each end, on the player's own ground. Where the screen is
-        // taller than 9:16 the strip IS the bar above or below the reel, and
-        // the line is centred in it; on a screen with no bars it is exactly as
-        // tall as the give, and the reel moving off it uncovers it. Either way
-        // it reads as the player's, never as the page behind showing through
-        // — which it did once, blurred, with the rail's captions in it. Each
-        // line has the same room above it as below, on the play button's left.
+        // The GROUND at each end, under the scroller, on the player's own
+        // colour. It only matters on a screen with no bars, where the give
+        // lifts the reel 40px off it: what is uncovered must read as the
+        // player's, never as the page behind showing through — which it did
+        // once, blurred, with the rail's captions in it. No words live here;
+        // they are all in the reel's corner.
         <>
           <div
-            className="pointer-events-none absolute inset-x-0 top-0 z-0 flex items-center bg-bg pl-[1.375rem]"
+            className="pointer-events-none absolute inset-x-0 top-0 z-0 bg-bg"
             style={{ height: STRIP_NARROW }}
-          >
-            {answer('top')}
-          </div>
+          />
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex items-center bg-bg pl-[1.375rem]"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-0 bg-bg"
             style={{ height: STRIP_NARROW }}
-          >
-            {answer('end')}
-          </div>
+          />
         </>
       )}
 
@@ -513,13 +514,17 @@ export default function ReelsFeed({
                     ahead and would carry a line of their own into sight. */}
                 {narrow && i === current && (
                   <>
-                    {/* The standing hint, level with the close mark opposite:
-                        the same 12px inset and the same 48px box, so it
-                        centres on the X rather than sitting above it. FIRST
-                        VIDEO is not here any more — it is in the strip the
-                        reel uncovers when pushed down, like LAST VIDEO below. */}
-                    <div className="pointer-events-none absolute left-3 top-3 z-[45] flex h-12 items-center">
-                      {standing()}
+                    {/* Every line the feed has to say, in the one place on a
+                        phone: level with the close mark opposite (the same
+                        48px box, so whichever line is showing centres on the
+                        X rather than sitting above it) and on the play glyph's
+                        own left, 22px in, with the title under it.
+                        The three are stacked in one grid cell, not a column,
+                        whose height would depend on which of them is there. */}
+                    <div className="pointer-events-none absolute left-[1.375rem] top-3 z-[45] grid h-12 items-center justify-items-start">
+                      <div className="[grid-area:1/1]">{standing()}</div>
+                      <div className="[grid-area:1/1]">{answer('top')}</div>
+                      <div className="[grid-area:1/1]">{answer('end')}</div>
                     </div>
                     {/* and the other end's answer under the play button, in the
                         band the transport leaves when it lifts off the bottom
@@ -548,6 +553,12 @@ export default function ReelsFeed({
                   // onto it starts the video rather than the cover
                   preload={Math.abs(i - current) <= 1}
                   fill={narrow}
+                  soundOff={soundOff}
+                  onSoundOff={onSoundOff}
+                  // on a phone the lines sit in the reel's corner, on a shade
+                  // that comes and goes with whichever of them is showing
+                  shadeTop={narrow && i === current ? edge !== null || (hint && reels.length > 1) : undefined}
+                  shadeQuick={edge !== null}
                 />
               </div>
             </div>

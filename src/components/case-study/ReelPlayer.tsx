@@ -167,6 +167,10 @@ export default function ReelPlayer({
   preload = false,
   suspend = false,
   fill = false,
+  soundOff = false,
+  onSoundOff,
+  shadeTop,
+  shadeQuick = false,
   lastSeen = false,
 }: {
   vimeoUrl: string
@@ -197,6 +201,16 @@ export default function ReelPlayer({
   /** The reel this visitor opened last. Marked on the rail so they can find
    *  their way back to it. */
   lastSeen?: boolean
+  /** A shade over the top of the picture, the twin of the one under the
+   *  transport, for the feed's lines to sit on when they are in the reel's
+   *  corner. Comes and goes with them: `shadeQuick` follows an answer's
+   *  160ms, otherwise the standing hint's 600ms. Undefined = never drawn. */
+  shadeTop?: boolean
+  shadeQuick?: boolean
+  /** The one sound setting the whole feed shares. A reel that starts applies
+   *  it; the speaker button on any reel changes it for every reel after. */
+  soundOff?: boolean
+  onSoundOff?: (off: boolean) => void
   /** The phone's full-screen dress: no card edge, no rounding, the close mark
    *  bare and lined up with the seconds. The frame is still 9:16 — the feed
    *  sizes it — and the clip is not cropped. */
@@ -265,6 +279,10 @@ export default function ReelPlayer({
   useEffect(() => {
     onPlayRef.current = onPlay
   }, [onPlay])
+  const soundOffRef = useRef(soundOff)
+  useEffect(() => {
+    soundOffRef.current = soundOff
+  }, [soundOff])
 
   useEffect(() => {
     const el = box.current
@@ -610,6 +628,12 @@ export default function ReelPlayer({
     if (!m) return
     claimed.current = true
     wantsPlay.current = true
+    // The feed's one sound setting, applied as this reel takes over. It also
+    // undoes the neighbour nudge, which had muted this reel to paint its first
+    // frame in silence and then left it that way — so every reel after the
+    // first was starting silent, and it was not the browser's doing.
+    m.setMuted(soundOffRef.current)
+    setMuted(soundOffRef.current)
     // Stated, not asked for. A slide in view is playing as far as the page is
     // concerned, so its transport is up from the first frame rather than
     // waiting on a 'play' event that may never come: the reel can already be
@@ -648,6 +672,8 @@ export default function ReelPlayer({
     }
     if (!m) return
     if (ended) m.seek(0)
+    m.setMuted(soundOffRef.current)
+    setMuted(soundOffRef.current)
     m.play()
   }
 
@@ -813,14 +839,14 @@ export default function ReelPlayer({
                 type="button"
                 onClick={onClose}
                 aria-label={t('exitFullscreen')}
-                // Filling the screen, the mark's INK ends where the seconds
-                // do, 20px in from the edge. Its strokes run 6→18 of a 24 grid
-                // and carry round caps, so at 26px they stop 5.6px short of
+                // Filling the screen, the mark's INK ends on the speaker's
+                // line with the seconds, 22px in. Its strokes run 6→18 of a
+                // 24 grid with round caps, so at 26px they stop 5.6px short of
                 // the glyph box, which sits 11px inside the 48px button: the
-                // button's own edge lands 3px in. Aligning box to box put the
+                // button's own edge lands 5px in. Aligning box to box put the
                 // mark visibly further in than the text it was meant to meet.
                 className={`absolute top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)] ${
-                  fill ? 'right-[3px]' : 'right-3'
+                  fill ? 'right-[5px]' : 'right-3'
                 }`}
                 // Filling the screen, the mark stands on its own: a disc is
                 // what lifts a control off a page it is sitting on, and here
@@ -1012,9 +1038,19 @@ export default function ReelPlayer({
                 )}
                 <div
                   className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/40 to-transparent ${
-                    inFeed ? 'h-48' : 'h-24'
+                    inFeed ? 'h-36' : 'h-24'
                   }`}
                 />
+                {shadeTop !== undefined && (
+                  <div
+                    aria-hidden
+                    // shorter than the one under the transport: there is one
+                    // line up here, not a title, a clock and a bar
+                    className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-black/70 via-black/40 to-transparent transition-opacity ${
+                      shadeQuick ? 'duration-[160ms]' : 'duration-[600ms]'
+                    } ${shadeTop ? 'opacity-100' : 'opacity-0'}`}
+                  />
+                )}
 
                 {/* The title, inside the picture and above the transport, with
                     the time opposite it. Set near the body copy's size (the
@@ -1022,7 +1058,16 @@ export default function ReelPlayer({
                     because in the feed this line is the only thing naming the
                     reel. */}
                 {inFeed && (caption || duration > 0) && (
-                  <div className="pointer-events-none absolute inset-x-5 bottom-14 z-20 flex items-end justify-between gap-6">
+                  <div
+                    className={`pointer-events-none absolute bottom-14 z-20 flex items-end justify-between gap-6 ${
+                      // Filling the screen, the title starts where the play
+                      // GLYPH does and the seconds end where the speaker's
+                      // does — 22px in, the 12px bar inset plus the 10px the
+                      // 20px marks sit inside their 40px buttons. Two lines
+                      // for everything, rather than a third pair of edges.
+                      fill ? 'left-[1.375rem] right-[1.375rem]' : 'inset-x-5'
+                    }`}
+                  >
                     {caption ? (
                       <p className="max-w-[26ch] text-[1.05rem] font-medium leading-[1.45] text-white">
                         {caption}
@@ -1102,7 +1147,11 @@ export default function ReelPlayer({
 
                   <button
                     type="button"
-                    onClick={() => setMuted((m) => !m)}
+                    onClick={() => {
+                      const off = !muted
+                      setMuted(off)
+                      onSoundOff?.(off)
+                    }}
                     aria-label={muted ? t('unmute') : t('mute')}
                     className={`flex shrink-0 items-center justify-center ${
                       inFeed ? 'size-10' : 'size-8'

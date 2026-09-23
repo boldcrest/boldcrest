@@ -39,6 +39,10 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
   // the reel they opened last — kept after the feed closes so the rail shows
   // where they got to
   const [lastSeen, setLastSeen] = useState<number | null>(null)
+  // One sound setting for every reel, rail and feed alike: mute one and the
+  // next starts muted, unmute one and the next starts with sound. Sound on
+  // to begin with — a reel is the one thing on the site that speaks.
+  const [soundOff, setSoundOff] = useState(false)
 
   const items = (reels ?? []).filter((r) => r.vimeoUrl)
   if (items.length === 0) return null
@@ -103,6 +107,8 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
               active={active === i}
               onPlay={() => setActive(i)}
               lastSeen={lastSeen === i}
+              soundOff={soundOff}
+              onSoundOff={setSoundOff}
               onExpand={(at) => {
                 setLastSeen(i)
                 // stop the card behind before the feed takes over, or both
@@ -123,6 +129,8 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
           reels={items}
           startAt={feed.index}
           resumeFrom={feed.at}
+          soundOff={soundOff}
+          onSoundOff={setSoundOff}
           onClose={() => {
             setFeed(null)
             // nothing in the rail resumes on its own when the feed closes
