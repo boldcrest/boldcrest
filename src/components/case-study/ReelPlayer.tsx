@@ -26,18 +26,18 @@ function PlayIcon({ size = 18 }: { size?: number }) {
   )
 }
 
-function PauseIcon() {
+function PauseIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <rect x="6" y="4.5" width="4" height="15" rx="1" />
       <rect x="14" y="4.5" width="4" height="15" rx="1" />
     </svg>
   )
 }
 
-function SoundIcon({ muted }: { muted: boolean }) {
+function SoundIcon({ muted, size = 16 }: { muted: boolean; size?: number }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
       <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" stroke="none" />
       {muted ? <path d="m16 9.5 5 5m0-5-5 5" /> : <path d="M16 9a4.2 4.2 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" />}
     </svg>
@@ -879,9 +879,15 @@ export default function ReelPlayer({
                     type="button"
                     onClick={toggle}
                     aria-label={playing ? t('pause') : t('play')}
-                    className="flex size-8 shrink-0 items-center justify-center"
+                    className={`flex shrink-0 items-center justify-center ${
+                      inFeed ? 'size-10' : 'size-8'
+                    }`}
                   >
-                    {playing ? <PauseIcon /> : <PlayIcon size={16} />}
+                    {playing ? (
+                      <PauseIcon size={inFeed ? 20 : 16} />
+                    ) : (
+                      <PlayIcon size={inFeed ? 20 : 16} />
+                    )}
                   </button>
 
                   {/* the timeline: press anywhere on it to jump there, drag to scrub */}
@@ -937,9 +943,11 @@ export default function ReelPlayer({
                     type="button"
                     onClick={() => setMuted((m) => !m)}
                     aria-label={muted ? t('unmute') : t('mute')}
-                    className="flex size-8 shrink-0 items-center justify-center"
+                    className={`flex shrink-0 items-center justify-center ${
+                      inFeed ? 'size-10' : 'size-8'
+                    }`}
                   >
-                    <SoundIcon muted={muted} />
+                    <SoundIcon muted={muted} size={inFeed ? 20 : 16} />
                   </button>
                 </div>
               </>
