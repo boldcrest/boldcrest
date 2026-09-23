@@ -706,6 +706,22 @@ export default function ReelPlayer({
   // "press to start" state: its transport is up from the first frame and the
   // corner button is only ever the replay at the end.
   const showControls = inFeed ? !ended : started && !ended
+
+  // The title row's height, so the shade under it can grow with it: a title
+  // that wraps to three lines climbs 73px up the picture, and a fixed shade
+  // left its top line on bare video.
+  const titleRow = useRef<HTMLDivElement>(null)
+  const [titleH, setTitleH] = useState(0)
+  useEffect(() => {
+    const el = titleRow.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setTitleH(e.contentRect.height))
+    ro.observe(el)
+    return () => ro.disconnect()
+    // the row is only in the tree while the controls are, so the observer is
+    // attached when it appears rather than at mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showControls, inFeed])
   const showCorner = ended || (!inFeed && !started)
 
   return (
@@ -1038,8 +1054,13 @@ export default function ReelPlayer({
                 )}
                 <div
                   className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/40 to-transparent ${
-                    inFeed ? 'h-36' : 'h-24'
+                    inFeed ? '' : 'h-24'
                   }`}
+                  // In the feed the shade reaches as far up as the title does,
+                  // plus room for the fade to finish above it: the row sits
+                  // 56px up, so a one-line title gets the 144px it always had
+                  // and a three-line one gets 56 + 73 + 72 = 201.
+                  style={inFeed ? { height: Math.max(144, 56 + titleH + 72) } : undefined}
                 />
                 {shadeTop !== undefined && (
                   <div
@@ -1059,6 +1080,7 @@ export default function ReelPlayer({
                     reel. */}
                 {inFeed && (caption || duration > 0) && (
                   <div
+                    ref={titleRow}
                     className={`pointer-events-none absolute bottom-14 z-20 flex items-end justify-between gap-6 ${
                       // Filling the screen, the title starts where the play
                       // GLYPH does and the seconds end where the speaker's
