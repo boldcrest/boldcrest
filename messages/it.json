@@ -370,6 +370,7 @@
     "scrollDown": "Scorri giù",
     "atTop": "Primo video",
     "atEnd": "Ultimo video",
-    "scrollUp": "Scorri su"
+    "scrollUp": "Scorri su",
+    "scrollBoth": "Scorri su/giù"
   }
 }

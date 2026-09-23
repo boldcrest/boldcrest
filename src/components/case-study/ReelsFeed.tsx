@@ -83,9 +83,16 @@ export default function ReelsFeed({
     const id = window.setTimeout(() => setSaid(null), 200)
     return () => window.clearTimeout(id)
   }, [edge])
-  // SCROLL DOWN has said its piece once the feed has moved off the reel it
-  // opened on, and does not come back if the visitor scrolls up again.
+  // The standing hint says its piece and goes: once the feed has moved off the
+  // reel it opened on, and in any case after a few seconds. It does not come
+  // back. Long enough to read a line of caps without hurrying, short enough
+  // that it is not still sitting over the picture while the reel plays —
+  // a second would be gone before it was noticed.
   const [hint, setHint] = useState(true)
+  useEffect(() => {
+    const id = window.setTimeout(() => setHint(false), 2600)
+    return () => window.clearTimeout(id)
+  }, [])
   const lastTouch = useRef<number | null>(null)
   const scrolledAt = useRef(0)
   /** On the last reel the only way on is back up, so the standing hint moves to
@@ -271,29 +278,49 @@ export default function ReelsFeed({
     return () => io.disconnect()
   }, [reels.length])
 
-  /** One of the four lines, wherever it is being put. `where` is the end this
-   *  line belongs to: the top one answers a push above the first reel and
-   *  carries SCROLL UP on the last, the bottom one the other way round. */
+  /** One of the lines, wherever it is being put. `where` is the end it belongs
+   *  to: the top one answers a push above the first reel, the bottom one a push
+   *  past the last. Between the two they also carry the standing hint, which
+   *  says which ways there are to go from the reel in view — down from the
+   *  first, up from the last, and both from anywhere in between. */
   const line = (where: 'top' | 'end') => {
     const answering = said === where
-    const standing = where === 'top' ? onLast : !onLast
+    const onFirst = current === 0
+    const alone = reels.length <= 1
+    // the top line carries the hint only when up is the ONLY way on
+    const standing =
+      !alone && (where === 'top' ? onLast && !onFirst : !onLast)
     return (
       <span
-        className={`flex items-center gap-2 text-[1rem] uppercase tracking-[0.2em] transition-opacity duration-[160ms] ${
+        className={`flex items-center gap-2 text-[0.8rem] uppercase tracking-[0.2em] transition-opacity ${
+          answering ? 'duration-[160ms]' : 'duration-[600ms]'
+        } ${
           answering ? 'text-white' : 'text-white/55'
         } ${edge === where || (hint && standing) ? 'opacity-100' : 'opacity-0'}`}
       >
         {answering ? (
           t(where === 'top' ? 'atTop' : 'atEnd')
         ) : where === 'top' ? (
+          // every arrow sits after the words, whichever way it points: one
+          // ahead and one behind read as brackets round the line rather than
+          // as the two ways out of it
           <>
-            <Arrow up />
             {t('scrollUp')}
+            <Arrow up />
           </>
-        ) : (
+        ) : onFirst ? (
           <>
             {t('scrollDown')}
             <Arrow />
+          </>
+        ) : (
+          // anywhere in the middle, both ways are open
+          <>
+            {t('scrollBoth')}
+            <span className="flex items-center gap-1">
+              <Arrow up />
+              <Arrow />
+            </span>
           </>
         )}
       </span>
@@ -414,9 +441,14 @@ export default function ReelsFeed({
                     Only for the reel in view: the ones either side are built
                     ahead and would carry a line of their own into sight. */}
                 {narrow && i === current && (
-                  <div className="pointer-events-none absolute left-4 top-4 z-[45] flex flex-col items-start gap-1">
-                    {line('top')}
-                    {line('end')}
+                  // Level with the close mark opposite: the same 12px inset,
+                  // and the same 48px tall box so whichever line is showing
+                  // centres on the X rather than sitting above it. The two are
+                  // stacked in one grid cell, not a column — a column's height
+                  // depends on which of them is there.
+                  <div className="pointer-events-none absolute left-3 top-3 z-[45] grid h-12 items-center justify-items-start">
+                    <div className="[grid-area:1/1]">{line('top')}</div>
+                    <div className="[grid-area:1/1]">{line('end')}</div>
                   </div>
                 )}
                 <ReelPlayer

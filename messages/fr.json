@@ -370,6 +370,7 @@
     "scrollDown": "Faites défiler",
     "atTop": "Première vidéo",
     "atEnd": "Dernière vidéo",
-    "scrollUp": "Remontez"
+    "scrollUp": "Remontez",
+    "scrollBoth": "Défilez haut/bas"
   }
 }

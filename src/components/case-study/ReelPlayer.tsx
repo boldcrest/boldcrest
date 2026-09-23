@@ -710,17 +710,34 @@ export default function ReelPlayer({
                 onClick={onClose}
                 aria-label={t('exitFullscreen')}
                 className="absolute right-3 top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)]"
-                style={{
-                  borderRadius: 'var(--radius-pill)',
-                  borderWidth: '1px',
-                  borderStyle: 'solid',
-                  borderColor: 'rgba(255,255,255,0.45)',
-                  backgroundColor: 'rgba(10,10,10,0.72)',
-                  backdropFilter: 'blur(24px) saturate(1.5)',
-                  WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-                }}
+                // Filling the screen, the mark stands on its own: a disc is
+                // what lifts a control off a page it is sitting on, and here
+                // there is no page under it — just the picture, edge to edge.
+                // Bigger to make up for losing the disc around it.
+                style={
+                  fill
+                    ? undefined
+                    : {
+                        borderRadius: 'var(--radius-pill)',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        borderColor: 'rgba(255,255,255,0.45)',
+                        backgroundColor: 'rgba(10,10,10,0.72)',
+                        backdropFilter: 'blur(24px) saturate(1.5)',
+                        WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                      }
+                }
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+                <svg
+                  width={fill ? 26 : 18}
+                  height={fill ? 26 : 18}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={fill ? 1.6 : 1.8}
+                  strokeLinecap="round"
+                  aria-hidden
+                >
                   <path d="M6 6l12 12M18 6 6 18" />
                 </svg>
               </button>
