@@ -160,6 +160,7 @@ export default function ReelPlayer({
   preload = false,
   suspend = false,
   fill = false,
+  aspect,
   lastSeen = false,
 }: {
   vimeoUrl: string
@@ -190,6 +191,10 @@ export default function ReelPlayer({
   /** The reel this visitor opened last. Marked on the rail so they can find
    *  their way back to it. */
   lastSeen?: boolean
+  /** The clip's width over height, from Vimeo. Only the cover in `fill` needs
+   *  it: a player sized for 9:16 letterboxes a clip of any other shape inside
+   *  itself, bars and all. Falls back to 9:16, which is what a reel should be. */
+  aspect?: number | null
   /** Fill whatever it is given rather than holding 9:16, cropping the video to
    *  cover it. The feed uses this on a phone, where a reel is the whole screen
    *  and a 9:16 box would sit in the middle of it with bars either side. */
@@ -692,12 +697,15 @@ export default function ReelPlayer({
                 style={
                   fill
                     ? {
-                        // Tall enough to cover the box, and as wide as 9:16
-                        // makes it — the ratio does the width, so there is no
-                        // percentage having to cross from one axis to the other.
-                        height: 'max(100%, calc(100vw * 16 / 9))',
+                        // Tall enough to cover the box, and as wide as the
+                        // clip's own shape makes it — the ratio does the width,
+                        // so no percentage has to cross from one axis to the
+                        // other. The clip's REAL ratio, not 9:16: sized for
+                        // 9:16, Vimeo letterboxed a 3:4 clip inside the player
+                        // and the bars came with it.
+                        height: `max(100%, calc(100vw / ${aspect || 9 / 16}))`,
                         width: 'auto',
-                        aspectRatio: '9 / 16',
+                        aspectRatio: String(aspect || 9 / 16),
                       }
                     : undefined
                 }

@@ -15,7 +15,10 @@ export const metadata: Metadata = {
 
 
 const REELS = [
-  'https://vimeo.com/903992253',
+  // SanFest's 34s reel (1080x1440, the tallest clip in the portfolio) stands
+  // in first, so the full-screen player can be judged on a real tall frame:
+  // the placeholder clips below are 1:1 and sit letterboxed inside 9:16.
+  'https://vimeo.com/1228749430',
   'https://vimeo.com/903992289',
   'https://vimeo.com/903992305',
   'https://vimeo.com/903992326',
@@ -73,7 +76,7 @@ const STUDY: CaseStudy = {
   reels: REELS.map((vimeoUrl, i) => ({
     vimeoUrl,
     aspectRatio: '9:16',
-    caption: ['Opening', '7:40 queue', 'The second coffee', 'Steam', 'Hands', 'Closing'][i],
+    caption: ['SanFest reel', '7:40 queue', 'The second coffee', 'Steam', 'Hands', 'Closing'][i],
   })),
   feed: FEED_REFS.map((ref, i) => ({
     _key: String(i),

@@ -391,14 +391,27 @@ export default function ReelsFeed({
           mark centred in it, so matching the button's own left edge left the
           line 10px to the left of the triangle above it. */}
       {narrow && (
-        // Exactly as tall as the lift, on the player's own ground: the reel
-        // lifting off it must read as the player opening a strip, not as the
-        // page behind showing through the gap — which it did, blurred, with
-        // the rail's captions in it. The line is centred in the strip, so it
-        // has the same room above it as below.
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex items-center bg-bg pl-[1.375rem]" style={{ height: LIFT_NARROW }}>
-          {answer('end')}
-        </div>
+        // A strip at each end, exactly as tall as the give, on the player's own
+        // ground: the reel moving off it must read as the player opening a
+        // strip, not as the page behind showing through the gap — which it
+        // did, blurred, with the rail's captions in it. Pushing down at the
+        // first reel uncovers the top one, pushing up at the last uncovers the
+        // bottom one. Each line is centred in its strip, so it has the same
+        // room above it as below, and both sit on the play button's own left.
+        <>
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 z-0 flex items-center bg-bg pl-[1.375rem]"
+            style={{ height: LIFT_NARROW }}
+          >
+            {answer('top')}
+          </div>
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex items-center bg-bg pl-[1.375rem]"
+            style={{ height: LIFT_NARROW }}
+          >
+            {answer('end')}
+          </div>
+        </>
       )}
 
       {/* one reel per screen; snapping so a flick lands on a whole one */}
@@ -466,8 +479,10 @@ export default function ReelsFeed({
                   narrow
                     ? undefined
                     : {
-                        aspectRatio: '9 / 16',
-                        height: 'min(100%, calc((100vw - 2 * var(--gutter)) * 16 / 9))',
+                        // the clip's own shape, so a 3:4 clip gets a 3:4 frame
+                        // rather than bars inside a 9:16 one
+                        aspectRatio: String(reel.aspect || 9 / 16),
+                        height: `min(100%, calc((100vw - 2 * var(--gutter)) / ${reel.aspect || 9 / 16}))`,
                       }
                 }
               >
@@ -477,14 +492,13 @@ export default function ReelsFeed({
                     ahead and would carry a line of their own into sight. */}
                 {narrow && i === current && (
                   <>
-                    {/* Level with the close mark opposite: the same 12px inset
-                        and the same 48px box, so whichever line is showing
-                        centres on the X rather than sitting above it. Stacked
-                        in one grid cell, not a column — a column's height
-                        depends on which of them is there. */}
-                    <div className="pointer-events-none absolute left-3 top-3 z-[45] grid h-12 items-center justify-items-start">
-                      <div className="[grid-area:1/1]">{answer('top')}</div>
-                      <div className="[grid-area:1/1]">{standing()}</div>
+                    {/* The standing hint, level with the close mark opposite:
+                        the same 12px inset and the same 48px box, so it
+                        centres on the X rather than sitting above it. FIRST
+                        VIDEO is not here any more — it is in the strip the
+                        reel uncovers when pushed down, like LAST VIDEO below. */}
+                    <div className="pointer-events-none absolute left-3 top-3 z-[45] flex h-12 items-center">
+                      {standing()}
                     </div>
                     {/* and the other end's answer under the play button, in the
                         band the transport leaves when it lifts off the bottom
@@ -494,6 +508,7 @@ export default function ReelsFeed({
                 <ReelPlayer
                   vimeoUrl={reel.vimeoUrl as string}
                   poster={reel.poster}
+                  aspect={reel.aspect}
                   caption={reel.caption}
                   active={current === i}
                   autoPlay
