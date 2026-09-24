@@ -352,6 +352,15 @@ export default function ReelPlayer({
   const [note, setNote] = useState<'hint' | 'first' | 'last' | null>(null)
   const noteTimer = useRef(0)
   const swipeY = useRef<number | null>(null)
+  const swipeX = useRef<number | null>(null)
+  // the deck's numbers, for the grown player's move
+  const MOVE_MS = 700
+  const MOVE_EASE = 'cubic-bezier(0.76, 0, 0.24, 1)'
+  const SWIPE_MIN = 50
+  const stage = useRef<HTMLDivElement>(null)
+  const movingUntil = useRef(0)
+  // the reel sliding in, while the move runs: its cover, from the side it comes
+  const [incoming, setIncoming] = useState<{ index: number; dir: 1 | -1 } | null>(null)
   // for the player's own handlers, which are wired once
   const grownRef = useRef(false)
   const cursorRef = useRef(index)
@@ -884,21 +893,41 @@ export default function ReelPlayer({
       say(next < 0 ? 'first' : 'last')
       return
     }
-    setSwapping(true)
-    setCursor(next)
-    setTime(0)
-    setEnded(false)
-    setBuffering(false)
-    onWatched?.(next)
-    claimed.current = true
-    wantsPlay.current = true
-    void m.load(list[next].vimeoUrl).then(() => {
-      // the player still holds the tap's permission: this play is obeyed,
-      // with sound, the way the first one was
-      m.setMuted(soundOffRef.current)
-      setMuted(soundOffRef.current)
-      m.play()
-    })
+    const now = performance.now()
+    if (now < movingUntil.current) return
+    movingUntil.current = now + MOVE_MS + 100
+    const dir: 1 | -1 = next > cursor ? 1 : -1
+    // The move first, the load after. The reel that is playing slides out and
+    // the next one's cover slides in, on the deck's curve, while the player
+    // is still showing the old reel — a load mid-move would go black under
+    // it. Only once the cover is in place is the new reel loaded behind it;
+    // the cover then holds until the reel's first frame, as a cover does.
+    setIncoming({ index: next, dir })
+    const st = stage.current
+    const run = st?.animate(
+      [{ transform: 'translateY(0)' }, { transform: `translateY(${-dir * 100}%)` }],
+      { duration: MOVE_MS, easing: MOVE_EASE },
+    )
+    const land = () => {
+      setIncoming(null)
+      setSwapping(true)
+      setCursor(next)
+      setTime(0)
+      setEnded(false)
+      setBuffering(false)
+      onWatched?.(next)
+      claimed.current = true
+      wantsPlay.current = true
+      void m.load(list[next].vimeoUrl).then(() => {
+        // the player still holds the tap's permission: this play is obeyed,
+        // with sound, the way the first one was
+        m.setMuted(soundOffRef.current)
+        setMuted(soundOffRef.current)
+        m.play()
+      })
+    }
+    if (run) run.onfinish = land
+    else land()
   }
 
   /** Back to the card. If a different reel was loaded while grown, the card's
@@ -999,15 +1028,27 @@ export default function ReelPlayer({
       <div
         ref={box}
         // grown on a phone: a swipe is the next or the previous reel
-        onTouchStart={grown ? (e) => { swipeY.current = e.touches[0].clientY } : undefined}
+        onTouchStart={
+          grown
+            ? (e) => {
+                swipeY.current = e.touches[0].clientY
+                swipeX.current = e.touches[0].clientX
+              }
+            : undefined
+        }
         onTouchEnd={
           grown
             ? (e) => {
-                const from = swipeY.current
-                swipeY.current = null
-                if (from === null) return
-                const dy = from - e.changedTouches[0].clientY
-                if (Math.abs(dy) < 60) return
+                const fromY = swipeY.current
+                const fromX = swipeX.current
+                swipeY.current = swipeX.current = null
+                if (fromY === null || fromX === null) return
+                const dy = fromY - e.changedTouches[0].clientY
+                const dx = fromX - e.changedTouches[0].clientX
+                // the deck's rules: only a clearly vertical swipe, and of some
+                // length; a sideways flick with some drift is not a reel
+                if (Math.abs(dx) > Math.abs(dy)) return
+                if (Math.abs(dy) < SWIPE_MIN) return
                 swapTo(cursor + (dy > 0 ? 1 : -1))
               }
             : undefined
@@ -1057,8 +1098,8 @@ export default function ReelPlayer({
           className={
             grown
               ? // the phone feed's frame: 9:16 at the full width, centred, bars
-                // above and below on the ground
-                'absolute inset-0 m-auto aspect-[9/16] w-full'
+                // above and below on the ground; clipped, for the move
+                'absolute inset-0 m-auto aspect-[9/16] w-full overflow-hidden'
               : full
                 ? // tall, but not wall to wall on a big screen: room above and
                   // below, and a cap
@@ -1091,10 +1132,30 @@ export default function ReelPlayer({
             </button>
           )}
 
+          {/* The next reel's cover, sliding in from the side it comes as the
+              stage slides out. At the end of the move it is exactly where the
+              swapping cover then stands, so the handover is invisible. */}
+          {incoming && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[36] bg-cover bg-center"
+              style={{
+                backgroundImage: playlist?.[incoming.index]?.poster
+                  ? `url(${playlist[incoming.index].poster})`
+                  : undefined,
+                backgroundColor: '#0a0a0a',
+                animation: `reel-in-${incoming.dir > 0 ? 'up' : 'down'} ${MOVE_MS}ms ${MOVE_EASE} forwards`,
+              }}
+            />
+          )}
+
           {/* rounded by a clip on its own layer, not a transform-free overflow:
               the playing video under a plain rounded overflow shimmered along
               the curve */}
-          <div className={`absolute inset-0 overflow-hidden ${full && !fillLook ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}>
+          <div
+            ref={stage}
+            className={`absolute inset-0 overflow-hidden ${full && !fillLook ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}
+          >
             {mounted && isFile(vimeoUrl) && (
               <video
                 ref={clip}

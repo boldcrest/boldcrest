@@ -10,6 +10,33 @@ import type { Reel } from './ReelsCarousel'
  *  3.25rem bands, or 960px, whichever is less. */
 const GAP = 'calc((100% - min(100% - 6.5rem, 960px)) / 2)'
 
+/** A CSS cubic-bezier as a function of progress, for a move we drive by hand. */
+function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  const sx = (t: number) => ((ax * t + bx) * t + cx) * t
+  const sy = (t: number) => ((ay * t + by) * t + cy) * t
+  const dx = (t: number) => (3 * ax * t + 2 * bx) * t + cx
+  return (x: number) => {
+    // Newton, then a bisection fallback: solve t for x, return y
+    let t = x
+    for (let i = 0; i < 6; i++) {
+      const d = dx(t)
+      if (Math.abs(d) < 1e-6) break
+      t -= (sx(t) - x) / d
+    }
+    if (t < 0 || t > 1 || Math.abs(sx(t) - x) > 1e-4) {
+      let lo = 0, hi = 1
+      for (let i = 0; i < 24; i++) {
+        t = (lo + hi) / 2
+        if (sx(t) < x) lo = t
+        else hi = t
+      }
+    }
+    return sy(t)
+  }
+}
+
 /** A reel fills a phone, so there is no clear space above or below it to put a
  *  line in: on a narrow screen the line goes inside the picture instead. */
 const NARROW = '(max-width: 767px)'
@@ -209,42 +236,46 @@ export default function ReelsFeed({
   // scroll and behind guesses about which events were a gesture and which were
   // its tail — which is what made it feel unresponsive and late.
   //
-  // The wheel is ours. A wheel is not a finger: a notch is a discrete click,
-  // and left to the browser's snapping it took an unpredictable number of them
-  // to move a reel, and sometimes moved three. So one gesture is one reel,
-  // moved on a curve of our own — 320ms, eased out, started on the first
-  // event so nothing waits — and everything that arrives while it moves, or
-  // that is only the decaying tail of the same push, is swallowed. A NEW push
-  // is a gap since the last event, or a delta larger than the one before it;
-  // a tail is neither. Touch is left to the browser, which moves a screen at
-  // a time on its own.
+  // The wheel is ours, on the People deck's model — the one the site has
+  // already tuned. A wheel is not a finger: a notch is a discrete click, and
+  // left to the browser's snapping it took an unpredictable number of them to
+  // move a reel, and sometimes moved three. So: intent is ACCUMULATED within
+  // one continuous gesture (reset on a pause or a change of direction), so
+  // even a gentle swipe whose single deltas are tiny reliably crosses the
+  // threshold; one step per gesture, on the deck's own 700ms curve; and a
+  // fixed window from the step in which everything is swallowed — long enough
+  // to absorb a hard flick's inertia tail, but a deadline, so a fresh scroll
+  // always advances and no input is ever blocked. Touch is left to the
+  // browser, which moves a screen at a time on its own.
   useEffect(() => {
     const el = scroller.current
     if (!el) return
     // Snapping is for a finger. Under a wheel it fought the step: every
     // in-between scrollTop we set was pulled to the nearest reel before the
-    // next frame, so a step was a jump — two positions, nothing between. On
-    // a mouse or trackpad the scroller is not snapped at all; we land it.
+    // next frame, so a step was a jump — two positions, nothing between.
     const wheelDriven = window.matchMedia('(hover: hover) and (pointer: fine)').matches
     if (wheelDriven) el.style.scrollSnapType = 'none'
     const onScroll = () => {
       scrolledAt.current = performance.now()
     }
+    // the deck's numbers
+    const DURATION = 700
+    const SWALLOW = DURATION + 450
+    const THRESHOLD = 28
+    const bezier = cubicBezier(0.76, 0, 0.24, 1)
     let raf = 0
     let moving = false
-    let lastAt = 0
-    let lastMag = 0
+    let accum = 0
+    let lastTs = 0
+    let swallowUntil = 0
     const glide = (to: number) => {
       cancelAnimationFrame(raf)
       const from = el.scrollTop
       const t0 = performance.now()
-      const D = 380
       moving = true
       const step = (now: number) => {
-        const k = Math.min(1, (now - t0) / D)
-        // a reel's move: away quickly, landing softly
-        const e = 1 - Math.pow(1 - k, 4)
-        el.scrollTop = from + (to - from) * e
+        const k = Math.min(1, (now - t0) / DURATION)
+        el.scrollTop = from + (to - from) * bezier(k)
         if (k < 1) raf = requestAnimationFrame(step)
         else moving = false
       }
@@ -252,34 +283,29 @@ export default function ReelsFeed({
     }
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || !e.deltaY) return
-      const now = performance.now()
-      const mag = Math.abs(e.deltaY)
-      const gap = now - lastAt
-      // A push, as against the tail of the last one: a gap since the last
-      // event, or a delta clearly larger than the one before — AND of some
-      // size. A tail decays to specks that jitter (3, 5, 4, 6), and 3 → 5 is
-      // "larger" by any ratio; taken as a push it moved a second reel once
-      // the step had landed. Nothing a hand does starts that small.
-      const grew = mag > lastMag * 1.4 && mag >= 24
-      lastAt = now
-      lastMag = mag
-      const down = e.deltaY > 0
+      e.preventDefault()
+      // the inertia tail of the step just taken
+      if (e.timeStamp < swallowUntil || moving) return
+      // a mouse notch and a trackpad swipe made comparable, then intent
+      // gathered within one gesture
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientHeight : 1
+      const dy = e.deltaY * unit
+      if (e.timeStamp - lastTs > 200 || Math.sign(dy) !== Math.sign(accum)) accum = 0
+      lastTs = e.timeStamp
+      accum += dy
+      if (Math.abs(accum) < THRESHOLD) return
+      const down = accum > 0
+      accum = 0
       const h = el.clientHeight
       const here = Math.round(el.scrollTop / h)
       const stuck = down ? here >= reels.length - 1 : here <= 0
-      e.preventDefault()
-      // a step still under way, or the tail of the push just acted on: not
-      // a new ask, whichever way it points
-      if (moving) return
-      if ((gap < 80 && !grew) || mag < 24) return
       if (stuck) {
-        // nothing that way: the feed gives instead of moving — at once, on the
-        // next push after landing here, not after a wait. Specks (a trackpad's
-        // stray movement in the axis not in use) are not a push.
-        if (mag < 8) return
+        // nothing that way: the feed gives instead of moving
         bounce(down)
+        swallowUntil = e.timeStamp + SWALLOW
         return
       }
+      swallowUntil = e.timeStamp + SWALLOW
       glide((here + (down ? 1 : -1)) * h)
     }
     el.addEventListener('scroll', onScroll, { passive: true })
