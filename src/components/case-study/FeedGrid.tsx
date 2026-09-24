@@ -17,8 +17,9 @@ interface FeedGridProps {
 }
 
 /**
- * The grid, laid out the way Instagram lays it out: three across, square crops,
- * hairline gaps, in colour.
+ * The grid, laid out the way Instagram lays it out now: three across, 3:4
+ * portrait tiles (the square grid went in early 2025), hairline gaps, in
+ * colour.
  *
  * Deliberately NOT the site's usual black-and-white-until-hover treatment — the
  * point of this block is to show the feed as it actually looks on the profile,
@@ -44,7 +45,7 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
           {items.map((img, i) => (
             <motion.div
               key={img._key ?? i}
-              className="relative aspect-square overflow-hidden bg-bg-card"
+              className="relative aspect-[3/4] overflow-hidden bg-bg-card"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, amount: 0.2 }}
@@ -56,7 +57,7 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
               }}
             >
               <Image
-                src={urlFor(img).width(700).height(700).url()}
+                src={urlFor(img).width(600).height(800).url()}
                 alt={img.alt || ''}
                 fill
                 loader={sanityImageLoader}
