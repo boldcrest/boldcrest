@@ -362,6 +362,12 @@ export default function ReelPlayer({
   const [cursor, setCursor] = useState(index)
   // a reel being loaded into the player: its cover holds the picture meanwhile
   const [swapping, setSwapping] = useState(false)
+  // A reel loaded into the grown player that the phone would not start on
+  // its own (iOS: a video inside the frame starts only from a tap on it,
+  // sound or no sound). Its cover stays, with a play mark, until that tap.
+  const [needsTap, setNeedsTap] = useState(false)
+  const needsTapRef = useRef(false)
+  needsTapRef.current = needsTap
   // what the grown player says in its corner
   const [note, setNote] = useState<'hint' | 'first' | 'last' | null>(null)
   // A readout for a phone in hand: what the player answered, in order, while
@@ -578,10 +584,12 @@ export default function ReelPlayer({
         if (cancelled || !wantsPlay.current) return
         if (retries >= 2) {
           // Refused with sound and refused muted: the reel is not going to
-          // start on its own. The cover comes off so the controls are there
-          // and a tap can ask again, rather than a cover with nothing on it.
-          setSwapping(false)
+          // start on its own. The cover stays, with a play mark on it, and
+          // the tap it asks for lands in the frame, which is what the phone
+          // wants before it will start this one.
           setLoading(false)
+          setNeedsTap(true)
+          setMuted(soundOffRef.current)
           return
         }
         retries += 1
@@ -608,6 +616,7 @@ export default function ReelPlayer({
       }
       media.current = {
         play: () => {
+          retries = 0
           askAndWatch()
           logRef.current('play()')
           void p
@@ -687,6 +696,7 @@ export default function ReelPlayer({
         setTimeout(syncMuted, 800)
         setLoading(false)
         setSwapping(false)
+        setNeedsTap(false)
         setStarted(true)
         setEnded(false)
         setPlaying(true)
@@ -736,6 +746,23 @@ export default function ReelPlayer({
     let giveUp = 0
     const onBlur = () => {
       if (document.activeElement !== el) return
+      if (grownRef.current && needsTapRef.current) {
+        // the tap the reel was waiting for: it went into the frame, so the
+        // phone lets this one start, with the sound as it was set
+        setLoading(true)
+        claimed.current = true
+        wantsPlay.current = true
+        window.setTimeout(() => {
+          if (cancelled) return
+          const m = media.current
+          m?.setMuted(soundOffRef.current)
+          setMuted(soundOffRef.current)
+          m?.play()
+          el.blur()
+          window.focus()
+        }, 50)
+        return
+      }
       if (nativeStart || grownRef.current) {
         // On a touch feed the reel is already running; a tap on the picture
         // toggles its sound, the way a reel does. It goes through the frame
@@ -965,6 +992,7 @@ export default function ReelPlayer({
     // it, so the handover is invisible. Then the reel is loaded behind the
     // cover, which holds until its first frame, as a cover does.
     setSwapping(true)
+    setNeedsTap(false)
     setCursor(next)
     setTime(0)
     setEnded(false)
@@ -1028,6 +1056,7 @@ export default function ReelPlayer({
     setStarted(false)
     setPlaying(false)
     setSwapping(false)
+    setNeedsTap(false)
     setTime(0)
   }
 
@@ -1304,6 +1333,15 @@ export default function ReelPlayer({
               </>
             )}
 
+            {/* The reel the phone would not start: its cover, and the mark
+                that says a tap on it does. Over the cover, under nothing. */}
+            {needsTap && !loading && (
+              <div aria-hidden className="pointer-events-none absolute inset-0 z-[36] grid place-items-center">
+                <span className="flex size-16 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-[2px]">
+                  <PlayIcon size={28} />
+                </span>
+              </div>
+            )}
             {/* Waiting on the network mid-play: the same ring the corner button
                 turns on a first press, in the middle of the picture. Only once
                 the reel has started — before that the corner already says so. */}
