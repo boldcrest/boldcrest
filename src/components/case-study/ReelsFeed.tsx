@@ -637,7 +637,9 @@ export default function ReelsFeed({
                   ? // full height, and centring the frame in it: the frame is
                     // shorter than the screen, and the bars must be even
                     'flex h-full w-full items-center justify-center'
-                  : 'h-full max-h-[min(100%,960px)] w-auto max-w-full'
+                  : // and centred here too: a picture is shorter than the
+                    // reel's frame, and it sits in the middle of that height
+                    'flex h-full max-h-[min(100%,960px)] w-auto max-w-full items-center justify-center'
               }
             >
               {/* A 9:16 frame, as tall as the screen allows but no wider than
