@@ -658,7 +658,10 @@ export default function ReelPlayer({
           return p
             .loadVideo({
               url: `https://vimeo.com/${id ?? ''}${hash ? `/${hash}` : ''}`,
-              autoplay: false,
+              // the player's own start, not ours after: its start is inside
+              // its frame, where the phone's permission lives
+              autoplay: true,
+              muted: false,
               controls: false,
               title: false,
               byline: false,
