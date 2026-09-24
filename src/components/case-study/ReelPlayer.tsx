@@ -746,9 +746,23 @@ export default function ReelPlayer({
     if (!expanded) return
     const el = box.current
     const card = el?.closest<HTMLElement>('[data-reel-card]')
+    // iOS Safari lays a fixed box out against the nearest scroll container,
+    // not the viewport: grown inside the rail, the reel sat where the rail
+    // was, the rail's width by the card's height, and moved with the page.
+    // So the rail stops being one while the reel is open (overflow visible,
+    // no snap) and takes its position back after.
+    const rail = el?.closest<HTMLElement>('[data-reel-rail]')
     const html = document.documentElement
-    const saved = { overflow: html.style.overflow, z: card?.style.zIndex ?? '' }
+    const saved = {
+      overflow: html.style.overflow,
+      z: card?.style.zIndex ?? '',
+      rail: { overflow: rail?.style.overflow ?? '', snap: rail?.style.scrollSnapType ?? '', left: rail?.scrollLeft ?? 0 },
+    }
     html.style.overflow = 'hidden'
+    if (rail) {
+      rail.style.overflow = 'visible'
+      rail.style.scrollSnapType = 'none'
+    }
     // 1800: over the header (999 / 1002) so the reel covers the floating menu,
     // and under the start-a-project overlay (1900) so that still wins if it is
     // opened. The card is `relative`, so giving it a z-index makes it a
@@ -760,6 +774,11 @@ export default function ReelPlayer({
     return () => {
       html.style.overflow = saved.overflow
       if (card) card.style.zIndex = saved.z
+      if (rail) {
+        rail.style.overflow = saved.rail.overflow
+        rail.style.scrollSnapType = saved.rail.snap
+        rail.scrollLeft = saved.rail.left
+      }
       document.removeEventListener('keydown', onKey)
     }
   }, [expanded])

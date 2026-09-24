@@ -150,6 +150,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
           can scroll clear of the right edge. */}
       <div
         ref={scrollerRef}
+        data-reel-rail
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
