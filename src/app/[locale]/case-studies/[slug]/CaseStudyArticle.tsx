@@ -74,7 +74,7 @@ export default async function CaseStudyArticle({
       />
 
       {study.explanation && study.explanation.length > 0 && (
-        <section className="px-[var(--gutter)] pb-[var(--space-xl)]">
+        <section className="px-[var(--gutter)]">
           <div className="mx-auto max-w-[var(--max-width)]">
             <div className="max-w-[760px] border-t border-border pt-[var(--space-lg)]">
               <PortableText value={study.explanation} components={ptComponents} />

@@ -105,8 +105,12 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
     state.current.active = false
   }
 
+  // One step (space-xl) from the write-up to the rail's heading, then the
+  // article's own heading-to-content step (space-lg) to the cards: the same
+  // rhythm the feed follows below, so the three read as one page, not three
+  // sections stacked.
   return (
-    <section className="py-[var(--space-lg)]">
+    <section className="pt-[var(--space-xl)]">
       <div className="mx-auto max-w-[var(--max-width)] px-[var(--gutter)]">
         <div className="mb-[var(--space-lg)] flex items-baseline justify-between gap-4">
           <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
@@ -116,7 +120,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
               of the site's controls; the one with nowhere to go fades rather
               than disappears, so the pair holds its place. */}
           {items.length > 1 && (
-            <div className="flex items-center gap-2 self-center">
+            <div className="-my-3 flex items-center gap-2 self-center">
               {([-1, 1] as const).map((dir) => {
                 const off = dir < 0 ? edges.start : edges.end
                 return (
@@ -127,7 +131,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
                     aria-label={dir < 0 ? t('previous') : t('next')}
                     aria-disabled={off}
                     tabIndex={off ? -1 : 0}
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-primary transition-[opacity,border-color,background-color] duration-300 hover:border-border-hover hover:bg-white/5 ${
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-primary transition-[opacity,border-color,background-color] duration-300 hover:border-border-hover hover:bg-white/5 ${
                       off ? 'pointer-events-none opacity-30' : 'opacity-100'
                     }`}
                   >
