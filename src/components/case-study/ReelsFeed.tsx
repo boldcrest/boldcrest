@@ -221,6 +221,12 @@ export default function ReelsFeed({
   useEffect(() => {
     const el = scroller.current
     if (!el) return
+    // Snapping is for a finger. Under a wheel it fought the step: every
+    // in-between scrollTop we set was pulled to the nearest reel before the
+    // next frame, so a step was a jump — two positions, nothing between. On
+    // a mouse or trackpad the scroller is not snapped at all; we land it.
+    const wheelDriven = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    if (wheelDriven) el.style.scrollSnapType = 'none'
     const onScroll = () => {
       scrolledAt.current = performance.now()
     }
@@ -232,11 +238,12 @@ export default function ReelsFeed({
       cancelAnimationFrame(raf)
       const from = el.scrollTop
       const t0 = performance.now()
-      const D = 320
+      const D = 380
       moving = true
       const step = (now: number) => {
         const k = Math.min(1, (now - t0) / D)
-        const e = 1 - Math.pow(1 - k, 3)
+        // a reel's move: away quickly, landing softly
+        const e = 1 - Math.pow(1 - k, 4)
         el.scrollTop = from + (to - from) * e
         if (k < 1) raf = requestAnimationFrame(step)
         else moving = false
@@ -274,6 +281,7 @@ export default function ReelsFeed({
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => {
       cancelAnimationFrame(raf)
+      el.style.scrollSnapType = ''
       el.removeEventListener('scroll', onScroll)
       el.removeEventListener('wheel', onWheel)
     }
