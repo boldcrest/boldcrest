@@ -27,7 +27,8 @@ interface ServiceCTAProps {
    * (1.5rem under a top border) is sized for the FAQ that follows it on a
    * service page; ahead of the footer it left 24px above the footer's line
    * against the 80px the footer keeps between its own sitemap and bottom
-   * band. This matches that 80px.
+   * band. This matches that 80px — below the block, and above it too, from
+   * its own line down to the eyebrow, so the block sits in even air.
    */
   beforeFooter?: boolean
 }
@@ -69,7 +70,7 @@ export default function ServiceCTA({
       className={`px-[var(--gutter)] ${
         beforeFooter ? 'pb-20' : topBorder ? 'pb-[var(--space-md)]' : 'pb-[var(--space-2xl)]'
       } ${
-        topBorder ? 'border-t border-border pt-[var(--space-lg)]' : ''
+        topBorder ? `border-t border-border ${beforeFooter ? 'pt-20' : 'pt-[var(--space-lg)]'}` : ''
       }`}
     >
       <div className={fullWidth ? 'w-full' : 'mx-auto max-w-[var(--max-width)]'}>
