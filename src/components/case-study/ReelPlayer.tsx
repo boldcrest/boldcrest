@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -110,6 +111,19 @@ type Media = {
  */
 const shade = (to: 'top' | 'bottom') =>
   `linear-gradient(in srgb to ${to}, rgb(10 10 10 / 1) 0%, rgb(10 10 10 / 0.55) 42%, rgb(10 10 10 / 0.18) 78%, rgb(10 10 10 / 0) 100%)`
+
+/** One screen of the grown box: a neighbour's cover in the same 9:16 frame
+ *  as the reel, so scrolling onto it looks like the next reel arriving. */
+function CoverSlide({ poster }: { poster?: string | null }) {
+  return (
+    <div aria-hidden className="relative h-full w-full snap-start snap-always bg-bg">
+      <div
+        className="absolute inset-0 m-auto aspect-[9/16] w-full bg-cover bg-center"
+        style={{ height: 'min(100%, calc(100vw * 16 / 9))', backgroundImage: poster ? `url(${poster})` : undefined }}
+      />
+    </div>
+  )
+}
 
 /** The feed's arrow, for the grown player's corner line. */
 function Arrow({ up = false }: { up?: boolean }) {
@@ -351,16 +365,12 @@ export default function ReelPlayer({
   // what the grown player says in its corner
   const [note, setNote] = useState<'hint' | 'first' | 'last' | null>(null)
   const noteTimer = useRef(0)
-  const swipeY = useRef<number | null>(null)
-  const swipeX = useRef<number | null>(null)
-  // the deck's numbers, for the grown player's move
-  const MOVE_MS = 700
-  const MOVE_EASE = 'cubic-bezier(0.76, 0, 0.24, 1)'
-  const SWIPE_MIN = 50
+  // Grown, the box scrolls natively between the reel and its neighbours'
+  // covers (see the render): a swipe that starts on the player's frame still
+  // scrolls it, which no touch listener of ours would see, and a tap still
+  // reaches the frame, which is where iOS wants it before it allows sound.
   const stage = useRef<HTMLDivElement>(null)
-  const movingUntil = useRef(0)
-  // the reel sliding in, while the move runs: its cover, from the side it comes
-  const [incoming, setIncoming] = useState<{ index: number; dir: 1 | -1 } | null>(null)
+  const settle = useRef(0)
   // for the player's own handlers, which are wired once
   const grownRef = useRef(false)
   const cursorRef = useRef(index)
@@ -702,7 +712,7 @@ export default function ReelPlayer({
     let giveUp = 0
     const onBlur = () => {
       if (document.activeElement !== el) return
-      if (nativeStart) {
+      if (nativeStart || grownRef.current) {
         // On a touch feed the reel is already running; a tap on the picture
         // toggles its sound, the way a reel does. It goes through the frame
         // because that is where iOS needs the tap to be before it will let
@@ -926,41 +936,55 @@ export default function ReelPlayer({
       say(next < 0 ? 'first' : 'last')
       return
     }
-    const now = performance.now()
-    if (now < movingUntil.current) return
-    movingUntil.current = now + MOVE_MS + 100
-    const dir: 1 | -1 = next > cursor ? 1 : -1
-    // The move first, the load after. The reel that is playing slides out and
-    // the next one's cover slides in, on the deck's curve, while the player
-    // is still showing the old reel — a load mid-move would go black under
-    // it. Only once the cover is in place is the new reel loaded behind it;
-    // the cover then holds until the reel's first frame, as a cover does.
-    setIncoming({ index: next, dir })
-    const st = stage.current
-    const run = st?.animate(
-      [{ transform: 'translateY(0)' }, { transform: `translateY(${-dir * 100}%)` }],
-      { duration: MOVE_MS, easing: MOVE_EASE },
-    )
-    const land = () => {
-      setIncoming(null)
-      setSwapping(true)
-      setCursor(next)
-      setTime(0)
-      setEnded(false)
-      setBuffering(false)
-      onWatched?.(next)
-      claimed.current = true
-      wantsPlay.current = true
-      void m.load(list[next].vimeoUrl).then(() => {
-        // the player still holds the tap's permission: this play is obeyed,
-        // with sound, the way the first one was
-        m.setMuted(soundOffRef.current)
-        setMuted(soundOffRef.current)
-        m.play()
-      })
-    }
-    if (run) run.onfinish = land
-    else land()
+    // The scroll has landed on the next reel's cover; the frame now shows
+    // that same cover (swapping) and is put back in the middle underneath
+    // it, so the handover is invisible. Then the reel is loaded behind the
+    // cover, which holds until its first frame, as a cover does.
+    setSwapping(true)
+    setCursor(next)
+    setTime(0)
+    setEnded(false)
+    setBuffering(false)
+    onWatched?.(next)
+    claimed.current = true
+    wantsPlay.current = true
+    void m.load(list[next].vimeoUrl).then(() => {
+      // asked with sound; a phone that refuses that starts it muted (see
+      // mutedRetry) and a tap on the reel asks for the sound again
+      m.setMuted(soundOffRef.current)
+      setMuted(soundOffRef.current)
+      m.play()
+    })
+  }
+
+  // Grown: the frame sits in the middle of the box's scroll, one screen of
+  // cover on each side that has a reel. Put it there whenever the box grows
+  // or the reel changes, before paint, so nothing is seen moving.
+  useLayoutEffect(() => {
+    if (!grown) return
+    const el = box.current
+    if (!el) return
+    el.scrollTo({ top: cursor > 0 ? el.clientHeight : 0, behavior: 'instant' as ScrollBehavior })
+  }, [grown, cursor])
+
+  /** The box has been scrolled: once it settles on a neighbour's cover, that
+   *  reel is next; pulled past an end (iOS lets the scroll rubber-band and
+   *  reports it), the corner says which end. */
+  const onGrownScroll = () => {
+    const el = box.current
+    const list = playlist
+    if (!el || !list) return
+    const h = el.clientHeight
+    const max = el.scrollHeight - h
+    if (el.scrollTop < -8 && cursor === 0) say('first')
+    else if (el.scrollTop > max + 8 && cursor === list.length - 1) say('last')
+    window.clearTimeout(settle.current)
+    settle.current = window.setTimeout(() => {
+      const at = Math.round(el.scrollTop / h)
+      if (Math.abs(el.scrollTop - at * h) > 2) return
+      const middle = cursor > 0 ? 1 : 0
+      if (at !== middle) swapTo(cursor + (at - middle))
+    }, 90)
   }
 
   /** Back to the card. If a different reel was loaded while grown, the card's
@@ -1060,35 +1084,14 @@ export default function ReelPlayer({
     <div className="relative aspect-[9/16] w-full">
       <div
         ref={box}
-        // grown on a phone: a swipe is the next or the previous reel
-        onTouchStart={
-          grown
-            ? (e) => {
-                swipeY.current = e.touches[0].clientY
-                swipeX.current = e.touches[0].clientX
-              }
-            : undefined
-        }
-        onTouchEnd={
-          grown
-            ? (e) => {
-                const fromY = swipeY.current
-                const fromX = swipeX.current
-                swipeY.current = swipeX.current = null
-                if (fromY === null || fromX === null) return
-                const dy = fromY - e.changedTouches[0].clientY
-                const dx = fromX - e.changedTouches[0].clientX
-                // the deck's rules: only a clearly vertical swipe, and of some
-                // length; a sideways flick with some drift is not a reel
-                if (Math.abs(dx) > Math.abs(dy)) return
-                if (Math.abs(dy) < SWIPE_MIN) return
-                swapTo(cursor + (dy > 0 ? 1 : -1))
-              }
-            : undefined
-        }
+        // grown on a phone: the box scrolls, one screen per reel, and
+        // settling on a neighbour's cover is the swipe to that reel
+        onScroll={grown ? onGrownScroll : undefined}
         className={
           expanded
-            ? 'group fixed inset-0 z-[200]'
+            ? grown
+              ? 'group fixed inset-0 z-[200] overflow-y-auto overscroll-contain snap-y snap-mandatory bg-bg [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+              : 'group fixed inset-0 z-[200]'
             : // no dark ground behind the cover: it showed as a thin line round
               // the rounded corners, where the edge is anti-aliased. The dark
               // only while a reel plays, under the video.
@@ -1127,6 +1130,9 @@ export default function ReelPlayer({
           </div>
         )}
 
+        {grown && cursor > 0 && <CoverSlide poster={playlist?.[cursor - 1]?.poster} />}
+        {/* grown, the frame's own screen in the scroll; otherwise nothing */}
+        <div className={grown ? 'relative h-full w-full snap-start snap-always' : 'contents'}>
         <div
           className={
             grown
@@ -1165,22 +1171,6 @@ export default function ReelPlayer({
             </button>
           )}
 
-          {/* The next reel's cover, sliding in from the side it comes as the
-              stage slides out. At the end of the move it is exactly where the
-              swapping cover then stands, so the handover is invisible. */}
-          {incoming && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 z-[36] bg-cover bg-center"
-              style={{
-                backgroundImage: playlist?.[incoming.index]?.poster
-                  ? `url(${playlist[incoming.index].poster})`
-                  : undefined,
-                backgroundColor: '#0a0a0a',
-                animation: `reel-in-${incoming.dir > 0 ? 'up' : 'down'} ${MOVE_MS}ms ${MOVE_EASE} forwards`,
-              }}
-            />
-          )}
 
           {/* rounded by a clip on its own layer, not a transform-free overflow:
               the playing video under a plain rounded overflow shimmered along
@@ -1228,7 +1218,7 @@ export default function ReelPlayer({
                 // is a tap we have given away — on a phone that is what handed
                 // the reel to the browser's own video player.
                 className={`absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] border-0 ${
-                  nativeStart
+                  nativeStart || grown
                     ? '' // takes the tap: see onBlur
                     : showControls || (!inFeed && onExpand && !growOnTouch)
                       ? 'pointer-events-none'
@@ -1645,6 +1635,8 @@ export default function ReelPlayer({
             )}
           </div>
         </div>
+        </div>
+        {grown && playlist && cursor < playlist.length - 1 && <CoverSlide poster={playlist[cursor + 1]?.poster} />}
       </div>
     </div>
   )
