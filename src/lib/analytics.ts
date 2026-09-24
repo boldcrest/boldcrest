@@ -109,7 +109,9 @@ export function trackStartProject() {
 }
 
 /** A portfolio / case-study page was viewed. */
-export function trackViewContent(params?: Record<string, unknown>) {
+export function trackViewContent(params?: Record<string, unknown>, eventId?: string) {
   trackEvent('view_item', params)
-  metaTrack('ViewContent', params)
+  // Same dedup contract as trackLead: `eventId` must match the id the server
+  // sends to the Conversions API for this same page view.
+  metaTrack('ViewContent', params, false, eventId)
 }

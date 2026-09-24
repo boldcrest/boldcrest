@@ -35,6 +35,10 @@ const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN
 // Leave unset in normal production use.
 const TEST_EVENT_CODE = process.env.META_TEST_EVENT_CODE
 const API_VERSION = 'v21.0'
+// Identifies this integration to Meta. Without it Events Manager reports the
+// connection as "Unknown Integration" and its diagnostics can't attribute
+// anything to us. Free-text; Meta only uses it for labelling.
+const PARTNER_AGENT = 'boldcrest-nextjs'
 
 /** Meta requires SHA-256 of the normalized value (trimmed + lowercased). */
 function hash(value?: string | null): string | null {
@@ -51,19 +55,19 @@ function splitName(full?: string): { first?: string; last?: string } {
   return { first: parts[0], last: parts[parts.length - 1] }
 }
 
-export interface LeadEventInput {
+export interface ServerEventInput {
+  /** Meta standard event name, e.g. 'Lead' | 'ViewContent'. */
+  eventName: string
   /** Shared with the browser pixel — this is what makes dedup work. */
   eventId: string
   email?: string
   name?: string
-  /** 'contact' | 'start_project' — lands in custom_data for reporting. */
-  form: string
-  /** Extra reporting fields (services, budget…). No PII. */
+  /** Reporting fields. No PII. */
   custom?: Record<string, unknown>
 }
 
-export async function sendLeadEvent(
-  input: LeadEventInput,
+export async function sendServerEvent(
+  input: ServerEventInput,
 ): Promise<{ sent: boolean; reason?: string }> {
   if (!ACCESS_TOKEN) {
     // Not provisioned yet — stay quiet rather than logging on every submission.
@@ -112,7 +116,7 @@ export async function sendLeadEvent(
     const payload: Record<string, unknown> = {
       data: [
         {
-          event_name: 'Lead',
+          event_name: input.eventName,
           event_time: Math.floor(Date.now() / 1000),
           event_id: input.eventId,
           action_source: 'website',
@@ -120,7 +124,8 @@ export async function sendLeadEvent(
             ? { event_source_url: referer || origin }
             : {}),
           user_data: userData,
-          custom_data: { form: input.form, ...(input.custom ?? {}) },
+          custom_data: { ...(input.custom ?? {}) },
+          partner_agent: PARTNER_AGENT,
         },
       ],
       ...(TEST_EVENT_CODE ? { test_event_code: TEST_EVENT_CODE } : {}),
@@ -138,12 +143,48 @@ export async function sendLeadEvent(
     )
 
     if (!res.ok) {
-      console.error('[meta-capi] Lead event rejected:', res.status, await res.text())
+      console.error(`[meta-capi] ${input.eventName} rejected:`, res.status, await res.text())
       return { sent: false, reason: 'http-error' }
     }
     return { sent: true }
   } catch (err) {
-    console.error('[meta-capi] Unexpected error sending Lead:', err)
+    console.error(`[meta-capi] Unexpected error sending ${input.eventName}:`, err)
     return { sent: false, reason: 'exception' }
   }
+}
+
+/** Lead — fired from both form actions. `form` distinguishes the two. */
+export function sendLeadEvent(input: {
+  eventId: string
+  email?: string
+  name?: string
+  form: string
+  custom?: Record<string, unknown>
+}) {
+  return sendServerEvent({
+    eventName: 'Lead',
+    eventId: input.eventId,
+    email: input.email,
+    name: input.name,
+    custom: { form: input.form, ...(input.custom ?? {}) },
+  })
+}
+
+/**
+ * ViewContent — a project page was viewed.
+ *
+ * Added because Events Manager flagged our server as sending ~178 fewer events
+ * than the pixel over 7 days, and coverage (not just Lead accuracy) is what its
+ * cost-per-result guidance keys on. There's no email to attach here — an anonymous
+ * browse — so this leans on fbp/fbc/IP/user-agent, exactly like the pixel does.
+ */
+export function sendViewContentEvent(input: {
+  eventId: string
+  custom?: Record<string, unknown>
+}) {
+  return sendServerEvent({
+    eventName: 'ViewContent',
+    eventId: input.eventId,
+    custom: input.custom,
+  })
 }
