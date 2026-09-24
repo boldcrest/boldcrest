@@ -366,6 +366,12 @@ export default function ReelPlayer({
   // its own (iOS: a video inside the frame starts only from a tap on it,
   // sound or no sound). Its cover stays, with a play mark, until that tap.
   const [needsTap, setNeedsTap] = useState(false)
+  // A swipe under way: the reel it is heading for is loaded into the frame
+  // while the finger is still moving, so the ask goes out the moment the
+  // load lands, as close to the gesture as it can be. The frame wears that
+  // reel's cover from then on.
+  const pending = useRef<number | null>(null)
+  const [coverOf, setCoverOf] = useState<number | null>(null)
   const needsTapRef = useRef(false)
   needsTapRef.current = needsTap
   // what the grown player says in its corner
@@ -405,7 +411,7 @@ export default function ReelPlayer({
   // frame with bars, the feed's transport
   const fillLook = fill || grown
   const feedLook = inFeed || grown
-  const shownPoster = grown ? (playlist?.[cursor]?.poster ?? poster) : poster
+  const shownPoster = grown ? (playlist?.[coverOf ?? cursor]?.poster ?? poster) : poster
   const shownCaption = grown ? (playlist?.[cursor]?.caption ?? caption) : caption
   const onPlayRef = useRef(onPlay)
   useEffect(() => {
@@ -658,10 +664,7 @@ export default function ReelPlayer({
           return p
             .loadVideo({
               url: `https://vimeo.com/${id ?? ''}${hash ? `/${hash}` : ''}`,
-              // the player's own start, not ours after: its start is inside
-              // its frame, where the phone's permission lives
-              autoplay: true,
-              muted: false,
+              autoplay: false,
               controls: false,
               title: false,
               byline: false,
@@ -1018,15 +1021,32 @@ export default function ReelPlayer({
     }
     // The scroll has landed on the next reel's cover; the frame now shows
     // that same cover (swapping) and is put back in the middle underneath
-    // it, so the handover is invisible. Then the reel is loaded behind the
-    // cover, which holds until its first frame, as a cover does.
+    // it, so the handover is invisible. The reel itself was loaded behind
+    // the cover during the swipe (see onGrownScroll); if the swipe was too
+    // quick for that, it is loaded now.
     setSwapping(true)
     setNeedsTap(false)
     setCursor(next)
+    setCoverOf(null)
     setTime(0)
     setEnded(false)
     setBuffering(false)
     onWatched?.(next)
+    if (pending.current === next) {
+      pending.current = null
+      return
+    }
+    pending.current = null
+    loadAhead(next)
+  }
+
+  /** The reel a swipe is heading for, into the frame, and asked to start as
+   *  soon as it is there. */
+  const loadAhead = (next: number) => {
+    const list = playlist
+    const m = media.current
+    if (!list || !m) return
+    log(`load ahead reel ${next + 1}`)
     claimed.current = true
     wantsPlay.current = true
     void m.load(list[next].vimeoUrl).then(() => {
@@ -1059,14 +1079,31 @@ export default function ReelPlayer({
     const max = el.scrollHeight - h
     if (el.scrollTop < -8 && cursor === 0) say('first')
     else if (el.scrollTop > max + 8 && cursor === list.length - 1) say('last')
+    const middle = cursor > 0 ? 1 : 0
+    const off = el.scrollTop / h - middle
+    if (Math.abs(off) > 0.5) {
+      const next = cursor + (off > 0 ? 1 : -1)
+      if (next >= 0 && next < list.length && pending.current !== next) {
+        pending.current = next
+        setSwapping(true)
+        setNeedsTap(false)
+        setCoverOf(next)
+        loadAhead(next)
+      }
+    }
     window.clearTimeout(settle.current)
     settle.current = window.setTimeout(() => {
       const at = Math.round(el.scrollTop / h)
       if (Math.abs(el.scrollTop - at * h) > 2) return
-      const middle = cursor > 0 ? 1 : 0
       if (at !== middle) {
         log(`settled ${at} -> reel ${cursor + (at - middle) + 1}`)
         swapTo(cursor + (at - middle))
+      } else if (pending.current !== null) {
+        // came back: the frame gets its own reel again
+        log('came back')
+        pending.current = null
+        setCoverOf(null)
+        loadAhead(cursor)
       }
     }, 90)
   }
