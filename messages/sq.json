@@ -430,7 +430,9 @@
     "scrollUp": "Lëviz lart",
     "scrollBoth": "Lëviz lart/poshtë",
     "firstPicture": "Postimi i parë",
-    "lastPicture": "Postimi i fundit"
+    "lastPicture": "Postimi i fundit",
+    "previous": "Reel-i i mëparshëm",
+    "next": "Reel-i tjetër"
   },
   "Taxonomy": {
     "branding": "Branding",

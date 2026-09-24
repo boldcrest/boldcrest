@@ -418,7 +418,7 @@
     "eyebrow": "Case Study",
     "indexTitle": "Case Studies",
     "indexHeading": "Numbers we moved",
-    "indexDescription": "Campaign results from BoldCrest — the number, the work behind it, and the feed it produced.",
+    "indexDescription": "Campaign results from BoldCrest: the number, the work behind it, and the feed it produced.",
     "empty": "Case studies are on the way.",
     "reels": "Reels",
     "close": "Close",
@@ -438,7 +438,9 @@
     "scrollUp": "Scroll up",
     "scrollBoth": "Scroll up/down",
     "firstPicture": "First post",
-    "lastPicture": "Last post"
+    "lastPicture": "Last post",
+    "previous": "Previous reel",
+    "next": "Next reel"
   },
   "Taxonomy": {
     "branding": "Branding",

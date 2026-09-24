@@ -47,7 +47,7 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
   if (items.length === 0) return null
 
   return (
-    <section className="px-[var(--gutter)] py-[var(--space-2xl)]">
+    <section className="px-[var(--gutter)] pt-[var(--space-xl)] pb-[var(--space-2xl)]">
       <div className="mx-auto max-w-[var(--max-width)]">
         <h2 className="mb-[var(--space-lg)] text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
           {heading}

@@ -120,6 +120,10 @@ export default function ReelsFeed({
   // viewer's
   const reelOf = (i: number): Reel | undefined => (slides ? slides.reelAt?.(i) : reels[i])
   const ratioOf = (i: number) => (slides && !slides.reelAt?.(i) ? slides.ratio : 16 / 9)
+  // Every frame is as WIDE as a reel's: a picture takes the reel's width and
+  // its own height from it, so the viewer does not widen and narrow as it
+  // moves between the two. This is a frame's share of the reel's height.
+  const shareOf = (i: number) => ratioOf(i) / (16 / 9)
   const scroller = useRef<HTMLDivElement>(null)
   const slideEls = useRef<(HTMLDivElement | null)[]>([])
   const [current, setCurrent] = useState(startAt)
@@ -127,8 +131,9 @@ export default function ReelsFeed({
   // that end says which one has been reached. Nothing is blocked: this is the
   // feed answering a gesture it cannot act on.
   const hOverW = ratioOf(current)
-  const ratioRef = useRef(hOverW)
-  ratioRef.current = hOverW
+  const share = shareOf(current)
+  const ratioRef = useRef({ hOverW, share })
+  ratioRef.current = { hOverW, share }
   const [edge, setEdge] = useState<'top' | 'end' | null>(null)
   // The standing hint says its piece and goes: once the feed has moved off the
   // reel it opened on, and in any case after a few seconds. It does not come
@@ -172,7 +177,7 @@ export default function ReelsFeed({
   const LIFT_NARROW = 40
   /** The bar above or below a 9:16 reel on this screen, and never less than
    *  the give. */
-  const STRIP_NARROW = `max(${LIFT_NARROW}px, calc((100% - min(100%, 100vw * ${hOverW})) / 2))`
+  const STRIP_NARROW = `max(${LIFT_NARROW}px, calc((100% - min(100% * ${share}, 100vw * ${hOverW})) / 2))`
 
   /** A gesture the feed cannot act on because there is nothing that way.
    *
@@ -213,7 +218,8 @@ export default function ReelsFeed({
     // 113, and the frame read as cut top and bottom. So with bars the reel
     // holds still and only the line comes and goes; without bars (a 16:9
     // screen) the give still uncovers the strip, as it has to.
-    const barH = narrow ? (window.innerHeight - Math.min(window.innerHeight, window.innerWidth * ratioRef.current)) / 2 : 0
+    const { hOverW: r, share: k } = ratioRef.current
+    const barH = narrow ? (window.innerHeight - Math.min(window.innerHeight * k, window.innerWidth * r)) / 2 : 0
     const lift = narrow ? (barH >= 24 ? 0 : LIFT_NARROW) : MAX_PULL
     const to = down ? -lift : lift
     // Held nine tenths of a second everywhere. The line goes with the hold — in as
@@ -649,8 +655,8 @@ export default function ReelsFeed({
                 style={{
                   aspectRatio: String(1 / ratioOf(i)),
                   height: narrow
-                    ? `min(100%, calc(100vw * ${ratioOf(i)}))`
-                    : `min(100%, calc((100vw - 2 * var(--gutter)) * ${ratioOf(i)}))`,
+                    ? `min(100% * ${shareOf(i)}, calc(100vw * ${ratioOf(i)}))`
+                    : `min(100% * ${shareOf(i)}, calc((100vw - 2 * var(--gutter)) * ${ratioOf(i)}))`,
                 }}
               >
                 {/* On a phone the line lives in the picture's top-left corner,

@@ -430,7 +430,9 @@
     "scrollUp": "Remontez",
     "scrollBoth": "Défilez haut/bas",
     "firstPicture": "Premier post",
-    "lastPicture": "Dernier post"
+    "lastPicture": "Dernier post",
+    "previous": "Reel précédent",
+    "next": "Reel suivant"
   },
   "Taxonomy": {
     "branding": "Branding",

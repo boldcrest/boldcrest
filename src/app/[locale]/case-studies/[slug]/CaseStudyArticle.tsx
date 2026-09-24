@@ -53,6 +53,16 @@ export default async function CaseStudyArticle({
     }),
   )
 
+  // A reel in the grid needs its cover the same way, or its tile is a blank
+  // square until it is opened.
+  const feed = await Promise.all(
+    (study.feed ?? []).map(async (item) => {
+      if (!item.reel?.vimeoUrl) return item
+      const meta = await getVimeoMeta(item.reel.vimeoUrl)
+      return { ...item, reel: { ...item.reel, poster: meta.poster ?? item.reel.poster ?? null } }
+    }),
+  )
+
   return (
     <article>
       <CaseStudyHero
@@ -78,7 +88,7 @@ export default async function CaseStudyArticle({
         heading={labels.reels}
       />
 
-      <FeedGrid feed={study.feed ?? []} heading={labels.feed} />
+      <FeedGrid feed={feed} heading={labels.feed} />
       {/* The ask, once the work has been seen: the service pages' block, with
           the copy turned to a case study — the visitor has just watched numbers
           move, so the question is whether they want theirs moved. Full width,

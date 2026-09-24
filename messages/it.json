@@ -430,7 +430,9 @@
     "scrollUp": "Scorri su",
     "scrollBoth": "Scorri su/giù",
     "firstPicture": "Primo post",
-    "lastPicture": "Ultimo post"
+    "lastPicture": "Ultimo post",
+    "previous": "Reel precedente",
+    "next": "Reel successivo"
   },
   "Taxonomy": {
     "branding": "Branding",

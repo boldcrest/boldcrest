@@ -1,6 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import ReelPlayer from './ReelPlayer'
 import ReelsFeed from './ReelsFeed'
 
@@ -44,6 +45,39 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // to begin with — a reel is the one thing on the site that speaks.
   const [soundOff, setSoundOff] = useState(false)
 
+  const t = useTranslations('CaseStudy')
+  // Where the rail stands, for the two anchors: dimmed at the end they cannot
+  // move towards. Read from the scroller itself, so a drag, a swipe or an
+  // anchor all leave the same answer.
+  const [edges, setEdges] = useState({ start: true, end: false })
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    const read = () => {
+      setEdges({
+        start: el.scrollLeft <= 1,
+        end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1,
+      })
+    }
+    read()
+    el.addEventListener('scroll', read, { passive: true })
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', read)
+      ro.disconnect()
+    }
+  }, [])
+  // One card per press: a card's width plus the gap after it, measured rather
+  // than assumed, so the step stays true at every breakpoint.
+  const step = (dir: -1 | 1) => {
+    const el = scrollerRef.current
+    const card = el?.querySelector<HTMLElement>('[data-reel-card]')
+    if (!el || !card) return
+    const gap = parseFloat(getComputedStyle(el).columnGap) || 0
+    el.scrollBy({ left: dir * (card.offsetWidth + gap), behavior: 'smooth' })
+  }
+
   const items = (reels ?? []).filter((r): r is Reel & { vimeoUrl: string } => !!r.vimeoUrl)
   if (items.length === 0) return null
 
@@ -72,12 +106,39 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   }
 
   return (
-    <section className="py-[var(--space-2xl)]">
+    <section className="py-[var(--space-lg)]">
       <div className="mx-auto max-w-[var(--max-width)] px-[var(--gutter)]">
         <div className="mb-[var(--space-lg)] flex items-baseline justify-between gap-4">
           <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
             {heading}
           </h2>
+          {/* The two anchors, one card a press. Hairline discs like the rest
+              of the site's controls; the one with nowhere to go fades rather
+              than disappears, so the pair holds its place. */}
+          {items.length > 1 && (
+            <div className="flex items-center gap-2 self-center">
+              {([-1, 1] as const).map((dir) => {
+                const off = dir < 0 ? edges.start : edges.end
+                return (
+                  <button
+                    key={dir}
+                    type="button"
+                    onClick={() => step(dir)}
+                    aria-label={dir < 0 ? t('previous') : t('next')}
+                    aria-disabled={off}
+                    tabIndex={off ? -1 : 0}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-primary transition-[opacity,border-color,background-color] duration-300 hover:border-border-hover hover:bg-white/5 ${
+                      off ? 'pointer-events-none opacity-30' : 'opacity-100'
+                    }`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      {dir < 0 ? <path d="M15 5l-7 7 7 7" /> : <path d="M9 5l7 7-7 7" />}
+                    </svg>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 

@@ -2,6 +2,7 @@
    the design can be reviewed before any caseStudy document exists in Sanity.
    The client, the figures and the imagery are invented. */
 import type { Metadata } from 'next'
+import type { FeedImage } from '@/components/case-study/FeedGrid'
 import CaseStudyArticle, {
   type CaseStudy,
 } from '../case-studies/[slug]/CaseStudyArticle'
@@ -22,6 +23,11 @@ const REELS = [
   'https://player.vimeo.com/video/1227408134?h=4abbb98f05',
   'https://player.vimeo.com/video/1227408228?h=0bb1634446',
   'https://player.vimeo.com/video/1227408330?h=3eeff3d9a7',
+]
+
+const FEED_REELS = [
+  'https://player.vimeo.com/video/1227408395?h=664b3daddc',
+  'https://player.vimeo.com/video/1227408435?h=2aa471188d',
 ]
 
 const FEED_REFS = [
@@ -65,7 +71,7 @@ const STUDY: CaseStudy = {
       'Buka Ime had the best sourdough in Tirana and a feed that looked like every other bakery: flat-lay loaves, price tags, the occasional oven shot. The product was not the problem. The framing was.',
     ),
     block(
-      'We stopped photographing bread and started photographing the twenty minutes around it — the queue at 7:40, steam on the window, the second coffee nobody planned to order. The loaf became the reason those mornings existed rather than the subject of the post.',
+      'We stopped photographing bread and started photographing the twenty minutes around it: the queue at 7:40, steam on the window, the second coffee nobody planned to order. The loaf became the reason those mornings existed rather than the subject of the post.',
     ),
     block(
       'Six reels carried the campaign, cut from a single shooting day and released weekly. The feed was built to be read three-at-a-time, so each row landed as one idea instead of nine unrelated squares.',
@@ -83,11 +89,19 @@ const STUDY: CaseStudy = {
       'Almerico Di Meglio',
     ][i],
   })),
-  feed: FEED_REFS.map((ref, i) => ({
-    _key: String(i),
-    alt: '',
-    asset: { _ref: ref },
-  })),
+  feed: (() => {
+    const feed: FeedImage[] = FEED_REFS.map((ref, i) => ({ _key: `p${i}`, alt: '', asset: { _ref: ref } }))
+    // two reels dropped into the grid at fixed spots (third and seventh tile),
+    // the way Instagram mixes them in; two more of JokaDent's, same terms
+    FEED_REELS.forEach((vimeoUrl, i) => {
+      feed.splice([2, 6][i], 0, {
+        _key: `r${i}`,
+        alt: '',
+        reel: { vimeoUrl, aspectRatio: '9:16', caption: ['Rebecca Silvestri', 'Marco Lanzillotta'][i] },
+      })
+    })
+    return feed
+  })(),
 }
 
 export default function MockCaseStudyPage() {
