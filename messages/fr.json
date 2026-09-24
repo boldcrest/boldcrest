@@ -373,6 +373,8 @@
     "atTop": "Première vidéo",
     "atEnd": "Dernière vidéo",
     "scrollUp": "Remontez",
-    "scrollBoth": "Défilez haut/bas"
+    "scrollBoth": "Défilez haut/bas",
+    "firstPicture": "Première photo",
+    "lastPicture": "Dernière photo"
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import ReelPlayer from './ReelPlayer'
 import type { Reel } from './ReelsCarousel'
@@ -78,7 +78,8 @@ function Arrow({ up = false }: { up?: boolean }) {
  * site puts over the page.
  */
 export default function ReelsFeed({
-  reels,
+  reels = [],
+  slides,
   startAt,
   resumeFrom,
   soundOff,
@@ -86,26 +87,48 @@ export default function ReelsFeed({
   onWatched,
   onClose,
 }: {
-  reels: Reel[]
+  reels?: Reel[]
+  /** Anything else in the same viewer — the feed's pictures, say — at its own
+   *  ratio (height over width). The scroll, the give, the lines, the bars and
+   *  the ground are all the same; only what fills the frame changes. */
+  slides?: {
+    count: number
+    ratio: number
+    render: (i: number, active: boolean) => ReactNode
+    /** what the ends are called — a picture is not a video */
+    first: string
+    last: string
+    /** a slide that is a reel rather than a picture: it plays, at 9:16 */
+    reelAt?: (i: number) => Reel | undefined
+  }
   startAt: number
   /** how far the rail card had played the reel this opened on */
   resumeFrom?: number
   /** the sound setting every reel shares, held by the rail so it survives the
    *  feed closing and opening again */
-  soundOff: boolean
-  onSoundOff: (off: boolean) => void
+  soundOff?: boolean
+  onSoundOff?: (off: boolean) => void
   /** the reel in view, every time it changes: the rail marks the LAST one
    *  watched here, not the one that opened the feed */
-  onWatched: (index: number) => void
+  onWatched?: (index: number) => void
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
+  const count = slides ? slides.count : reels.length
+  // the frame's shape: a reel is 9:16; pictures bring their own — and a reel
+  // among the pictures is 9:16 again, so the shape is a slide's, not the
+  // viewer's
+  const reelOf = (i: number): Reel | undefined => (slides ? slides.reelAt?.(i) : reels[i])
+  const ratioOf = (i: number) => (slides && !slides.reelAt?.(i) ? slides.ratio : 16 / 9)
   const scroller = useRef<HTMLDivElement>(null)
-  const slides = useRef<(HTMLDivElement | null)[]>([])
+  const slideEls = useRef<(HTMLDivElement | null)[]>([])
   const [current, setCurrent] = useState(startAt)
   // The reels give a little when there is nothing past them, and the line at
   // that end says which one has been reached. Nothing is blocked: this is the
   // feed answering a gesture it cannot act on.
+  const hOverW = ratioOf(current)
+  const ratioRef = useRef(hOverW)
+  ratioRef.current = hOverW
   const [edge, setEdge] = useState<'top' | 'end' | null>(null)
   // The standing hint says its piece and goes: once the feed has moved off the
   // reel it opened on, and in any case after a few seconds. It does not come
@@ -121,7 +144,7 @@ export default function ReelsFeed({
   const scrolledAt = useRef(0)
   /** On the last reel the only way on is back up, so the standing hint moves to
    *  the top and turns round. */
-  const onLast = current === reels.length - 1
+  const onLast = current === count - 1
   const narrow = useSyncExternalStore(
     subscribeNarrow,
     () => window.matchMedia(NARROW).matches,
@@ -149,7 +172,7 @@ export default function ReelsFeed({
   const LIFT_NARROW = 40
   /** The bar above or below a 9:16 reel on this screen, and never less than
    *  the give. */
-  const STRIP_NARROW = `max(${LIFT_NARROW}px, calc((100% - min(100%, 100vw * 16 / 9)) / 2))`
+  const STRIP_NARROW = `max(${LIFT_NARROW}px, calc((100% - min(100%, 100vw * ${hOverW})) / 2))`
 
   /** A gesture the feed cannot act on because there is nothing that way.
    *
@@ -190,7 +213,7 @@ export default function ReelsFeed({
     // 113, and the frame read as cut top and bottom. So with bars the reel
     // holds still and only the line comes and goes; without bars (a 16:9
     // screen) the give still uncovers the strip, as it has to.
-    const barH = narrow ? (window.innerHeight - Math.min(window.innerHeight, (window.innerWidth * 16) / 9)) / 2 : 0
+    const barH = narrow ? (window.innerHeight - Math.min(window.innerHeight, window.innerWidth * ratioRef.current)) / 2 : 0
     const lift = narrow ? (barH >= 24 ? 0 : LIFT_NARROW) : MAX_PULL
     const to = down ? -lift : lift
     // Held nine tenths of a second everywhere. The line goes with the hold — in as
@@ -298,7 +321,7 @@ export default function ReelsFeed({
       accum = 0
       const h = el.clientHeight
       const here = Math.round(el.scrollTop / h)
-      const stuck = down ? here >= reels.length - 1 : here <= 0
+      const stuck = down ? here >= count - 1 : here <= 0
       if (stuck) {
         // nothing that way: the feed gives instead of moving
         bounce(down)
@@ -317,7 +340,7 @@ export default function ReelsFeed({
       el.removeEventListener('wheel', onWheel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reels.length])
+  }, [count])
 
   // a swipe moves the feed itself, so the hint goes the moment it lands
   useEffect(() => {
@@ -325,7 +348,7 @@ export default function ReelsFeed({
   }, [current, startAt])
 
   useEffect(() => {
-    onWatched(current)
+    onWatched?.(current)
   }, [current, onWatched])
 
   // ...and an answer about one end does not belong on a reel at the other
@@ -382,7 +405,7 @@ export default function ReelsFeed({
   // Open on the reel that was tapped, without animating through the ones above
   // it — `instant`, before the observer below is wired.
   useEffect(() => {
-    const el = slides.current[startAt]
+    const el = slideEls.current[startAt]
     el?.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior })
   }, [startAt])
 
@@ -396,16 +419,16 @@ export default function ReelsFeed({
       (entries) => {
         for (const e of entries) {
           if (e.isIntersecting && e.intersectionRatio > 0.6) {
-            const i = slides.current.indexOf(e.target as HTMLDivElement)
+            const i = slideEls.current.indexOf(e.target as HTMLDivElement)
             if (i >= 0 && !settling.current) setCurrent(i)
           }
         }
       },
       { root, threshold: [0.6] },
     )
-    for (const el of slides.current) if (el) io.observe(el)
+    for (const el of slideEls.current) if (el) io.observe(el)
     return () => io.disconnect()
-  }, [reels.length])
+  }, [count])
 
   /** FIRST VIDEO or LAST VIDEO: the answer to a push at that end. It is a line
    *  of its own rather than a change of wording in the hint — sharing one span
@@ -417,7 +440,7 @@ export default function ReelsFeed({
         edge === where ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      {t(where === 'top' ? 'atTop' : 'atEnd')}
+      {where === 'top' ? (slides?.first ?? t('atTop')) : (slides?.last ?? t('atEnd'))}
       {/* and the one way on from here: down from the first, up from the last */}
       <Arrow up={where === 'end'} />
     </span>
@@ -429,7 +452,7 @@ export default function ReelsFeed({
    *  round the line rather than as the two ways out of it. */
   const standing = () => {
     const onFirst = current === 0
-    const alone = reels.length <= 1
+    const alone = count <= 1
     // Only ever on the reel the feed opened on. `hint` is cleared by an effect
     // once `current` moves, which is one render late: the corner had already
     // moved to the next reel and painted SCROLL UP/DOWN there for a frame
@@ -581,11 +604,11 @@ export default function ReelsFeed({
         // the bounce too; the only give at the ends is the feed's own.
         className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {reels.map((reel, i) => (
+        {Array.from({ length: count }, (_, i) => i).map((i) => (
           <div
             key={i}
             ref={(el) => {
-              slides.current[i] = el
+              slideEls.current[i] = el
             }}
             // Clicking the space around the reel closes the feed. Only when
             // the slide ITSELF is the target: a click that bubbles up from the
@@ -624,10 +647,10 @@ export default function ReelsFeed({
               <div
                 className="relative mx-auto"
                 style={{
-                  aspectRatio: '9 / 16',
+                  aspectRatio: String(1 / ratioOf(i)),
                   height: narrow
-                    ? 'min(100%, calc(100vw * 16 / 9))'
-                    : 'min(100%, calc((100vw - 2 * var(--gutter)) * 16 / 9))',
+                    ? `min(100%, calc(100vw * ${ratioOf(i)}))`
+                    : `min(100%, calc((100vw - 2 * var(--gutter)) * ${ratioOf(i)}))`,
                 }}
               >
                 {/* On a phone the line lives in the picture's top-left corner,
@@ -653,10 +676,70 @@ export default function ReelsFeed({
                         edge on a phone */}
                   </>
                 )}
+                {slides && !slides.reelAt?.(i) ? (
+                  <>
+                    {slides.render(i, current === i)}
+                    {/* the phone's shade under the corner lines, the player's
+                        twin, since there is no player here to draw it */}
+                    {narrow && i === current && (
+                      <div
+                        aria-hidden
+                        className={`pointer-events-none absolute inset-x-0 top-0 z-[34] h-32 transition-opacity ${
+                          edge !== null ? 'duration-[160ms]' : 'duration-[600ms]'
+                        } ${edge !== null || (hint && count > 1 && current === startAt) ? 'opacity-100' : 'opacity-0'}`}
+                        style={{
+                          backgroundImage:
+                            'linear-gradient(in srgb to bottom, rgb(10 10 10 / 1) 0%, rgb(10 10 10 / 0.55) 42%, rgb(10 10 10 / 0.18) 78%, rgb(10 10 10 / 0) 100%)',
+                        }}
+                      />
+                    )}
+                    {/* the close mark, as the player draws it: bare with a
+                        shadow on a phone, on its disc elsewhere */}
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      aria-label={t('exitFullscreen')}
+                      className={`absolute top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white ${
+                        narrow ? 'right-[5px]' : 'right-3'
+                      }`}
+                      style={
+                        narrow
+                          ? undefined
+                          : {
+                              borderRadius: 'var(--radius-pill)',
+                              borderWidth: '1px',
+                              borderStyle: 'solid',
+                              borderColor: 'rgba(255,255,255,0.45)',
+                              backgroundColor: 'rgba(10,10,10,0.72)',
+                              backdropFilter: 'blur(24px) saturate(1.5)',
+                              WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                            }
+                      }
+                    >
+                      <svg
+                        width={narrow ? 26 : 18}
+                        height={narrow ? 26 : 18}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={narrow ? 1.6 : 1.8}
+                        strokeLinecap="round"
+                        aria-hidden
+                        style={
+                          narrow
+                            ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(0,0,0,0.35))' }
+                            : undefined
+                        }
+                      >
+                        <path d="M6 6l12 12M18 6 6 18" />
+                      </svg>
+                    </button>
+                  </>
+                ) : (
                 <ReelPlayer
-                  vimeoUrl={reel.vimeoUrl as string}
-                  poster={reel.poster}
-                  caption={reel.caption}
+                  vimeoUrl={reelOf(i)?.vimeoUrl as string}
+                  poster={reelOf(i)?.poster}
+                  caption={reelOf(i)?.caption}
                   active={current === i}
                   autoPlay
                   inFeed
@@ -681,11 +764,12 @@ export default function ReelsFeed({
                   // that comes and goes with whichever of them is showing
                   shadeTop={
                     narrow && i === current
-                      ? edge !== null || (hint && reels.length > 1 && current === startAt)
+                      ? edge !== null || (hint && count > 1 && current === startAt)
                       : undefined
                   }
                   shadeQuick={edge !== null}
                 />
+                )}
               </div>
             </div>
 

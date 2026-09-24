@@ -373,6 +373,8 @@
     "atTop": "Videoja e parë",
     "atEnd": "Videoja e fundit",
     "scrollUp": "Lëviz lart",
-    "scrollBoth": "Lëviz lart/poshtë"
+    "scrollBoth": "Lëviz lart/poshtë",
+    "firstPicture": "Fotoja e parë",
+    "lastPicture": "Fotoja e fundit"
   }
 }

@@ -381,6 +381,8 @@
     "atTop": "First video",
     "atEnd": "Last video",
     "scrollUp": "Scroll up",
-    "scrollBoth": "Scroll up/down"
+    "scrollBoth": "Scroll up/down",
+    "firstPicture": "First picture",
+    "lastPicture": "Last picture"
   }
 }
