@@ -3,6 +3,7 @@
 import Script from 'next/script'
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { captureFbclid, persistFbcOnConsent, forgetFbclid } from '@/lib/fbclid'
 
 /* ════════════════════════════════════════════════════
    Meta (Facebook) Pixel — consent-gated
@@ -52,6 +53,12 @@ export default function MetaPixel() {
   const firstView = useRef(true)
 
   useEffect(() => {
+    // FIRST, before anything else and regardless of consent: lift `fbclid` off
+    // the landing URL into memory. This writes nothing and reads nothing from the
+    // device, so it is outside ePrivacy Art. 5(3) — but it has to happen now,
+    // because by the time the banner is answered the visitor has navigated on and
+    // the click ID is gone from the URL. It only becomes a cookie on accept.
+    captureFbclid()
     setConsent(readConsent())
     // Banner fires this on Accept/Deny, so the pixel can load (or stay out) live.
     const onConsent = (e: Event) => {
@@ -61,6 +68,14 @@ export default function MetaPixel() {
     window.addEventListener('cookie-consent', onConsent)
     return () => window.removeEventListener('cookie-consent', onConsent)
   }, [])
+
+  // Consent decision landed. On accept, promote the in-memory click ID to the
+  // `_fbc` cookie — from there the pixel and meta-capi.ts both pick it up with no
+  // further changes. On deny, drop it so it can never be written.
+  useEffect(() => {
+    if (consent === 'accepted') persistFbcOnConsent()
+    else if (consent === 'denied') forgetFbclid()
+  }, [consent])
 
   // SPA navigations don't reload, so fire PageView on each route change. The
   // inline script already fires the FIRST PageView, so skip the initial run.
