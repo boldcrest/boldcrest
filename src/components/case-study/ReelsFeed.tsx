@@ -723,6 +723,7 @@ export default function ReelsFeed({
                         onPlay={() => {}}
                         soundOff={soundOff}
                         onSoundOff={onSoundOff}
+                        viewer
                       />
                     ) : (
                       slides.render(i, current === i)
@@ -741,8 +742,20 @@ export default function ReelsFeed({
                         }}
                       />
                     )}
-                    {/* the close mark, as the player draws it: bare with a
-                        shadow on a phone, on its disc elsewhere */}
+                    {/* the same standing shade the reels wear, so the mark
+                        reads on a bright picture */}
+                    {!narrow && (
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-0 top-0 z-[34] h-28"
+                        style={{
+                          backgroundImage:
+                            'linear-gradient(in srgb to bottom, rgb(10 10 10 / 0.55) 0%, rgb(10 10 10 / 0.3) 45%, rgb(10 10 10 / 0.1) 78%, rgb(10 10 10 / 0) 100%)',
+                        }}
+                      />
+                    )}
+                    {/* the close mark, as the player draws it: bare, with a
+                        shadow of its own */}
                     <button
                       type="button"
                       onClick={onClose}
@@ -750,34 +763,17 @@ export default function ReelsFeed({
                       className={`absolute top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white ${
                         narrow ? 'right-[5px]' : 'right-3'
                       }`}
-                      style={
-                        narrow
-                          ? undefined
-                          : {
-                              borderRadius: 'var(--radius-pill)',
-                              borderWidth: '1px',
-                              borderStyle: 'solid',
-                              borderColor: 'rgba(255,255,255,0.45)',
-                              backgroundColor: 'rgba(10,10,10,0.72)',
-                              backdropFilter: 'blur(24px) saturate(1.5)',
-                              WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-                            }
-                      }
                     >
                       <svg
-                        width={narrow ? 26 : 18}
-                        height={narrow ? 26 : 18}
+                        width={26}
+                        height={26}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth={narrow ? 1.6 : 1.8}
+                        strokeWidth={1.6}
                         strokeLinecap="round"
                         aria-hidden
-                        style={
-                          narrow
-                            ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(0,0,0,0.35))' }
-                            : undefined
-                        }
+                        style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(0,0,0,0.35))' }}
                       >
                         <path d="M6 6l12 12M18 6 6 18" />
                       </svg>

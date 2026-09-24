@@ -54,8 +54,10 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // card's clock, and only then does the card let go. Nothing is seen to
   // reload. `HAND_LEAD` is the head start the feed's player is given, so
   // its first frame lands near where the card will be by then.
-  const [lift, setLift] = useState<{ index: number; rect: { x: number; y: number; width: number; height: number } | null } | null>(null)
-  const clocks = useRef<number[]>([])
+  const [lift, setLift] = useState<{ index: number; rect: { x: number; y: number; width: number; height: number } | null; fading?: boolean } | null>(null)
+  // each card's clock: its last tick and when it came, so it can be read
+  // live between ticks (a tick is a quarter second apart)
+  const clocks = useRef<{ t: number; at: number }[]>([])
   // The rail's fit. When the whole rail would end within a third of a card
   // of the measure's right edge (the arrows' edge), the cards are sized so
   // it ends exactly there, grown or shrunk a little; a rail that overruns by
@@ -230,9 +232,10 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
               index={i}
               onWatched={setLastSeen}
               onTick={(s) => {
-                clocks.current[i] = s
+                clocks.current[i] = { t: s, at: performance.now() }
               }}
               liftTo={lift?.index === i ? lift.rect : null}
+              liftFading={lift?.index === i && !!lift.fading}
               onExpand={(at) => {
                 setLastSeen(i)
                 // the card plays on, lifted; the feed's player takes over
@@ -270,12 +273,24 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
           soundOff={lift ? true : soundOff}
           onSoundOff={setSoundOff}
           onWatched={setLastSeen}
-          holdOpening={lift !== null}
+          holdOpening={lift !== null && !lift.fading}
           onFrame={(rect) => setLift((l) => (l ? { ...l, rect } : l))}
-          syncTo={lift ? () => clocks.current[lift.index] ?? 0 : undefined}
+          syncTo={
+            lift
+              ? () => {
+                  const c = clocks.current[lift.index]
+                  return c ? c.t + (performance.now() - c.at) / 1000 : 0
+                }
+              : undefined
+          }
           onSynced={() => {
-            setLift(null)
-            setActive(null)
+            // the feed is on the card's clock: the card fades off it, then
+            // lets go (its sound with it; the feed's comes on as it does)
+            setLift((l) => (l ? { ...l, fading: true } : l))
+            window.setTimeout(() => {
+              setLift(null)
+              setActive(null)
+            }, 220)
           }}
           onClose={() => {
             setFeed(null)

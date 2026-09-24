@@ -45,9 +45,9 @@ function SoundIcon({ muted, size = 16 }: { muted: boolean; size?: number }) {
   )
 }
 
-function FullscreenIcon({ exit }: { exit: boolean }) {
+function FullscreenIcon({ exit, size = 16 }: { exit: boolean; size?: number }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       {exit ? <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
     </svg>
   )
@@ -232,6 +232,8 @@ export default function ReelPlayer({
   syncTo,
   onSynced,
   liftTo = null,
+  liftFading = false,
+  viewer = false,
   shadeTop,
   shadeQuick = false,
   lastSeen = false,
@@ -283,6 +285,13 @@ export default function ReelPlayer({
    *  this frame (the feed's, measured), still playing, so the feed's own
    *  player can take over underneath without anything visibly reloading. */
   liftTo?: { x: number; y: number; width: number; height: number } | null
+  /** the feed has taken over underneath: the lifted card fades off it */
+  liftFading?: boolean
+  /** A reel among the pictures on a phone: the card as it is in the rail,
+   *  but with the viewer's transport (title and seconds above the buttons,
+   *  the bigger buttons) and its full-screen button top LEFT, clear of the
+   *  viewer's close mark on the right. */
+  viewer?: boolean
   /** A shade over the top of the picture, the twin of the one under the
    *  transport, for the feed's lines to sit on when they are in the reel's
    *  corner. Comes and goes with them: `shadeQuick` follows an answer's
@@ -446,7 +455,7 @@ export default function ReelPlayer({
   // frame with bars, the feed's transport
   const lifted = liftTo !== null
   const fillLook = fill || grown
-  const feedLook = inFeed || grown || lifted
+  const feedLook = inFeed || grown || lifted || viewer
   const shownPoster = grown ? (playlist?.[coverOf ?? cursor]?.poster ?? poster) : poster
   const shownCaption = grown ? (playlist?.[cursor]?.caption ?? caption) : caption
   const onPlayRef = useRef(onPlay)
@@ -679,7 +688,7 @@ export default function ReelPlayer({
           ask += 1
           const of = ask
           askAndWatch()
-          logRef.current('play()')
+          logRef.current(`play() ${(new Error().stack ?? '').split('\n').slice(2, 4).map((l) => l.trim().slice(0, 60)).join(' < ')}`)
           void p
             .play()
             .then(() => logRef.current('play() ok'))
@@ -777,43 +786,73 @@ export default function ReelPlayer({
         setPlaying(false)
       })
       // The handover: this reel runs under the card that opened the feed,
-      // and has to reach the card's clock before it can take over. Ahead of
-      // the card, it waits (a pause of the difference); behind it, it seeks
-      // past the card and waits for the card to arrive. Then it is announced.
-      // The card's own clock is read live, since it is still playing.
+      // and has to be on the card's clock before it can take over. Both run
+      // at the same speed, so a lead is never made up: this one is put a
+      // little ahead and PAUSED there, and started again the moment the
+      // card's clock (read live, extrapolated between its ticks) comes up
+      // to that point, less the start's own latency. Both clocks are then
+      // read every few frames until they agree to within a few hundredths,
+      // and it is announced. Late after all, it goes round once more.
+      const START_LATENCY = 0.12
       let met = false
-      let meeting = false
+      let syncing = false
       let meetFrom = 0
-      const meet = (seconds: number) => {
-        const cardTime = syncToRef.current?.()
-        if (met || cardTime === undefined) return
+      let poll = 0
+      const meet = () => {
+        if (met || syncing || !syncToRef.current) return
         if (!meetFrom) meetFrom = performance.now()
-        const gap = seconds - cardTime
+        syncing = true
         const done = () => {
+          window.clearInterval(poll)
           met = true
           onSyncedRef.current?.()
         }
-        // close enough, or long enough: the frame you land on is the one you
-        // left, give or take a tick
-        if (Math.abs(gap) <= 0.2 || performance.now() - meetFrom > 4000) {
-          done()
-          return
-        }
-        if (meeting) return
-        meeting = true
-        if (gap > 0) {
-          // ahead: hold the difference, then run
-          void p.pause().catch(() => {})
-          window.setTimeout(() => {
-            void p.play().catch(() => {})
-            meeting = false
-          }, gap * 1000)
-        } else {
-          // behind: jump past the card and let it catch up
-          void p.setCurrentTime(cardTime + 0.6).catch(() => {}).finally(() => {
-            meeting = false
+        const target = syncToRef.current() + 0.5
+        logRef.current(`meet: hold at ${target.toFixed(2)}`)
+        let started = false
+        void p
+          .setCurrentTime(target)
+          .then(() => p.pause())
+          .then(() => {
+            poll = window.setInterval(() => {
+              if (cancelled || met) {
+                window.clearInterval(poll)
+                return
+              }
+              if (performance.now() - meetFrom > 5000) {
+                logRef.current('meet: gave up')
+                if (!started) void p.play().catch(() => {})
+                done()
+                return
+              }
+              const now = syncToRef.current?.() ?? 0
+              if (!started) {
+                if (now >= target - START_LATENCY) {
+                  started = true
+                  logRef.current(`meet: go at ${now.toFixed(2)}`)
+                  void p.play().catch(() => {})
+                }
+                return
+              }
+              void p.getCurrentTime().then((mine) => {
+                const gap = mine - (syncToRef.current?.() ?? 0)
+                if (mine <= target) return // not moving yet
+                if (Math.abs(gap) <= 0.08) {
+                  logRef.current(`meet: met, gap ${gap.toFixed(2)}`)
+                  done()
+                } else if (gap < -0.3) {
+                  // started late: once more
+                  logRef.current(`meet: late ${gap.toFixed(2)}, again`)
+                  window.clearInterval(poll)
+                  syncing = false
+                  meet()
+                }
+              })
+            }, 30)
           })
-        }
+          .catch(() => {
+            syncing = false
+          })
       }
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
         if (!progressed && d.seconds > 0 && !swappingRef.current) {
@@ -839,7 +878,7 @@ export default function ReelPlayer({
         }
         setTime(d.seconds)
         onTickRef.current?.(d.seconds)
-        meet(d.seconds)
+        if (d.seconds > 0) meet()
       })
       p.on('bufferstart', () => setBuffering(true))
       p.on('bufferend', () => setBuffering(false))
@@ -1343,6 +1382,16 @@ export default function ReelPlayer({
   return (
     // the reel's place in the rail, kept while it is grown over the page
     <div className="relative aspect-[9/16] w-full">
+      {/* the box is off over the feed: the slot it left keeps the card's
+          cover, as the card will look when the box is back, so the rail is
+          not left with a hole under the dimmed page */}
+      {lifted && poster && (
+        <div
+          aria-hidden
+          className="absolute inset-0 overflow-hidden rounded-[var(--radius-lg)] border border-border bg-cover bg-center"
+          style={{ backgroundImage: `url(${poster})` }}
+        />
+      )}
       <div
         ref={box}
         // grown on a phone: the box scrolls, one screen per reel, and
@@ -1357,7 +1406,7 @@ export default function ReelPlayer({
         }
         className={
           lifted
-            ? 'group fixed z-[1850] overflow-hidden rounded-[var(--radius-lg)] bg-bg'
+            ? `group fixed z-[1850] overflow-hidden rounded-[var(--radius-lg)] bg-bg transition-opacity duration-200 ${liftFading ? 'opacity-0' : 'opacity-100'}`
             : expanded
             ? grown
               ? 'group fixed inset-0 z-[200] overflow-y-auto overscroll-contain snap-y snap-mandatory bg-bg [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
@@ -1569,6 +1618,16 @@ export default function ReelPlayer({
                 clipped frame so it reads as part of the picture, and above the
                 player (z-40) so it stays pressable while the invisible iframe
                 is taking taps over the cover. */}
+            {inFeed && !fillLook && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 z-[34] h-28"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(in srgb to bottom, rgb(10 10 10 / 0.55) 0%, rgb(10 10 10 / 0.3) 45%, rgb(10 10 10 / 0.1) 78%, rgb(10 10 10 / 0) 100%)',
+                }}
+              />
+            )}
             {((inFeed && onClose) || grown) && (
               <button
                 type="button"
@@ -1580,44 +1639,24 @@ export default function ReelPlayer({
                 // the glyph box, which sits 11px inside the 48px button: the
                 // button's own edge lands 5px in. Aligning box to box put the
                 // mark visibly further in than the text it was meant to meet.
-                className={`absolute top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)] ${
+                // The mark stands on its own everywhere, no disc: a disc is
+                // what lifts a control off a page, and here there is only the
+                // picture. A soft shadow of its own and the shade under it
+                // (below) keep it legible on a bright frame.
+                className={`absolute top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white ${
                   fillLook ? 'right-[5px]' : 'right-3'
                 }`}
-                // Filling the screen, the mark stands on its own: a disc is
-                // what lifts a control off a page it is sitting on, and here
-                // there is no page under it — just the picture, edge to edge.
-                // Bigger to make up for losing the disc around it.
-                style={
-                  fillLook
-                    ? undefined
-                    : {
-                        borderRadius: 'var(--radius-pill)',
-                        borderWidth: '1px',
-                        borderStyle: 'solid',
-                        borderColor: 'rgba(255,255,255,0.45)',
-                        backgroundColor: 'rgba(10,10,10,0.72)',
-                        backdropFilter: 'blur(24px) saturate(1.5)',
-                        WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-                      }
-                }
               >
                 <svg
-                  width={fillLook ? 26 : 18}
-                  height={fillLook ? 26 : 18}
+                  width={26}
+                  height={26}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth={fillLook ? 1.6 : 1.8}
+                  strokeWidth={1.6}
                   strokeLinecap="round"
                   aria-hidden
-                  // Bare on a phone, with no disc, the mark needs its own
-                  // ground: a soft shadow, so it holds on a white frame when
-                  // the top shade is not there.
-                  style={
-                    fillLook
-                      ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(0,0,0,0.35))' }
-                      : undefined
-                  }
+                  style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(0,0,0,0.35))' }}
                 >
                   <path d="M6 6l12 12M18 6 6 18" />
                 </svg>
@@ -1676,9 +1715,11 @@ export default function ReelPlayer({
               aria-label={ended ? t('replay') : playing ? t('pause') : t('play')}
               // on a touch feed the picture's tap belongs to the frame under
               // this (sound), and play/pause is the transport's button
-              className={`absolute inset-0 z-10 flex items-end justify-between p-[7%] ${
-                nativeStart ? 'pointer-events-none' : ''
-              }`}
+              // in the phone's viewer likewise, and above the cover (which
+              // sits over the frame there), so its play mark shows on it
+              className={`absolute inset-0 flex items-end justify-between p-[7%] ${
+                nativeStart || viewer ? 'pointer-events-none' : ''
+              } ${viewer ? 'z-[36]' : 'z-10'}`}
             >
               {/* no nudge for the play glyph: its triangle is already drawn with
                   its centroid on the icon's centre, which is where the eye puts
@@ -1690,7 +1731,11 @@ export default function ReelPlayer({
                   // sticker sitting on the image; this darkens and blurs
                   // whatever is behind it instead, so it belongs to the page the
                   // way the header button does.
-                  className="relative flex size-12 items-center justify-center text-white/80 transition-all duration-300 group-hover:scale-105 group-hover:text-white group-hover:[border-color:rgba(255,255,255,0.6)]"
+                  // a size up in the phone's viewer, where the card is the
+                  // whole screen
+                  className={`relative flex items-center justify-center text-white/80 transition-all duration-300 group-hover:scale-105 group-hover:text-white group-hover:[border-color:rgba(255,255,255,0.6)] ${
+                    viewer ? 'size-16' : 'size-12'
+                  }`}
                   style={{
                     borderRadius: 'var(--radius-pill)',
                     borderWidth: '1px',
@@ -1706,7 +1751,7 @@ export default function ReelPlayer({
                   ) : ended ? (
                     <ReplayIcon />
                   ) : (
-                    <PlayIcon />
+                    <PlayIcon size={viewer ? 24 : 18} />
                   )}
                 </span>
               )}
@@ -1758,7 +1803,7 @@ export default function ReelPlayer({
                     </span>
                   </>
                 )}
-                {!full && !feedLook && (
+                {!full && (!feedLook || viewer) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1781,9 +1826,15 @@ export default function ReelPlayer({
                       else setExpanded(true)
                     }}
                     aria-label={t('fullscreen')}
-                    className="absolute right-3 top-3 z-20 flex size-8 items-center justify-center text-white"
+                    // in the viewer it mirrors the close mark opposite: same
+                    // 48px box on the same line, 5px in, bigger glyph with
+                    // the same shadow
+                    className={`absolute top-3 z-20 flex items-center justify-center text-white ${
+                      viewer ? 'left-[5px] size-12 text-white/80' : 'right-3 size-8'
+                    }`}
+                    style={viewer ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(0,0,0,0.35))' } : undefined}
                   >
-                    <FullscreenIcon exit={false} />
+                    <FullscreenIcon exit={false} size={viewer ? 22 : 16} />
                   </button>
                 )}
                 <div
