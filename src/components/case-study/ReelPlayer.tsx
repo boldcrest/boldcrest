@@ -628,6 +628,10 @@ export default function ReelPlayer({
             // never started at all.
             .catch((e: { name?: string; message?: string }) => {
               logRef.current(`play() rejected ${e?.name ?? ''} ${e?.message ?? ''}`.slice(0, 80))
+              // a refusal of a swapped-in reel: the play mark goes on the
+              // cover at once, while the muted retries run behind it; should
+              // one of them be obeyed, the play event takes the mark off
+              if (grownRef.current && swappingRef.current) setNeedsTap(true)
               mutedRetry()
             })
         },
