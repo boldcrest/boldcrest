@@ -364,6 +364,19 @@ export default function ReelPlayer({
   const [swapping, setSwapping] = useState(false)
   // what the grown player says in its corner
   const [note, setNote] = useState<'hint' | 'first' | 'last' | null>(null)
+  // A readout for a phone in hand: what the player answered, in order, while
+  // grown. Only with ?reeldebug in the address; nothing otherwise.
+  const [debug, setDebug] = useState<string[]>([])
+  const debugOn = useRef(false)
+  useEffect(() => {
+    debugOn.current = typeof window !== 'undefined' && window.location.search.includes('reeldebug')
+  }, [])
+  const log = (line: string) => {
+    if (!debugOn.current) return
+    setDebug((d) => [...d.slice(-11), `${(performance.now() / 1000).toFixed(1)} ${line}`])
+  }
+  const logRef = useRef(log)
+  logRef.current = log
   const noteTimer = useRef(0)
   // Grown, the box scrolls natively between the reel and its neighbours'
   // covers (see the render): a swipe that starts on the player's frame still
@@ -561,6 +574,7 @@ export default function ReelPlayer({
       // it again behind the visitor.
       let retries = 0
       const mutedRetry = () => {
+        logRef.current(`mutedRetry ${retries} wants=${wantsPlay.current}`)
         if (cancelled || !wantsPlay.current) return
         if (retries >= 2) {
           // Refused with sound and refused muted: the reel is not going to
@@ -595,12 +609,17 @@ export default function ReelPlayer({
       media.current = {
         play: () => {
           askAndWatch()
+          logRef.current('play()')
           void p
             .play()
+            .then(() => logRef.current('play() ok'))
             // On a phone the refusal can be a REJECTION — and a rejection
             // skipped every check but this one, so a reel opened from a phone
             // never started at all.
-            .catch(mutedRetry)
+            .catch((e: { name?: string; message?: string }) => {
+              logRef.current(`play() rejected ${e?.name ?? ''} ${e?.message ?? ''}`.slice(0, 80))
+              mutedRetry()
+            })
         },
         pause: () => void p.pause().catch(() => {}),
         seek: (s) => p.setCurrentTime(s).then(() => {}).catch(() => {}),
@@ -627,8 +646,8 @@ export default function ReelPlayer({
               loop: true,
               keyboard: false,
             } as Parameters<typeof p.loadVideo>[0])
-            .then(() => {})
-            .catch(() => {})
+            .then(() => logRef.current('load ok'))
+            .catch((e: { name?: string; message?: string }) => logRef.current(`load rejected ${e?.name ?? ''} ${e?.message ?? ''}`.slice(0, 80)))
         },
         setMuted: (m) => {
           void p
@@ -639,7 +658,9 @@ export default function ReelPlayer({
         paused: () => isPaused,
         fullscreen: () => p.requestFullscreen(),
       }
+      p.on('error', (e: { name?: string; message?: string }) => logRef.current(`error ${e?.name ?? ''} ${e?.message ?? ''}`.slice(0, 80)))
       p.on('loaded', () => {
+        logRef.current('loaded')
         setReady(true)
         // every call has to swallow its own rejection: the player can be torn
         // down mid-flight (a reel scrolled past, the feed closed) and Vimeo
@@ -647,6 +668,7 @@ export default function ReelPlayer({
         void p.getDuration().then(setDuration).catch(() => {})
       })
       p.on('play', () => {
+        logRef.current('play event')
         isPaused = false
         // 'play' is the player's word again, not the reel moving: keep watching
         window.clearTimeout(watchdog)
@@ -671,10 +693,12 @@ export default function ReelPlayer({
       })
       p.on('volumechange', syncMuted)
       p.on('pause', () => {
+        logRef.current('pause event')
         isPaused = true
         setPlaying(false)
       })
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
+        if (!progressed && d.seconds > 0 && !swappingRef.current) logRef.current(`first tick ${d.seconds.toFixed(1)}`)
         // a reel being swapped in: the old one's last ticks are not its time,
         // and not its progress either
         if (swappingRef.current) return
@@ -983,7 +1007,10 @@ export default function ReelPlayer({
       const at = Math.round(el.scrollTop / h)
       if (Math.abs(el.scrollTop - at * h) > 2) return
       const middle = cursor > 0 ? 1 : 0
-      if (at !== middle) swapTo(cursor + (at - middle))
+      if (at !== middle) {
+        log(`settled ${at} -> reel ${cursor + (at - middle) + 1}`)
+        swapTo(cursor + (at - middle))
+      }
     }, 90)
   }
 
@@ -1233,6 +1260,11 @@ export default function ReelPlayer({
                 level with the X and on the play glyph's left, on its own shade.
                 SCROLL UP/DOWN when it opens; FIRST VIDEO or LAST VIDEO when a
                 swipe asks for a reel that is not there. */}
+            {grown && debug.length > 0 && (
+              <pre className="pointer-events-none absolute left-2 top-16 z-[60] max-w-[90%] whitespace-pre-wrap rounded bg-black/70 p-2 text-[10px] leading-[1.3] text-white">
+                {debug.join('\n')}
+              </pre>
+            )}
             {grown && (
               <>
                 <div
