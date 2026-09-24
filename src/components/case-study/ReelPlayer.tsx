@@ -747,6 +747,7 @@ export default function ReelPlayer({
     let giveUp = 0
     const onBlur = () => {
       if (document.activeElement !== el) return
+      logRef.current(`tap in frame grown=${grownRef.current} needsTap=${needsTapRef.current}`)
       if (grownRef.current && needsTapRef.current) {
         // the tap the reel was waiting for: it went into the frame, so the
         // phone lets this one start, with the sound as it was set
@@ -790,6 +791,9 @@ export default function ReelPlayer({
       waiting = window.setTimeout(() => {
         const m = media.current
         if (!cancelled && m?.paused()) m.play()
+        // focus back out of the frame, or the next tap in it is not a change
+        // of focus and is never seen (iOS keeps focus in the frame otherwise)
+        el.blur()
         window.focus()
         // on a phone the tapped card is the reels: it grows the moment it
         // has been asked to play, with the tap's permission inside it
