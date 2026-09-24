@@ -355,7 +355,9 @@
     "requestAssistance": "Chiedi assistenza",
     "exploreOther": "Scopri gli altri nostri servizi",
     "explore": "Scopri",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "caseHeading": "Vuoi far crescere anche i tuoi numeri?",
+    "caseBody": "Raccontaci cosa vendi e cosa deve cambiare. Ti proporremo un perimetro di lavoro chiaro, tempistiche e un prezzo. Senza impegno."
   },
   "CaseStudy": {
     "play": "Riproduci",

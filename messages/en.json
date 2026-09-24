@@ -355,7 +355,9 @@
     "requestAssistance": "Request Assistance",
     "exploreOther": "Explore Our Other Services",
     "explore": "Explore",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "caseHeading": "Ready to move your own numbers?",
+    "caseBody": "Tell us what you sell and what needs to change. We’ll come back with a clear scope, a timeline and a price. No obligation."
   },
   "CaseStudy": {
     "eyebrow": "Case Study",

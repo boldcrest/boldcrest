@@ -355,7 +355,9 @@
     "requestAssistance": "Kërko ndihmë",
     "exploreOther": "Zbulo shërbimet tona të tjera",
     "explore": "Zbulo",
-    "faq": "Pyetje të shpeshta"
+    "faq": "Pyetje të shpeshta",
+    "caseHeading": "Gati t’i lëvizësh edhe ti shifrat e tua?",
+    "caseBody": "Na trego çfarë shet dhe çfarë duhet të ndryshojë. Do të të propozojmë një shtrirje të qartë të punës, afatet dhe çmimin. Pa detyrim."
   },
   "CaseStudy": {
     "play": "Luaj",

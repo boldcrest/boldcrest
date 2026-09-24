@@ -100,6 +100,9 @@ export default function MockCaseStudyPage() {
         reelsHint: 'Drag / tap to play',
         close: 'Close',
         feed: 'The Feed',
+        ctaHeading: 'Ready to move your own numbers?',
+        ctaBody:
+          'Tell us what you sell and what needs to change. We’ll come back with a clear scope, a timeline and a price. No obligation.',
       }}
     />
   )

@@ -79,12 +79,15 @@ export default async function CaseStudyPage({
   if (!study) notFound()
 
   const t = await getTranslations({ locale, namespace: 'CaseStudy' })
+  const tCta = await getTranslations({ locale, namespace: 'Cta' })
   const labels = {
     eyebrow: t('eyebrow'),
     reels: t('reels'),
     reelsHint: t('reelsHint'),
     close: t('close'),
     feed: t('feed'),
+    ctaHeading: tCta('caseHeading'),
+    ctaBody: tCta('caseBody'),
   }
 
   return (

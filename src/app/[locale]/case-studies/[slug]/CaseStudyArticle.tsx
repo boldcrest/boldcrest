@@ -4,6 +4,7 @@ import { ptComponents } from '@/components/portableText'
 import CaseStudyHero from '@/components/case-study/CaseStudyHero'
 import ReelsCarousel, { type Reel } from '@/components/case-study/ReelsCarousel'
 import FeedGrid, { type FeedImage } from '@/components/case-study/FeedGrid'
+import ServiceCTA from '@/components/services/ServiceCTA'
 
 export interface CaseStudy {
   _id: string
@@ -27,6 +28,8 @@ interface Labels {
   reelsHint: string
   close: string
   feed: string
+  ctaHeading: string
+  ctaBody: string
 }
 
 /**
@@ -78,6 +81,11 @@ export default async function CaseStudyArticle({
       />
 
       <FeedGrid feed={study.feed ?? []} heading={labels.feed} />
+      {/* The ask, once the work has been seen: the service pages' block, with
+          the copy turned to a case study — the visitor has just watched numbers
+          move, so the question is whether they want theirs moved. Full width,
+          like the feed above it, or it sat visibly indented from the grid. */}
+      <ServiceCTA heading={labels.ctaHeading} description={labels.ctaBody} fullWidth topBorder />
     </article>
   )
 }

@@ -355,7 +355,9 @@
     "requestAssistance": "Demander de l’aide",
     "exploreOther": "Découvrez nos autres services",
     "explore": "Découvrir",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "caseHeading": "Envie de faire bouger vos propres chiffres ?",
+    "caseBody": "Dites-nous ce que vous vendez et ce qui doit changer. Nous vous proposerons un périmètre clair, un calendrier et un prix. Sans engagement."
   },
   "CaseStudy": {
     "play": "Lire",
