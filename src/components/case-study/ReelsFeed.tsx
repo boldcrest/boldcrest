@@ -255,7 +255,12 @@ export default function ReelsFeed({
       const now = performance.now()
       const mag = Math.abs(e.deltaY)
       const gap = now - lastAt
-      const grew = mag > lastMag * 1.4
+      // A push, as against the tail of the last one: a gap since the last
+      // event, or a delta clearly larger than the one before — AND of some
+      // size. A tail decays to specks that jitter (3, 5, 4, 6), and 3 → 5 is
+      // "larger" by any ratio; taken as a push it moved a second reel once
+      // the step had landed. Nothing a hand does starts that small.
+      const grew = mag > lastMag * 1.4 && mag >= 24
       lastAt = now
       lastMag = mag
       const down = e.deltaY > 0
@@ -266,7 +271,7 @@ export default function ReelsFeed({
       // a step still under way, or the tail of the push just acted on: not
       // a new ask, whichever way it points
       if (moving) return
-      if (gap < 80 && !grew) return
+      if ((gap < 80 && !grew) || mag < 24) return
       if (stuck) {
         // nothing that way: the feed gives instead of moving — at once, on the
         // next push after landing here, not after a wait. Specks (a trackpad's
