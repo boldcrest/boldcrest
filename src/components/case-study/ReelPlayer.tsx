@@ -371,6 +371,10 @@ export default function ReelPlayer({
   // load lands, as close to the gesture as it can be. The frame wears that
   // reel's cover from then on.
   const pending = useRef<number | null>(null)
+  // The phone has refused to start a swapped-in reel once: it will refuse
+  // every one, so the next covers get their play mark as they land rather
+  // than after the refusal comes back.
+  const refuses = useRef(false)
   // the box's height the scroll was laid out at: a change (Safari's bars, a
   // screenshot) moves the scroll without a swipe, and is not one
   const laidOutAt = useRef(0)
@@ -649,7 +653,10 @@ export default function ReelPlayer({
               // a refusal of a swapped-in reel: the play mark goes on the
               // cover at once, while the muted retries run behind it; should
               // one of them be obeyed, the play event takes the mark off
-              if (grownRef.current && swappingRef.current) setNeedsTap(true)
+              if (grownRef.current && swappingRef.current) {
+                refuses.current = true
+                setNeedsTap(true)
+              }
               mutedRetry(of)
             })
         },
@@ -1041,7 +1048,7 @@ export default function ReelPlayer({
     // the cover during the swipe (see onGrownScroll); if the swipe was too
     // quick for that, it is loaded now.
     setSwapping(true)
-    setNeedsTap(false)
+    setNeedsTap(refuses.current)
     setCursor(next)
     setCoverOf(null)
     setTime(0)
@@ -1115,7 +1122,9 @@ export default function ReelPlayer({
         pending.current = next
         setSwapping(true)
         setNeedsTap(false)
-        setCoverOf(next)
+        // its own cover while it slides out: the next one's is on the slide
+        // coming in, and the same picture on both read as a jump
+        setCoverOf(cursor)
         loadAhead(next)
       }
     }
@@ -1133,7 +1142,7 @@ export default function ReelPlayer({
         setCoverOf(null)
         loadAhead(cursor)
       }
-    }, 90)
+    }, 50)
   }
 
   /** Back to the card. If a different reel was loaded while grown, the card's
