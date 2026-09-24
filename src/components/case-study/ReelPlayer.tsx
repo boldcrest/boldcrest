@@ -551,7 +551,15 @@ export default function ReelPlayer({
       // it again behind the visitor.
       let retries = 0
       const mutedRetry = () => {
-        if (cancelled || !wantsPlay.current || retries >= 2) return
+        if (cancelled || !wantsPlay.current) return
+        if (retries >= 2) {
+          // Refused with sound and refused muted: the reel is not going to
+          // start on its own. The cover comes off so the controls are there
+          // and a tap can ask again, rather than a cover with nothing on it.
+          setSwapping(false)
+          setLoading(false)
+          return
+        }
         retries += 1
         setMuted(true)
         void p
@@ -588,6 +596,11 @@ export default function ReelPlayer({
         seek: (s) => p.setCurrentTime(s).then(() => {}).catch(() => {}),
         load: (url) => {
           const { id, hash } = extractVimeoRef(url)
+          // a fresh reel gets a fresh judgement: the retries spent on the last
+          // one, and the last one's ticks, must not count for this one
+          retries = 0
+          progressed = false
+          window.clearTimeout(watchdog)
           // the watch address with the hash, which is how a hidden video is
           // named to loadVideo; the embed options are the same as the frame's
           return p
@@ -652,9 +665,10 @@ export default function ReelPlayer({
         setPlaying(false)
       })
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
-        if (d.seconds > 0) progressed = true
-        // a reel being swapped in: the old one's last ticks are not its time
+        // a reel being swapped in: the old one's last ticks are not its time,
+        // and not its progress either
         if (swappingRef.current) return
+        if (d.seconds > 0) progressed = true
         if (d.duration) setDuration(d.duration)
         const target = resumeTarget.current
         if (target !== null) {
