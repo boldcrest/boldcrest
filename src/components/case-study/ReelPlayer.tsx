@@ -371,6 +371,9 @@ export default function ReelPlayer({
   // load lands, as close to the gesture as it can be. The frame wears that
   // reel's cover from then on.
   const pending = useRef<number | null>(null)
+  // the box's height the scroll was laid out at: a change (Safari's bars, a
+  // screenshot) moves the scroll without a swipe, and is not one
+  const laidOutAt = useRef(0)
   const [coverOf, setCoverOf] = useState<number | null>(null)
   const needsTapRef = useRef(false)
   needsTapRef.current = needsTap
@@ -1065,6 +1068,7 @@ export default function ReelPlayer({
     if (!grown) return
     const el = box.current
     if (!el) return
+    laidOutAt.current = el.clientHeight
     el.scrollTo({ top: cursor > 0 ? el.clientHeight : 0, behavior: 'instant' as ScrollBehavior })
   }, [grown, cursor])
 
@@ -1076,6 +1080,14 @@ export default function ReelPlayer({
     const list = playlist
     if (!el || !list) return
     const h = el.clientHeight
+    if (h !== laidOutAt.current) {
+      // the screen changed size under the scroll: back to the middle, and
+      // nothing read into the move
+      laidOutAt.current = h
+      window.clearTimeout(settle.current)
+      el.scrollTo({ top: cursor > 0 ? h : 0, behavior: 'instant' as ScrollBehavior })
+      return
+    }
     const max = el.scrollHeight - h
     if (el.scrollTop < -8 && cursor === 0) say('first')
     else if (el.scrollTop > max + 8 && cursor === list.length - 1) say('last')
