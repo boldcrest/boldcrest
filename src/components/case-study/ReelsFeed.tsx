@@ -676,7 +676,12 @@ export default function ReelsFeed({
                   its own, and nothing is cropped. */}
               <div
                 ref={i === startAt ? openingFrame : undefined}
-                className={`relative mx-auto ${holdOpening && i === startAt ? 'opacity-0' : ''}`}
+                // a picture's frame clips to the reels' radius (the shade and
+                // the close mark sit inside it, so they are clipped with it);
+                // a reel's player rounds itself
+                className={`relative mx-auto ${holdOpening && i === startAt ? 'opacity-0' : ''} ${
+                  slides && !slides.reelAt?.(i) && !narrow ? 'overflow-hidden rounded-[var(--radius-lg)]' : ''
+                }`}
                 style={{
                   aspectRatio: String(1 / ratioOf(i)),
                   height: narrow
@@ -718,7 +723,7 @@ export default function ReelsFeed({
                       <ReelPlayer
                         vimeoUrl={reelOf(i)?.vimeoUrl as string}
                         poster={reelOf(i)?.poster}
-                        caption={reelOf(i)?.caption}
+                        caption={slides ? undefined : reelOf(i)?.caption}
                         active={current === i}
                         onPlay={() => {}}
                         soundOff={soundOff}
@@ -784,7 +789,7 @@ export default function ReelsFeed({
                   key="feed"
                   vimeoUrl={reelOf(i)?.vimeoUrl as string}
                   poster={reelOf(i)?.poster}
-                  caption={reelOf(i)?.caption}
+                  caption={slides ? undefined : reelOf(i)?.caption}
                   active={current === i}
                   autoPlay
                   inFeed
