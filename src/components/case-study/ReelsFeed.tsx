@@ -89,6 +89,7 @@ export default function ReelsFeed({
   syncTo,
   onSynced,
   holdOpening = false,
+  hurry = false,
   onClose,
 }: {
   reels?: Reel[]
@@ -124,6 +125,8 @@ export default function ReelsFeed({
   /** the card is still on top of the opening frame: the frame stays out of
    *  sight until the handover, so nothing of it shows round the card */
   holdOpening?: boolean
+  /** the visitor is already moving on: the opening reel takes over now */
+  hurry?: boolean
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
@@ -806,6 +809,7 @@ export default function ReelsFeed({
                   resumeFrom={i === startAt ? resumeFrom : undefined}
                   syncTo={i === startAt ? syncTo : undefined}
                   onSynced={i === startAt ? onSynced : undefined}
+                  hurry={i === startAt && hurry}
                   // the one either side is built ahead of time, so scrolling
                   // onto it starts the video rather than the cover
                   preload={Math.abs(i - current) <= 1}

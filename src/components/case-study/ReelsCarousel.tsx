@@ -54,7 +54,13 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // card's clock, and only then does the card let go. Nothing is seen to
   // reload. `HAND_LEAD` is the head start the feed's player is given, so
   // its first frame lands near where the card will be by then.
-  const [lift, setLift] = useState<{ index: number; rect: { x: number; y: number; width: number; height: number } | null; fading?: boolean } | null>(null)
+  const [lift, setLift] = useState<{
+    index: number
+    rect: { x: number; y: number; width: number; height: number } | null
+    fading?: boolean
+    /** the visitor wheeled during the handover: it is cut short */
+    hurry?: boolean
+  } | null>(null)
   // each card's clock: its last tick and when it came, so it can be read
   // live between ticks (a tick is a quarter second apart)
   const clocks = useRef<{ t: number; at: number }[]>([])
@@ -236,6 +242,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
               }}
               liftTo={lift?.index === i ? lift.rect : null}
               liftFading={lift?.index === i && !!lift.fading}
+              onLiftWheel={() => setLift((l) => (l && !l.hurry ? { ...l, hurry: true } : l))}
               onExpand={(at) => {
                 setLastSeen(i)
                 // the card plays on, lifted; the feed's player takes over
@@ -274,6 +281,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
           onSoundOff={setSoundOff}
           onWatched={setLastSeen}
           holdOpening={lift !== null && !lift.fading}
+          hurry={!!lift?.hurry}
           onFrame={(rect) => setLift((l) => (l ? { ...l, rect } : l))}
           syncTo={
             lift
@@ -285,12 +293,17 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
           }
           onSynced={() => {
             // the feed is on the card's clock: the card fades off it, then
-            // lets go (its sound with it; the feed's comes on as it does)
-            setLift((l) => (l ? { ...l, fading: true } : l))
+            // lets go (its sound with it; the feed's comes on as it does).
+            // Hurried by a wheel, it lets go at once.
+            let quick = false
+            setLift((l) => {
+              quick = !!l?.hurry
+              return l ? { ...l, fading: true } : l
+            })
             window.setTimeout(() => {
               setLift(null)
               setActive(null)
-            }, 220)
+            }, quick ? 0 : 220)
           }}
           onClose={() => {
             setFeed(null)

@@ -233,6 +233,8 @@ export default function ReelPlayer({
   onSynced,
   liftTo = null,
   liftFading = false,
+  onLiftWheel,
+  hurry = false,
   viewer = false,
   shadeTop,
   shadeQuick = false,
@@ -287,6 +289,10 @@ export default function ReelPlayer({
   liftTo?: { x: number; y: number; width: number; height: number } | null
   /** the feed has taken over underneath: the lifted card fades off it */
   liftFading?: boolean
+  /** a wheel over the lifted card: the visitor wants to move on */
+  onLiftWheel?: () => void
+  /** the feed's opening reel, told to take over now, met or not */
+  hurry?: boolean
   /** A reel among the pictures on a phone: the card as it is in the rail,
    *  but with the viewer's transport (title and seconds above the buttons,
    *  the bigger buttons) and its full-screen button top LEFT, clear of the
@@ -444,6 +450,8 @@ export default function ReelPlayer({
   syncToRef.current = syncTo
   const onSyncedRef = useRef(onSynced)
   onSyncedRef.current = onSynced
+  const hurryRef = useRef(hurry)
+  hurryRef.current = hurry
   const onWatchedRef = useRef(onWatched)
   useEffect(() => {
     grownRef.current = grown
@@ -793,7 +801,9 @@ export default function ReelPlayer({
       // to that point, less the start's own latency. Both clocks are then
       // read every few frames until they agree to within a few hundredths,
       // and it is announced. Late after all, it goes round once more.
-      const START_LATENCY = 0.12
+      // how long the player takes to move after play(): guessed, then
+      // measured from the first round and corrected for the next
+      let latency = 0.12
       let met = false
       let syncing = false
       let meetFrom = 0
@@ -819,15 +829,15 @@ export default function ReelPlayer({
                 window.clearInterval(poll)
                 return
               }
-              if (performance.now() - meetFrom > 5000) {
-                logRef.current('meet: gave up')
+              if (performance.now() - meetFrom > 5000 || hurryRef.current) {
+                logRef.current(hurryRef.current ? 'meet: hurried' : 'meet: gave up')
                 if (!started) void p.play().catch(() => {})
                 done()
                 return
               }
               const now = syncToRef.current?.() ?? 0
               if (!started) {
-                if (now >= target - START_LATENCY) {
+                if (now >= target - latency) {
                   started = true
                   logRef.current(`meet: go at ${now.toFixed(2)}`)
                   void p.play().catch(() => {})
@@ -835,18 +845,22 @@ export default function ReelPlayer({
                 return
               }
               void p.getCurrentTime().then((mine) => {
+                if (met || cancelled) return
                 const gap = mine - (syncToRef.current?.() ?? 0)
                 if (mine <= target) return // not moving yet
                 if (Math.abs(gap) <= 0.08) {
                   logRef.current(`meet: met, gap ${gap.toFixed(2)}`)
                   done()
-                } else if (gap < -0.3) {
-                  // started late: once more
-                  logRef.current(`meet: late ${gap.toFixed(2)}, again`)
-                  window.clearInterval(poll)
-                  syncing = false
-                  meet()
+                  return
                 }
+                // Off by more than that, and both run at one speed, so it
+                // stays off: the gap IS the error in the latency guess.
+                // Corrected, and another round from a fresh hold.
+                latency = Math.min(0.8, Math.max(0, latency - gap))
+                logRef.current(`meet: off ${gap.toFixed(2)}, latency ${latency.toFixed(2)}, again`)
+                window.clearInterval(poll)
+                syncing = false
+                meet()
               })
             }, 30)
           })
@@ -1397,6 +1411,19 @@ export default function ReelPlayer({
         // grown on a phone: the box scrolls, one screen per reel, and
         // settling on a neighbour's cover is the swipe to that reel
         onScroll={grown ? onGrownScroll : undefined}
+        // lifted over the feed, the box is not in the feed's scroller: a
+        // wheel over it would move the page behind (Lenis). It is kept here,
+        // and the handover is hurried so the feed can take the next one.
+        data-lenis-prevent={lifted ? '' : undefined}
+        onWheel={
+          lifted
+            ? (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onLiftWheel?.()
+              }
+            : undefined
+        }
         // lifted: the box sits at the feed's frame, fixed, and is moved back
         // to where the card is by a transform that the lift then animates off
         style={
@@ -1602,6 +1629,28 @@ export default function ReelPlayer({
               <div aria-hidden className="pointer-events-none absolute inset-0 z-[36] grid place-items-center">
                 <span className="flex size-16 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-[2px]">
                   <PlayIcon size={28} />
+                </span>
+              </div>
+            )}
+            {/* The feed's reel getting going: the rail's own corner mark with
+                its ring, bottom left where the transport's play button sits,
+                until the reel has moved. The transport under it is "stated"
+                from the first frame; this says the player is still coming. */}
+            {feedLook && started && !ticked && !ended && !swapping && !needsTap && (
+              <div aria-hidden className="pointer-events-none absolute bottom-[7%] left-[7%] z-[36] flex">
+                <span
+                  className="flex size-12 items-center justify-center text-white/80"
+                  style={{
+                    borderRadius: 'var(--radius-pill)',
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: 'rgba(255,255,255,0.45)',
+                    backgroundColor: 'rgba(10,10,10,0.72)',
+                    backdropFilter: 'blur(24px) saturate(1.5)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                  }}
+                >
+                  <span className="size-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                 </span>
               </div>
             )}
