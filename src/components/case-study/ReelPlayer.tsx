@@ -597,7 +597,8 @@ export default function ReelPlayer({
         void p
           .setMuted(true)
           .then(() => p.play())
-          .catch(() => {})
+          // refused muted as well: ask once more, and then the cover asks for the tap
+          .catch(() => mutedRetry())
       }
       // The player's own word on whether it is playing cannot be trusted on a
       // phone: it says yes while the phone has blocked the start, and the reel
