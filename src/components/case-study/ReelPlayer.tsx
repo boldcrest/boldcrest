@@ -354,13 +354,17 @@ export default function ReelPlayer({
   // has to pay; a mouse keeps the neighbours ready as before.
   const nativeStart = inFeed && !mouse && !isFile(vimeoUrl)
   const mounted = !suspend && (nativeStart ? active : inView || preload)
-  // The phone's reels: this card's player, tapped (so iOS trusts it), grown
-  // over the page, with the rest of the rail loaded into it on a swipe. The
-  // tap goes INTO the frame as on jokadent.com — that is what lets the player
-  // obey afterwards — and from then on every reel plays with sound and no
-  // second tap.
-  const growOnTouch = !mouse && !inFeed && !!playlist && playlist.length > 0
+  // On a phone a rail card is the player, as on jokadent.com: the tap goes
+  // INTO the frame (what lets the player obey afterwards), the reel plays in
+  // the card, and full screen is the phone's own player. Neither the reels
+  // feed nor the grown player is used there: a video loaded into the frame
+  // after the tap is refused by iOS, sound or no sound, measured 2026-09-24
+  // on device. The grown-player code stays for the record, switched off.
+  const growOnTouch = false
   const grown = expanded && growOnTouch
+  // the rail's full-screen routes (the feed, the double-click) are for a
+  // mouse; on touch the card has none
+  const expand = mouse || inFeed ? onExpand : undefined
   // which of the rail's reels the grown player is showing
   const [cursor, setCursor] = useState(index)
   // a reel being loaded into the player: its cover holds the picture meanwhile
@@ -1340,7 +1344,7 @@ export default function ReelPlayer({
                 aria-label={caption || t('reels')}
                 // the same footprint and the same say over taps as the iframe
                 className={`absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] border-0 object-contain ${
-                  showControls || (!inFeed && onExpand)
+                  showControls || (!inFeed && expand)
                     ? 'pointer-events-none'
                     : mouse
                       ? 'pointer-events-none opacity-0'
@@ -1371,7 +1375,7 @@ export default function ReelPlayer({
                 className={`absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] border-0 ${
                   nativeStart || grown
                     ? '' // takes the tap: see onBlur
-                    : showControls || (!inFeed && onExpand && !growOnTouch)
+                    : showControls || (!inFeed && expand)
                       ? 'pointer-events-none'
                       : mouse
                         ? 'pointer-events-none opacity-0'
@@ -1535,8 +1539,8 @@ export default function ReelPlayer({
                 // A rail card on a phone is a thumbnail: pressing it goes
                 // straight to the reels, full screen, rather than playing a
                 // 62vw video in the middle of the page.
-                if (!mouse && !inFeed && onExpand && !growOnTouch) {
-                  onExpand(time)
+                if (!mouse && !inFeed && expand) {
+                  expand(time)
                   return
                 }
                 toggle()
@@ -1547,10 +1551,10 @@ export default function ReelPlayer({
               // still fire, but they are a pause and a play, so they cancel
               // out and the reel is still running when it is handed over.
               onDoubleClick={
-                !inFeed && onExpand
+                !inFeed && expand
                   ? (e) => {
                       e.preventDefault()
-                      onExpand(time)
+                      expand(time)
                     }
                   : undefined
               }
@@ -1650,11 +1654,14 @@ export default function ReelPlayer({
                       // grows over the page instead, and on an iPhone it asks
                       // the player for its own full screen, the only one iOS
                       // gives a video.
-                      if (onExpand) {
-                        onExpand(time)
+                      if (expand) {
+                        expand(time)
                         return
                       }
-                      if (/iPhone|iPod/.test(navigator.userAgent) && media.current)
+                      // on touch, the phone's own player: iOS gives a video
+                      // nothing else, and on Android it is the one that is
+                      // expected; the boxed lightbox only if that is refused
+                      if (!mouse && media.current)
                         void media.current.fullscreen().catch(() => setExpanded(true))
                       else setExpanded(true)
                     }}
