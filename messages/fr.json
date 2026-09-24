@@ -429,8 +429,8 @@
     "atEnd": "Dernière vidéo",
     "scrollUp": "Remontez",
     "scrollBoth": "Défilez haut/bas",
-    "firstPicture": "Première photo",
-    "lastPicture": "Dernière photo"
+    "firstPicture": "Premier post",
+    "lastPicture": "Dernier post"
   },
   "Taxonomy": {
     "branding": "Branding",

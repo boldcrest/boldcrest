@@ -121,11 +121,13 @@ export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
           last column's heading ("Note legali" in Italian). */}
       <button
         onClick={scrollToTop}
-        className="group absolute top-0 flex h-[60px] w-[60px] -translate-y-1/2 items-center justify-center rounded-full"
-        // The ARROW is what lines up with the copyright's right edge; the disc
-        // is decoration that follows it, so it overhangs by its own ring width
-        // (the 7px between the 46px arrow and the 60px disc).
-        style={{ background: '#EDEDED', right: 'calc(var(--gutter) - 7px)' }}
+        // On a phone the DISC's right edge lines up with the floating menu
+        // pill's right edge (both inset by --gutter). From md up the ARROW is
+        // what lines up with the copyright's right edge; the disc is decoration
+        // that follows it, so it overhangs by its own ring width (the 7px
+        // between the 46px arrow and the 60px disc).
+        className="group absolute top-0 right-[var(--gutter)] flex h-[60px] w-[60px] -translate-y-1/2 items-center justify-center rounded-full md:right-[calc(var(--gutter)-7px)]"
+        style={{ background: '#EDEDED' }}
         aria-label={t('backToTop')}
       >
         {/* Only the arrow reacts to hover. The disc is the footer's own
