@@ -303,6 +303,9 @@ export default function ReelPlayer({
   const mouse = useSyncExternalStore(subscribeMouse, hasMouse, () => false)
   const [playing, setPlaying] = useState(false)
   const [started, setStarted] = useState(false)
+  // the reel has actually moved: the player's 'play' comes before its first
+  // frame, and a cover lifted on 'play' showed the frame's own spinner
+  const [ticked, setTicked] = useState(false)
   const [ended, setEnded] = useState(false)
   const [muted, setMuted] = useState(false)
   const [time, setTime] = useState(0)
@@ -739,7 +742,10 @@ export default function ReelPlayer({
         setPlaying(false)
       })
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
-        if (!progressed && d.seconds > 0 && !swappingRef.current) logRef.current(`first tick ${d.seconds.toFixed(1)}`)
+        if (!progressed && d.seconds > 0 && !swappingRef.current) {
+          logRef.current(`first tick ${d.seconds.toFixed(1)}`)
+          setTicked(true)
+        }
         // a reel being swapped in: the old one's last ticks are not its time,
         // and not its progress either
         if (swappingRef.current) return
@@ -801,19 +807,6 @@ export default function ReelPlayer({
           window.focus()
         }, 50)
         return
-      }
-      if (grownRef.current && playlist) {
-        // EXPERIMENT: a tap on the playing reel is the next reel, asked for
-        // straight after the load, to see whether the tap's permission
-        // survives a load in the frame
-        const next = cursorRef.current + 1
-        if (next < playlist.length) {
-          logRef.current('tap -> next reel')
-          el.blur()
-          window.focus()
-          swapToRef.current(next)
-          return
-        }
       }
       if (nativeStart || grownRef.current) {
         // On a touch feed the reel is already running; a tap on the picture
@@ -1048,6 +1041,7 @@ export default function ReelPlayer({
     // the cover during the swipe (see onGrownScroll); if the swipe was too
     // quick for that, it is loaded now.
     setSwapping(true)
+    setTicked(false)
     setNeedsTap(refuses.current)
     setCursor(next)
     setCoverOf(null)
@@ -1062,9 +1056,6 @@ export default function ReelPlayer({
     pending.current = null
     loadAhead(next)
   }
-
-  const swapToRef = useRef(swapTo)
-  swapToRef.current = swapTo
 
   /** The reel a swipe is heading for, into the frame, and asked to start as
    *  soon as it is there. */
@@ -1157,6 +1148,7 @@ export default function ReelPlayer({
       setCursor(index)
     }
     setStarted(false)
+    setTicked(false)
     setPlaying(false)
     setSwapping(false)
     setNeedsTap(false)
@@ -1520,7 +1512,7 @@ export default function ReelPlayer({
                 scrolling onto a reel shows the picture and then the video,
                 never a hole. pointer-events-none so the tap still reaches the
                 player underneath. */}
-            {shownPoster && (feedLook ? (!started && !primed) || swapping : !showControls) && (
+            {shownPoster && (feedLook ? (!(started && ticked) && !primed) || swapping : !showControls) && (
               <span
                 aria-hidden
                 className={
@@ -1530,7 +1522,7 @@ export default function ReelPlayer({
                       // pause; once the reel has started, pausing should hold
                       // the frame you stopped on and the end should hold the
                       // last one, the way a reel does.
-                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-200 ${(started || primed) && !swapping ? 'opacity-0' : 'opacity-100'}`
+                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-200 ${((started && ticked) || primed) && !swapping ? 'opacity-0' : 'opacity-100'}`
                     : 'absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]'
                 }
                 style={{ backgroundImage: `url(${shownPoster})` }}
