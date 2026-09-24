@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -184,7 +185,7 @@ function ServiceShowcase({
 }: {
   categories: CategoryGroup[]
   label: string
-  disciplines: typeof capabilities
+  disciplines: (typeof capabilities[number] & { categoryLabel?: string })[]
 }) {
   const [active, setActive] = useState(0)
   const ref = useRef<HTMLElement>(null)
@@ -253,7 +254,7 @@ function ServiceShowcase({
                       color: darkShade,
                     }}
                   >
-                    {cap.category}
+                    {cap.categoryLabel ?? cap.category}
                   </span>
                 </div>
                 <div
@@ -277,7 +278,7 @@ function ServiceShowcase({
                 <Link
                   href={cap.href}
                   onClick={(e) => e.stopPropagation()}
-                  aria-label={`${cap.category}, ${cap.ctaLabel}`}
+                  aria-label={`${cap.categoryLabel ?? cap.category}, ${cap.ctaLabel}`}
                   className="group flex h-full flex-col"
                 >
                 {/* Top body */}
@@ -384,6 +385,7 @@ function Stats({
 }: {
   labels: { projectsLabel?: string; partnersLabel?: string; daysLabel?: string }
 }) {
+  const ts = useTranslations('Services')
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
   const [counts, setCounts] = useState({
@@ -405,9 +407,9 @@ function Stats({
   }, [])
 
   const stats = [
-    { value: counts.projects, label: labels.projectsLabel ?? 'Projects delivered', bg: '#1f1f1f' },
-    { value: counts.partners, label: labels.partnersLabel ?? 'Partners', bg: '#171717' },
-    { value: counts.days, label: labels.daysLabel ?? 'Days active', bg: '#0f0f0f' },
+    { value: counts.projects, label: labels.projectsLabel ?? ts('statProjects'), bg: '#1f1f1f' },
+    { value: counts.partners, label: labels.partnersLabel ?? ts('statPartners'), bg: '#171717' },
+    { value: counts.days, label: labels.daysLabel ?? ts('statDays'), bg: '#0f0f0f' },
   ]
 
   return (
@@ -698,6 +700,9 @@ export default function ServicesPageClient({
   partners = [],
   content,
 }: ServicesPageClientProps) {
+  const tCta = useTranslations('Cta')
+  const tServices = useTranslations('Services')
+  const tHome = useTranslations('Home')
   const heroEyebrow = content?.hero?.eyebrow ?? 'Services'
   const heroLines = content?.hero?.lines?.length
     ? content.hero.lines
@@ -709,6 +714,10 @@ export default function ServicesPageClient({
       ...cap,
       number: d?.number ?? cap.number,
       heading: d?.heading ?? cap.heading,
+      // `category` is the key that matches Sanity's service.category, so it
+      // must stay English. This is the label people actually read on the
+      // collapsed card, taken from the localised heading.
+      categoryLabel: (d?.heading ?? cap.heading ?? cap.category).replace(/\n/g, ' '),
       abbr: d?.abbr ?? cap.abbr,
       ctaLabel: d?.ctaLabel ?? cap.ctaLabel,
       tags: d?.tags?.length ? d.tags : cap.tags,
@@ -754,7 +763,7 @@ export default function ServicesPageClient({
 
       {/* ── Process Timeline ── */}
       <ProcessSection
-        eyebrow={content?.processEyebrow ?? 'Process'}
+        eyebrow={content?.processEyebrow ?? tServices('process')}
         heading={content?.processHeading ?? 'How every BoldCrest project works'}
         steps={processSteps}
       />
@@ -763,28 +772,25 @@ export default function ServicesPageClient({
       <Stats labels={content?.stats ?? {}} />
 
       {/* ── Client Logos ── */}
-      <ClientLogos partners={partners} eyebrow={content?.clientLogosEyebrow ?? 'Trusted by the ambitious'} />
+      <ClientLogos partners={partners} eyebrow={content?.clientLogosEyebrow ?? tHome('trustedBy')} />
 
       {/* ── CTA (before the FAQ, matching the single service pages) ── */}
       <ServiceCTA
         // "Need Help" rather than the default "Next Step": this block is for a
         // visitor who has not chosen a service yet, so it is an offer of help,
         // not the next move in a sequence.
-        label={content?.ctaSection?.label ?? 'Need Help'}
-        heading={content?.ctaSection?.heading ?? 'Not sure which service you need?'}
-        description={
-          content?.ctaSection?.description ??
-          'Tell us the problem, not the deliverable. We\u2019ll tell you what the work actually needs and come back with a clear scope, a timeline and a price. No obligation.'
-        }
+        label={content?.ctaSection?.label ?? tCta('needHelp')}
+        heading={content?.ctaSection?.heading ?? tCta('servicesHeading')}
+        description={content?.ctaSection?.description ?? tCta('servicesBody')}
         // Not "Start a Project" here: this CTA answers someone who does not yet
         // know which service they need, so the ask is help choosing, not a brief.
-        buttonLabel={content?.ctaSection?.buttonLabel ?? 'Request Assistance'}
+        buttonLabel={content?.ctaSection?.buttonLabel ?? tCta('requestAssistance')}
       />
 
       {/* ── FAQ ── */}
       {faqItems && faqItems.length > 0 && (
         <FAQSection
-          heading="Questions We Hear Most"
+          heading={tServices('faqHeading')}
           items={faqItems}
           noTopBorder
           grayBg

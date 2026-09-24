@@ -2,7 +2,10 @@ import { getRequestConfig } from 'next-intl/server'
 import { hasLocale } from 'next-intl'
 import { routing } from './routing'
 
-type Messages = Record<string, Record<string, string>>
+// Values are usually strings, but a few keys hold string arrays (SEO keywords,
+// read with t.raw()), so the leaf type has to allow both.
+type MessageValue = string | string[]
+type Messages = Record<string, Record<string, MessageValue>>
 
 /**
  * Deep-merge a locale catalogue over English, NAMESPACE BY NAMESPACE.

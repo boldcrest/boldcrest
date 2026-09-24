@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { useTaxonomyLabel } from '@/lib/taxonomy'
 
 import { useRef } from 'react'
 import { Link } from '@/i18n/navigation'
@@ -37,6 +38,7 @@ function ProjectCard({
   project: Project
   index: number
 }) {
+  const tax = useTaxonomyLabel()
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
@@ -99,7 +101,7 @@ function ProjectCard({
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {project.industry && (
                 <span className="rounded-[var(--radius-pill)] bg-white/10 px-3.5 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-secondary">
-                  {project.industry}
+                  {tax(project.industry)}
                 </span>
               )}
               {project.services?.map((service) => (
@@ -107,7 +109,7 @@ function ProjectCard({
                   key={service}
                   className="rounded-[var(--radius-pill)] border border-border px-3.5 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
                 >
-                  {service}
+                  {tax(service)}
                 </span>
               ))}
             </div>
@@ -129,7 +131,7 @@ function ProjectCard({
             {project.industry && (
               <div className="flex flex-wrap gap-1.5">
                 <span className="rounded-[var(--radius-pill)] bg-white/10 px-2 py-0.5 text-[0.55rem] font-medium uppercase tracking-[0.06em] text-text-secondary">
-                  {project.industry}
+                  {tax(project.industry)}
                 </span>
               </div>
             )}
@@ -140,7 +142,7 @@ function ProjectCard({
                     key={service}
                     className="rounded-[var(--radius-pill)] border border-border px-2 py-0.5 text-[0.55rem] font-medium uppercase tracking-[0.06em] text-text-tertiary"
                   >
-                    {service}
+                    {tax(service)}
                   </span>
                 ))}
               </div>

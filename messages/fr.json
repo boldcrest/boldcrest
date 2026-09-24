@@ -9,7 +9,8 @@
     "home": "BoldCrest — accueil",
     "toggleMenu": "Ouvrir ou fermer le menu",
     "closeMenu": "Fermer le menu",
-    "careers": "Carrières"
+    "careers": "Carrières",
+    "breadcrumb": "Fil d'Ariane"
   },
   "Language": {
     "label": "Langue",
@@ -113,7 +114,13 @@
     "exploreOther": "Découvrez nos autres services",
     "mediaPlanning": "Planification média",
     "process": "Processus",
-    "motionGraphics": "Motion design"
+    "motionGraphics": "Motion design",
+    "faqBrand": "Les questions les plus fréquentes sur la marque",
+    "faqComms": "Les questions les plus fréquentes sur la communication",
+    "faqProduction": "Les questions les plus fréquentes sur la production",
+    "statProjects": "Projets livrés",
+    "statPartners": "Partenaires",
+    "statDays": "Jours d’activité"
   },
   "People": {
     "eyebrow": "Équipe",
@@ -338,7 +345,52 @@
     "peopleDescription": "Il ne s’agit pas de nous, mais de vous. Découvrez l’équipe derrière BoldCrest.",
     "diaryTitle": "Journal — BoldCrest",
     "contactTitle": "Contact — BoldCrest",
-    "contactDescription": "Parlons-en. Contactez BoldCrest pour lancer votre prochain projet."
+    "contactDescription": "Parlons-en. Contactez BoldCrest pour lancer votre prochain projet.",
+    "servicesTitle": "Services d’agence créative",
+    "servicesDescription": "BoldCrest est une agence créative basée à Tirana : développement de marque, photographie, vidéo, animation et communication. Plus de 300 projets, plus de 30 marques, 7 ans de métier.",
+    "servicesOgTitle": "Services d’agence créative | BoldCrest",
+    "servicesOgDescription": "BoldCrest est une agence créative basée à Tirana : développement de marque, photographie, vidéo, animation et communication. Plus de 300 projets, plus de 30 marques, 7 ans.",
+    "servicesKeywords": [
+      "agence créative Tirana",
+      "agence de branding",
+      "services créatifs",
+      "agence de publicité Albanie"
+    ],
+    "brandTitle": "Agence de branding | Identité visuelle, logo et packaging | BoldCrest",
+    "brandDescription": "Développement de marque depuis Tirana : création de logo, systèmes d’identité visuelle, chartes graphiques, packaging et publicité créative. Plus de 300 projets dans 11 secteurs. Osez ou restez invisibles.",
+    "brandOgTitle": "Développement de marque | BoldCrest",
+    "brandOgDescription": "Développement de marque : création de logo, systèmes d’identité visuelle, chartes graphiques, packaging et publicité créative.",
+    "brandKeywords": [
+      "agence de branding",
+      "création de logo",
+      "identité de marque",
+      "identité visuelle",
+      "design packaging",
+      "charte graphique"
+    ],
+    "commsTitle": "Agence de communication et social media | Stratégie, contenus et campagnes | BoldCrest",
+    "commsDescription": "Gestion des réseaux sociaux, marketing digital, relations presse et campagnes depuis Tirana. Plus de 22 marques suivies. Stratégie, production et reporting, tout en interne.",
+    "commsOgTitle": "Services de communication | BoldCrest",
+    "commsOgDescription": "Gestion des réseaux sociaux, marketing digital, relations presse et campagnes. Plus de 22 marques suivies.",
+    "commsKeywords": [
+      "gestion réseaux sociaux Tirana",
+      "marketing digital",
+      "campagnes publicitaires créatives",
+      "stratégie de contenu",
+      "gestion de campagnes"
+    ],
+    "motionTitle": "Production photo, vidéo et animation | Photo et vidéo | BoldCrest",
+    "motionDescription": "Photographie, vidéo, animation, motion design et post-production en interne, depuis Tirana. Plus de 22 marques actives, équipe intégrée. Une production à la hauteur de l’ambition de votre marque.",
+    "motionOgTitle": "Production photo et vidéo | BoldCrest",
+    "motionOgDescription": "Photographie, vidéo, animation, motion design et post-production en interne. Plus de 22 marques actives.",
+    "motionKeywords": [
+      "photographie produit Tirana",
+      "production vidéo",
+      "production de spots TV",
+      "agence d’animation",
+      "motion design",
+      "production de contenus"
+    ]
   },
   "Cta": {
     "nextStep": "Prochaine étape",
@@ -357,7 +409,10 @@
     "explore": "Découvrir",
     "faq": "FAQ",
     "caseHeading": "Envie de faire bouger vos propres chiffres ?",
-    "caseBody": "Dites-nous ce que vous vendez et ce qui doit changer. Nous vous proposerons un périmètre clair, un calendrier et un prix. Sans engagement."
+    "caseBody": "Dites-nous ce que vous vendez et ce qui doit changer. Nous vous proposerons un périmètre clair, un calendrier et un prix. Sans engagement.",
+    "workLabel": "À vous",
+    "workHeading": "Qu’est-ce qu’on façonne ensuite ?",
+    "workBody": "Dites-nous ce que vous avez en tête. Cela peut être un brief précis ou simplement le début d’une idée. Nous vous aidons à définir les prochaines étapes et gardons les choses simples."
   },
   "CaseStudy": {
     "play": "Lire",
@@ -376,5 +431,27 @@
     "scrollBoth": "Défilez haut/bas",
     "firstPicture": "Première photo",
     "lastPicture": "Dernière photo"
+  },
+  "Taxonomy": {
+    "branding": "Branding",
+    "creativeAdvertising": "Publicité créative",
+    "packaging": "Packaging",
+    "photography": "Photographie",
+    "socialMediaManagement": "Gestion des réseaux sociaux",
+    "televisionCommercials": "Spots TV",
+    "videography": "Vidéo",
+    "construction": "Construction",
+    "fashion": "Mode",
+    "finance": "Finance",
+    "foodBeverage": "Alimentation et boissons",
+    "healthBeauty": "Santé et beauté",
+    "horeca": "HoReCa",
+    "homeAppliances": "Maison et électroménager",
+    "ngo": "ONG",
+    "services": "Services",
+    "tech": "Tech",
+    "socialMediaManagementShort": "Réseaux sociaux",
+    "televisionCommercialsShort": "Spots TV",
+    "creativeAdvertisingShort": "Publicité"
   }
 }

@@ -1,4 +1,6 @@
+import { getMessages } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
+import { labelFor } from '@/lib/taxonomy'
 import { withSmallMarks } from '@/lib/marks'
 import ViewContentTracker from '@/components/analytics/ViewContentTracker'
 
@@ -9,12 +11,16 @@ interface ProjectHeroProps {
   year?: string
 }
 
-export default function ProjectHero({
+export default async function ProjectHero({
   name,
   services,
   industry,
   year,
 }: ProjectHeroProps) {
+  // Taxonomy values are English identifiers (they are the /work filter keys);
+  // only the visible label is localised.
+  const messages = (await getMessages()) as unknown as Record<string, Record<string, string>>
+  const taxonomy = messages.Taxonomy ?? {}
   // "Client | Title" → two lines
   const titleLines = name.split(' | ')
   const hasMeta = (services && services.length > 0) || !!industry || !!year
@@ -61,7 +67,7 @@ export default function ProjectHero({
                         href={`/work?service=${encodeURIComponent(s)}`}
                         className="transition-colors duration-200 hover:text-white"
                       >
-                        {s}
+                        {labelFor(taxonomy, s)}
                       </Link>
                     </span>
                   ))}
@@ -74,7 +80,7 @@ export default function ProjectHero({
                     href={`/work?industry=${encodeURIComponent(industry)}`}
                     className="transition-colors duration-200 hover:text-white"
                   >
-                    {industry}
+                    {labelFor(taxonomy, industry)}
                   </Link>
                 </div>
               )}

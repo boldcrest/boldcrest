@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { client } from '@/sanity/lib/client'
+import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
 import { allProjectsQuery, allDiaryPostsQuery, allCaseStudiesQuery } from '@/sanity/lib/queries'
 import { routing } from '@/i18n/routing'
 import { sitemapImageFrom } from '@/lib/seo'
@@ -57,11 +57,11 @@ function localized(
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [projects, posts, studies] = await Promise.all([
-    client.fetch(allProjectsQuery, { locale: routing.defaultLocale }) as Promise<ProjectRow[]>,
-    client.fetch(allDiaryPostsQuery, { locale: routing.defaultLocale }) as Promise<DiaryRow[]>,
+    client.fetch(allProjectsQuery, { locale: routing.defaultLocale }, { next: { revalidate: CMS_REVALIDATE } }) as Promise<ProjectRow[]>,
+    client.fetch(allDiaryPostsQuery, { locale: routing.defaultLocale }, { next: { revalidate: CMS_REVALIDATE } }) as Promise<DiaryRow[]>,
     // allCaseStudiesQuery already filters out `unlisted` documents, so an
     // in-progress case study is never advertised to search engines.
-    client.fetch(allCaseStudiesQuery, { locale: routing.defaultLocale }) as Promise<DiaryRow[]>,
+    client.fetch(allCaseStudiesQuery, { locale: routing.defaultLocale }, { next: { revalidate: CMS_REVALIDATE } }) as Promise<DiaryRow[]>,
   ])
 
   const projectUrls: MetadataRoute.Sitemap = (projects ?? []).flatMap((p) => {

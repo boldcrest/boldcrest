@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { routing } from '@/i18n/routing'
+import { useTaxonomyLabel, useTaxonomyShortLabel } from '@/lib/taxonomy'
 import { Link } from '@/i18n/navigation'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -65,11 +66,9 @@ function useInViewOnce(margin = '-50px') {
  * fit on a single line there. This is display text, not data — the Sanity value
  * and every filter/query still use the full name, so nothing downstream breaks.
  */
-const SHORT_SERVICE: Record<string, string> = {
-  'Social Media Management': 'Social Media',
-}
-
 function ProjectCard({ project, index }: { project: Project; index: number }) {
+  const tax = useTaxonomyLabel()
+  const taxShort = useTaxonomyShortLabel()
   const { ref, isVisible } = useInViewOnce()
 
   return (
@@ -157,7 +156,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               {project.industry && (
                 <span className="rounded-[var(--radius-pill)] bg-white/10 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-secondary">
-                  {project.industry}
+                  {tax(project.industry)}
                 </span>
               )}
               {project.services?.map((service) => (
@@ -165,7 +164,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                   key={service}
                   className="rounded-[var(--radius-pill)] border border-border px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
                 >
-                  {service}
+                  {tax(service)}
                 </span>
               ))}
             </div>
@@ -187,7 +186,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             {project.industry && (
               <div className="flex flex-wrap gap-1.5">
                 <span className="rounded-[10px] bg-white/10 px-2 py-0.5 text-[0.55rem] font-medium uppercase tracking-[0.06em] text-text-secondary">
-                  {project.industry}
+                  {tax(project.industry)}
                 </span>
               </div>
             )}
@@ -206,7 +205,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                     // same corner curvature as the rest.
                     className="rounded-[10px] border border-border px-2 py-0.5 text-[0.55rem] font-medium uppercase tracking-[0.06em] text-text-tertiary"
                   >
-                    {SHORT_SERVICE[service] ?? service}
+                    {taxShort(service)}
                   </span>
                 ))}
               </div>
@@ -219,6 +218,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 }
 
 function ProjectListRow({ project, index }: { project: Project; index: number }) {
+  const tax = useTaxonomyLabel()
   const { ref, isVisible } = useInViewOnce()
   const [hovered, setHovered] = useState(false)
   const [mouseMoving, setMouseMoving] = useState(false)
@@ -283,7 +283,7 @@ function ProjectListRow({ project, index }: { project: Project; index: number })
               key={service}
               className="text-[0.7rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
             >
-              {service}
+              {tax(service)}
             </span>
           ))}
         </div>
@@ -351,6 +351,7 @@ function InlineFilter({
   allServices: string[]
   allIndustries: string[]
 }) {
+  const tax = useTaxonomyLabel()
   const t = useTranslations('Work')
   const tp = useTranslations('Portfolio')
   const labelClass =
@@ -497,7 +498,7 @@ function InlineFilter({
             transition={{ duration: 0.2 }}
           >
             <span className="shrink-0 text-[0.75rem] font-semibold uppercase tracking-[0.15em] leading-[1.4] text-white whitespace-nowrap">
-              {openFilter === 'services' ? 'Services' : 'Industry'}
+              {openFilter === 'services' ? t('filterServices') : t('filterIndustry')}
             </span>
             {/* mt-[0.125rem] vertically centers the 12px divider on the first
                 row's text (glyph center ≈ 8px from the row top) — matching the
@@ -526,7 +527,7 @@ function InlineFilter({
                     ease: [0.16, 1, 0.3, 1],
                   }}
                 >
-                  {item}
+                  {tax(item)}
                 </motion.button>
               ))}
             </div>
@@ -534,7 +535,7 @@ function InlineFilter({
                 label and the right edge, kept clear of the view-style toggle. */}
             <motion.button
               onClick={() => setOpenFilter(null)}
-              aria-label="Clear filter"
+              aria-label={tp('clearFilter')}
               className="mt-[0.15rem] inline-flex shrink-0 items-center justify-center transition-colors duration-200 focus:outline-none"
               style={{ color: '#a3a3a3' }}
               onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff' }}
@@ -561,9 +562,16 @@ function InlineFilter({
 export default function WorkPageClient({ projects, initialService, initialIndustry }: WorkPageClientProps) {
   const t = useTranslations('Work')
   const tp = useTranslations('Portfolio')
-  // The h1 is a stacked word-per-line lockup with the final dot in accent.
-  // Splitting the translated title keeps that shape in every language rather
-  // than hard-coding three English words.
+  // The h1 is a stacked word-per-line lockup with the final dot in accent:
+  // every word gets its own hard <br/>, so the split below decides the shape.
+  // Splitting the translated title keeps it in every language rather than
+  // hard-coding three English words.
+  //
+  // Languages that need an article where English does not would otherwise put
+  // it alone on a line ("L'audacia / costruisce / i / brand."), and Albanian
+  // stranded a one-letter particle across five lines. The translations join
+  // those to the word they belong with using a NON-BREAKING space, which this
+  // split leaves intact — keep that convention when editing Work.title.
   const titleWords = t('title').replace(/[.]$/, '').split(' ')
   const [serviceFilter, setServiceFilter] = useState(initialService || 'All')
   const [industryFilter, setIndustryFilter] = useState(initialIndustry || 'All')

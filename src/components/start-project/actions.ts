@@ -4,6 +4,7 @@ import { sendFormEmail, buildBody } from '@/lib/email'
 import { createOpportunity } from '@/lib/clickup'
 import { isLikelyBot } from '@/lib/spam-guard'
 import { verifyTurnstile } from '@/lib/turnstile'
+import { sendLeadEvent } from '@/lib/meta-capi'
 
 const TO = 'sales@boldcrest.com'
 
@@ -57,6 +58,16 @@ export async function submitProjectForm(formData: FormData) {
     }),
     // Create a matching Opportunity in the ClickUp sales pipeline.
     createOpportunity(data),
+    // Report the Lead to Meta server-side as well. Shares `meta_event_id` with
+    // the browser pixel so Meta deduplicates the two into one conversion; a
+    // missing id means the visitor never accepted cookies, and nothing is sent.
+    sendLeadEvent({
+      eventId: (formData.get('meta_event_id') as string) || '',
+      email: data.email,
+      name: data.name,
+      form: 'start_project',
+      custom: { services: data.services, budget: data.budget },
+    }),
   ])
 
   return { success: true }

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import Script from 'next/script'
 import { submitContactForm } from './actions'
-import { trackLead } from '@/lib/analytics'
+import { trackLead, newMetaEventId } from '@/lib/analytics'
 // Global `window.turnstile` type comes from src/types/turnstile.d.ts (picked up
 // automatically by the TS program — no import needed for ambient globals).
 
@@ -60,10 +60,14 @@ export default function ContactPageClient({
 
   const [state, formAction, isPending] = useActionState(
     async (_prevState: unknown, formData: FormData) => {
+      // Shared id for pixel + Conversions API dedup (null without consent).
+      const metaEventId = newMetaEventId()
+      if (metaEventId) formData.set('meta_event_id', metaEventId)
+
       const result = await submitContactForm(formData)
       if (result.success) {
         setSubmitted(true)
-        trackLead('contact')
+        trackLead('contact', undefined, metaEventId ?? undefined)
       } else {
         // A real visitor failing Turnstile is rare but should be able to
         // retry — reset the (single-use) token so the widget can issue a
@@ -98,7 +102,7 @@ export default function ContactPageClient({
       <section className="flex flex-col px-[var(--gutter)] pt-[120px] pb-0 landscape-short:pt-[5.5rem]">
         <div className="w-full">
           <p className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
-            Contact
+            {t('eyebrow')}
           </p>
 
           {/* Headline left, intro right-aligned to its bottom */}
@@ -196,7 +200,7 @@ export default function ContactPageClient({
                 required
                 disabled={submitted}
                 placeholder={t('fullName')}
-                aria-label="Full name"
+                aria-label={t('fullName')}
                 className={FIELD}
               />
               <input

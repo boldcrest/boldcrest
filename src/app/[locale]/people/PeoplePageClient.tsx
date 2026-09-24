@@ -1010,7 +1010,18 @@ export default function PeoplePageClient({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    {t('hero')}
+                    {/* The headline carries `|` row breaks, the same control the
+                        home hero uses. Left to the browser, the wrap orphaned the
+                        article from its noun in the languages that need one
+                        ("…e una / decisione."), and the break landed differently
+                        per language. Splitting on `|` keeps one deliberate
+                        composition everywhere. */}
+                    {t('hero').split('|').map((row, i, all) => (
+                      <span key={i}>
+                        {row.trim()}
+                        {i < all.length - 1 && <br />}
+                      </span>
+                    ))}
                   </motion.h1>
 
                   <motion.p
@@ -1109,7 +1120,7 @@ export default function PeoplePageClient({
                   {FOUNDERS_PHOTO ? (
                     <Image
                       src={FOUNDERS_PHOTO}
-                      alt="Xhulio and Aldo, founders of BoldCrest"
+                      alt={t('founders')}
                       width={1228}
                       height={1500}
                       unoptimized
@@ -1275,7 +1286,7 @@ export default function PeoplePageClient({
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
         >
-          <CTAButton href="https://careers.boldcrest.com" label="Visit Careers" showArrow />
+          <CTAButton href="https://careers.boldcrest.com" label={t('visitCareers')} showArrow />
         </motion.div>
       </div>
 

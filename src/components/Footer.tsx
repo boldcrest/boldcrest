@@ -105,10 +105,43 @@ export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
   return (
     <footer
       ref={footerRef}
-      className="flex flex-col"
+      // The FOOTER owns the stacking, not the button. `isolate` makes it its
+      // own stacking context so nothing inside can escape it, and z-[2] lifts
+      // the whole footer just above the preceding section (which is z-[1]) so
+      // the back-to-top disc can straddle their shared edge. The button itself
+      // therefore can never paint above anything the footer doesn't — the
+      // header (z-1002), the mobile menu and the cookie banner all stay on top.
+      className="relative isolate z-[2] flex flex-col"
       style={{ background: '#EDEDED', color: '#000000' }}
     >
-        {/* Columns + Back to top */}
+      {/* Back to top — sits ON the footer's top edge, half over the dark section
+          above it, and its right edge lines up with the copyright line at the
+          bottom of the footer (both inset by --gutter). It used to sit top-right
+          INSIDE the column grid, where at phone width it landed on top of the
+          last column's heading ("Note legali" in Italian). */}
+      <button
+        onClick={scrollToTop}
+        className="group absolute top-0 flex h-[60px] w-[60px] -translate-y-1/2 items-center justify-center rounded-full"
+        // The ARROW is what lines up with the copyright's right edge; the disc
+        // is decoration that follows it, so it overhangs by its own ring width
+        // (the 7px between the 46px arrow and the 60px disc).
+        style={{ background: '#EDEDED', right: 'calc(var(--gutter) - 7px)' }}
+        aria-label={t('backToTop')}
+      >
+        {/* Only the arrow reacts to hover. The disc is the footer's own
+            background and has to stay fully opaque: fading it would let the
+            dark section above show through and it would stop reading as part
+            of the footer. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/go-up.svg"
+          alt=""
+          width={46}
+          height={46}
+          className="transition-opacity duration-300 group-hover:opacity-70"
+        />
+      </button>
+        {/* Columns */}
         <div className="w-full px-[var(--gutter)] pt-14 pb-20">
           <div className="relative grid grid-cols-2 gap-y-10 gap-x-8 md:grid-cols-[1.2fr_1fr_1.2fr_1fr_0.8fr]">
             {/* Services */}
@@ -175,15 +208,6 @@ export default function Footer({ forceShow = false }: { forceShow?: boolean }) {
               </Link>
             </div>
 
-            {/* Back to top button — absolute top-right */}
-            <button
-              onClick={scrollToTop}
-              className="absolute right-0 top-0 h-[46px] w-[46px] transition-opacity duration-300 hover:opacity-70"
-              aria-label={t('backToTop')}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/go-up.svg" alt="" width={46} height={46} />
-            </button>
           </div>
         </div>
 

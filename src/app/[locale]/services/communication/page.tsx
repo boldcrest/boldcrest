@@ -1,21 +1,33 @@
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
-import { client } from '@/sanity/lib/client'
+import { routing } from '@/i18n/routing'
+import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
 import { projectsByServicesQuery, serviceDetailPageQuery } from '@/sanity/lib/queries'
 import CommunicationClient from './CommunicationClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
 
-export const metadata: Metadata = {
-  title: { absolute: 'Social Media & Communication Agency | Strategy, Content & Campaigns | BoldCrest' },
-  description:
-    'Full-service social media management, digital marketing, PR, and campaign management from Tirana. 22+ active brands managed. Strategy, production, and reporting, all in-house.',
-  keywords: ['social media management Tirana', 'digital marketing', 'creative advertising campaigns', 'content strategy', 'campaign management'],
-  openGraph: {
-    title: 'Communication Services | BoldCrest',
-    description: 'Full-service social media management, digital marketing, PR, and campaign management. 22+ active brands managed.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
-  },
-  alternates: { canonical: '/services/communication' },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'Seo' })
+  // The canonical must carry the locale prefix. A static '/services/communication' told Google
+  // every localised service page was a duplicate of the English one.
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`
+
+  return {
+    title: { absolute: t('commsTitle') },
+    description: t('commsDescription'),
+    keywords: t.raw('commsKeywords') as string[],
+    openGraph: {
+      title: t('commsOgTitle'),
+      description: t('commsOgDescription'),
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
+    alternates: { canonical: `${prefix}/services/communication` },
+  }
 }
 
 const FAQ_ITEMS = [
@@ -36,8 +48,8 @@ export default async function CommunicationPage({ params }: { params: Promise<{ 
   const projects = await client.fetch(projectsByServicesQuery, {
     locale,
     serviceNames: ['Social Media Management', 'Ads Management'],
-  })
-  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'communication', locale })
+  }, { next: { revalidate: CMS_REVALIDATE } })
+  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'communication', locale }, { next: { revalidate: CMS_REVALIDATE } })
   const faqItems = content?.faqs?.length ? content.faqs : FAQ_ITEMS
 
   return (

@@ -115,9 +115,10 @@ export const servicesPageQuery = defineQuery(
       ...,
       "heading": coalesce(select($locale == "sq" => ^.i18n.sq.disciplines[@._key == ^._key][0].heading, $locale == "it" => ^.i18n.it.disciplines[@._key == ^._key][0].heading, $locale == "fr" => ^.i18n.fr.disciplines[@._key == ^._key][0].heading), heading),
       "description": coalesce(select($locale == "sq" => ^.i18n.sq.disciplines[@._key == ^._key][0].description, $locale == "it" => ^.i18n.it.disciplines[@._key == ^._key][0].description, $locale == "fr" => ^.i18n.fr.disciplines[@._key == ^._key][0].description), description),
-      "tags": coalesce(select($locale == "sq" => ^.i18n.sq.disciplines[@._key == ^._key][0].tags, $locale == "it" => ^.i18n.it.disciplines[@._key == ^._key][0].tags, $locale == "fr" => ^.i18n.fr.disciplines[@._key == ^._key][0].tags), tags)
+      "tags": coalesce(select($locale == "sq" => ^.i18n.sq.disciplines[@._key == ^._key][0].tags, $locale == "it" => ^.i18n.it.disciplines[@._key == ^._key][0].tags, $locale == "fr" => ^.i18n.fr.disciplines[@._key == ^._key][0].tags), tags),
+      "ctaLabel": coalesce(select($locale == "sq" => ^.i18n.sq.disciplines[@._key == ^._key][0].ctaLabel, $locale == "it" => ^.i18n.it.disciplines[@._key == ^._key][0].ctaLabel, $locale == "fr" => ^.i18n.fr.disciplines[@._key == ^._key][0].ctaLabel), ctaLabel)
     },
-    stats,
+    "stats": coalesce(select($locale == "sq" => i18n.sq.stats, $locale == "it" => i18n.it.stats, $locale == "fr" => i18n.fr.stats), stats),
     "clientLogosEyebrow": coalesce(select($locale == "sq" => i18n.sq.clientLogosEyebrow, $locale == "it" => i18n.it.clientLogosEyebrow, $locale == "fr" => i18n.fr.clientLogosEyebrow), clientLogosEyebrow),
     "processEyebrow": coalesce(select($locale == "sq" => i18n.sq.processEyebrow, $locale == "it" => i18n.it.processEyebrow, $locale == "fr" => i18n.fr.processEyebrow), processEyebrow),
     "processHeading": coalesce(select($locale == "sq" => i18n.sq.processHeading, $locale == "it" => i18n.it.processHeading, $locale == "fr" => i18n.fr.processHeading), processHeading),

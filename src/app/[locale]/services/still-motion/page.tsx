@@ -1,21 +1,33 @@
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
-import { client } from '@/sanity/lib/client'
+import { routing } from '@/i18n/routing'
+import { client, CMS_REVALIDATE } from '@/sanity/lib/client'
 import { projectsByServicesQuery, serviceDetailPageQuery } from '@/sanity/lib/queries'
 import StillMotionClient from './StillMotionClient'
 import { BreadcrumbJsonLd, ServiceJsonLd, FAQJsonLd } from '@/components/services/JsonLd'
 
-export const metadata: Metadata = {
-  title: { absolute: 'Photography, Video & Animation Production | Still & Motion | BoldCrest' },
-  description:
-    'In-house photography, videography, animation, motion graphics, and post-production from Tirana. 22+ active brands, full in-house team. Production that matches your brand\'s ambition.',
-  keywords: ['product photography Tirana', 'video production', 'TVC production', 'animation agency', 'motion graphics', 'content production'],
-  openGraph: {
-    title: 'Still & Motion Production | BoldCrest',
-    description: 'In-house photography, videography, animation, motion graphics, and post-production. 22+ active brands.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
-  },
-  alternates: { canonical: '/services/still-motion' },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'Seo' })
+  // The canonical must carry the locale prefix. A static '/services/still-motion' told Google
+  // every localised service page was a duplicate of the English one.
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`
+
+  return {
+    title: { absolute: t('motionTitle') },
+    description: t('motionDescription'),
+    keywords: t.raw('motionKeywords') as string[],
+    openGraph: {
+      title: t('motionOgTitle'),
+      description: t('motionOgDescription'),
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
+    alternates: { canonical: `${prefix}/services/still-motion` },
+  }
 }
 
 const FAQ_ITEMS = [
@@ -35,8 +47,8 @@ export default async function StillMotionPage({ params }: { params: Promise<{ lo
   const projects = await client.fetch(projectsByServicesQuery, {
     locale,
     serviceNames: ['Photography', 'Videography'],
-  })
-  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'still-motion', locale })
+  }, { next: { revalidate: CMS_REVALIDATE } })
+  const content = await client.fetch(serviceDetailPageQuery, { pageKey: 'still-motion', locale }, { next: { revalidate: CMS_REVALIDATE } })
   const faqItems = content?.faqs?.length ? content.faqs : FAQ_ITEMS
 
   return (

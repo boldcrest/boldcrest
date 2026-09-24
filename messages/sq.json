@@ -9,7 +9,8 @@
     "home": "BoldCrest — kryefaqja",
     "toggleMenu": "Hap ose mbyll menunë",
     "closeMenu": "Mbyll menunë",
-    "careers": "Karriera"
+    "careers": "Karriera",
+    "breadcrumb": "Shtegu i faqes"
   },
   "Language": {
     "label": "Gjuha",
@@ -113,7 +114,13 @@
     "exploreOther": "Zbulo shërbimet tona të tjera",
     "mediaPlanning": "Planifikim mediatik",
     "process": "Procesi",
-    "motionGraphics": "Grafikë e animuar"
+    "motionGraphics": "Grafikë e animuar",
+    "faqBrand": "Pyetjet më të shpeshta për zhvillimin e markës",
+    "faqComms": "Pyetjet më të shpeshta për komunikimin",
+    "faqProduction": "Pyetjet më të shpeshta për produksionin",
+    "statProjects": "Projekte të realizuara",
+    "statPartners": "Partnerë",
+    "statDays": "Ditë aktive"
   },
   "People": {
     "eyebrow": "Ekipi",
@@ -338,7 +345,52 @@
     "peopleDescription": "Nuk bëhet fjalë për ne, por për ty. Njihu me ekipin pas BoldCrest.",
     "diaryTitle": "Ditari — BoldCrest",
     "contactTitle": "Kontakt — BoldCrest",
-    "contactDescription": "Le të flasim. Kontakto BoldCrest për të nisur projektin tënd të radhës."
+    "contactDescription": "Le të flasim. Kontakto BoldCrest për të nisur projektin tënd të radhës.",
+    "servicesTitle": "Shërbimet e agjencisë krijuese",
+    "servicesDescription": "BoldCrest është agjenci krijuese me qendër në Tiranë: zhvillim marke, fotografi, video, animacion dhe komunikim. Mbi 300 projekte, mbi 30 marka, 7 vjet punë krijuese.",
+    "servicesOgTitle": "Shërbimet e agjencisë krijuese | BoldCrest",
+    "servicesOgDescription": "BoldCrest është agjenci krijuese me qendër në Tiranë: zhvillim marke, fotografi, video, animacion dhe komunikim. Mbi 300 projekte, mbi 30 marka, 7 vjet.",
+    "servicesKeywords": [
+      "agjenci krijuese Tiranë",
+      "agjenci brandingu",
+      "shërbime krijuese",
+      "agjencitë më të mira të brandingut në Tiranë"
+    ],
+    "brandTitle": "Agjenci brandingu | Identitet vizual, logo dhe paketim | BoldCrest",
+    "brandDescription": "Zhvillim marke nga Tirana: dizajn logoje, sisteme identiteti vizual, udhëzues marke, paketim dhe reklamë krijuese. Mbi 300 projekte në 11 industri. Guxo ose rri në hije.",
+    "brandOgTitle": "Zhvillim marke | BoldCrest",
+    "brandOgDescription": "Zhvillim marke: dizajn logoje, sisteme identiteti vizual, udhëzues marke, paketim dhe reklamë krijuese.",
+    "brandKeywords": [
+      "agjenci brandingu",
+      "dizajn logoje",
+      "identitet marke",
+      "identitet vizual",
+      "dizajn paketimi",
+      "udhëzues marke"
+    ],
+    "commsTitle": "Agjenci komunikimi dhe rrjetesh sociale | Strategji, përmbajtje dhe fushata | BoldCrest",
+    "commsDescription": "Menaxhim i rrjeteve sociale, marketing digjital, PR dhe fushata nga Tirana. Mbi 22 marka aktive. Strategji, produksion dhe raportim, gjithçka brenda ekipit.",
+    "commsOgTitle": "Shërbime komunikimi | BoldCrest",
+    "commsOgDescription": "Menaxhim i rrjeteve sociale, marketing digjital, PR dhe fushata. Mbi 22 marka aktive.",
+    "commsKeywords": [
+      "menaxhim rrjetesh sociale Tiranë",
+      "marketing digjital",
+      "fushata reklamuese krijuese",
+      "strategji përmbajtjeje",
+      "menaxhim fushatash"
+    ],
+    "motionTitle": "Produksion fotografie, videoje dhe animacioni | Foto dhe video | BoldCrest",
+    "motionDescription": "Fotografi, video, animacion, motion graphics dhe post-produksion brenda ekipit, nga Tirana. Mbi 22 marka aktive. Produksion në lartësinë e ambicies së markës sate.",
+    "motionOgTitle": "Produksion foto dhe video | BoldCrest",
+    "motionOgDescription": "Fotografi, video, animacion, motion graphics dhe post-produksion brenda ekipit. Mbi 22 marka aktive.",
+    "motionKeywords": [
+      "fotografi produkti Tiranë",
+      "produksion videoje",
+      "prodhim TVC",
+      "agjenci animacioni",
+      "motion graphics",
+      "produksion përmbajtjeje"
+    ]
   },
   "Cta": {
     "nextStep": "Hapi i radhës",
@@ -357,7 +409,10 @@
     "explore": "Zbulo",
     "faq": "Pyetje të shpeshta",
     "caseHeading": "Gati t’i lëvizësh edhe ti shifrat e tua?",
-    "caseBody": "Na trego çfarë shet dhe çfarë duhet të ndryshojë. Do të të propozojmë një shtrirje të qartë të punës, afatet dhe çmimin. Pa detyrim."
+    "caseBody": "Na trego çfarë shet dhe çfarë duhet të ndryshojë. Do të të propozojmë një shtrirje të qartë të punës, afatet dhe çmimin. Pa detyrim.",
+    "workLabel": "Radha jote",
+    "workHeading": "Çfarë do të formësojmë më pas?",
+    "workBody": "Na trego çfarë ke në mendje. Mund të jetë një brief i qartë ose thjesht fillimi i një ideje. Të ndihmojmë të gjejmë hapat e radhës dhe e mbajmë gjithçka të thjeshtë."
   },
   "CaseStudy": {
     "play": "Luaj",
@@ -376,5 +431,27 @@
     "scrollBoth": "Lëviz lart/poshtë",
     "firstPicture": "Fotoja e parë",
     "lastPicture": "Fotoja e fundit"
+  },
+  "Taxonomy": {
+    "branding": "Branding",
+    "creativeAdvertising": "Reklamë krijuese",
+    "packaging": "Paketim",
+    "photography": "Fotografi",
+    "socialMediaManagement": "Menaxhim rrjetesh sociale",
+    "televisionCommercials": "Reklama televizive",
+    "videography": "Videografi",
+    "construction": "Ndërtim",
+    "fashion": "Modë",
+    "finance": "Financë",
+    "foodBeverage": "Ushqim dhe pije",
+    "healthBeauty": "Shëndet dhe bukuri",
+    "horeca": "HoReCa",
+    "homeAppliances": "Shtëpi dhe pajisje",
+    "ngo": "OJF",
+    "services": "Shërbime",
+    "tech": "Teknologji",
+    "socialMediaManagementShort": "Rrjete sociale",
+    "televisionCommercialsShort": "Reklama TV",
+    "creativeAdvertisingShort": "Reklamë"
   }
 }

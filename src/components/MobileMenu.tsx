@@ -35,6 +35,7 @@ export default function MobileMenu({ open, onClose, scrolled = false, onExitComp
   // Reads the ACTIVE locale from the router, exactly as the header switcher
   // does — no local state, so the two can never disagree.
   const t = useTranslations('Nav')
+  const tl = useTranslations('Language')
   const activeLocale = useLocale()
   const lang: Locale = LOCALES.find((l) => l.code === activeLocale) ?? LOCALES[0]
   const router = useRouter()
@@ -181,7 +182,7 @@ export default function MobileMenu({ open, onClose, scrolled = false, onExitComp
               >
                 <div
                   role="group"
-                  aria-label="Language"
+                  aria-label={tl('label')}
                   className="inline-flex h-9 items-center rounded-full border border-white/35 p-[3px]"
                 >
                   {LOCALES.map((l) => {

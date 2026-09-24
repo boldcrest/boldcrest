@@ -1,5 +1,6 @@
 'use client'
 
+import { useTaxonomyLabel } from '@/lib/taxonomy'
 import { useCallback, useEffect, useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import Image from 'next/image'
@@ -32,6 +33,7 @@ export default function ProjectMarquee({
   projects,
   accentColor = '#DA291C',
 }: ProjectMarqueeProps) {
+  const tax = useTaxonomyLabel()
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -267,7 +269,7 @@ export default function ProjectMarquee({
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {project.industry && (
                       <span className="rounded-[var(--radius-pill)] bg-white/10 px-3.5 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-secondary">
-                        {project.industry}
+                        {tax(project.industry)}
                       </span>
                     )}
                     {project.services?.map((service) => (
@@ -275,7 +277,7 @@ export default function ProjectMarquee({
                         key={service}
                         className="rounded-[var(--radius-pill)] border border-border px-3.5 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
                       >
-                        {service}
+                        {tax(service)}
                       </span>
                     ))}
                   </div>
@@ -295,7 +297,7 @@ export default function ProjectMarquee({
                 <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                   {project.industry && (
                     <span className="rounded-[var(--radius-pill)] bg-white/10 px-3 py-1 text-[0.6rem] font-medium uppercase tracking-[0.1em] text-text-secondary">
-                      {project.industry}
+                      {tax(project.industry)}
                     </span>
                   )}
                   {project.services?.map((service) => (
@@ -303,7 +305,7 @@ export default function ProjectMarquee({
                       key={service}
                       className="rounded-[var(--radius-pill)] border border-border px-3 py-1 text-[0.6rem] font-medium uppercase tracking-[0.1em] text-text-tertiary"
                     >
-                      {service}
+                      {tax(service)}
                     </span>
                   ))}
                 </div>
