@@ -209,41 +209,76 @@ export default function ReelsFeed({
   // scroll and behind guesses about which events were a gesture and which were
   // its tail — which is what made it feel unresponsive and late.
   //
-  // All that is left to us is the two ends, where there is nothing to scroll
-  // and so nothing to interfere with.
+  // The wheel is ours. A wheel is not a finger: a notch is a discrete click,
+  // and left to the browser's snapping it took an unpredictable number of them
+  // to move a reel, and sometimes moved three. So one gesture is one reel,
+  // moved on a curve of our own — 320ms, eased out, started on the first
+  // event so nothing waits — and everything that arrives while it moves, or
+  // that is only the decaying tail of the same push, is swallowed. A NEW push
+  // is a gap since the last event, or a delta larger than the one before it;
+  // a tail is neither. Touch is left to the browser, which moves a screen at
+  // a time on its own.
   useEffect(() => {
     const el = scroller.current
     if (!el) return
     const onScroll = () => {
       scrolledAt.current = performance.now()
     }
+    let raf = 0
+    let moving = false
+    let lastAt = 0
+    let lastMag = 0
+    const glide = (to: number) => {
+      cancelAnimationFrame(raf)
+      const from = el.scrollTop
+      const t0 = performance.now()
+      const D = 320
+      moving = true
+      const step = (now: number) => {
+        const k = Math.min(1, (now - t0) / D)
+        const e = 1 - Math.pow(1 - k, 3)
+        el.scrollTop = from + (to - from) * e
+        if (k < 1) raf = requestAnimationFrame(step)
+        else moving = false
+      }
+      raf = requestAnimationFrame(step)
+    }
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || !e.deltaY) return
+      const now = performance.now()
+      const mag = Math.abs(e.deltaY)
+      const gap = now - lastAt
+      const grew = mag > lastMag * 1.4
+      lastAt = now
+      lastMag = mag
       const down = e.deltaY > 0
-      const stuck = down
-        ? el.scrollTop + el.clientHeight >= el.scrollHeight - 1
-        : el.scrollTop <= 1
-      if (!stuck) return
-      // Landing on the first or last reel does not mean the visitor is asking
-      // for more. A flick that ends there keeps arriving for a moment after the
-      // scroller has stopped, and taking that as a push made the reel bob the
-      // instant it settled. Once it has been still, a push is a push.
-      if (performance.now() - scrolledAt.current < 220) return
-      // ...and a trackpad reports specks of movement in the axis you are not
-      // using. They are not a gesture, and acting on them made the reel twitch
-      // while it was sitting at the top doing nothing.
-      if (Math.abs(e.deltaY) < 8) return
+      const h = el.clientHeight
+      const here = Math.round(el.scrollTop / h)
+      const stuck = down ? here >= reels.length - 1 : here <= 0
+      if (stuck) {
+        // nothing that way: the feed gives instead of moving. Not on the tail
+        // of the scroll that just landed here, and not on a speck.
+        if (performance.now() - scrolledAt.current < 220 && !moving) return
+        if (mag < 8) return
+        e.preventDefault()
+        bounce(down)
+        return
+      }
       e.preventDefault()
-      bounce(down)
+      if (moving) return
+      // the tail of the push that has just been acted on
+      if (gap < 80 && !grew) return
+      glide((here + (down ? 1 : -1)) * h)
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => {
+      cancelAnimationFrame(raf)
       el.removeEventListener('scroll', onScroll)
       el.removeEventListener('wheel', onWheel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [reels.length])
 
   // a swipe moves the feed itself, so the hint goes the moment it lands
   useEffect(() => {
