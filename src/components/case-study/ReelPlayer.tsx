@@ -1015,7 +1015,12 @@ export default function ReelPlayer({
       resumeTarget.current = resumeFrom
       resumeTries.current = 0
       setTime(resumeFrom)
-      void m.seek(resumeFrom).then(() => m.play())
+      // not chained on the seek's promise: Vimeo does not always settle it
+      // before playback exists, and a play waiting on it never came (the feed
+      // opened on a still frame). Both are sent; `timeupdate` holds the
+      // position until the player's clock agrees.
+      void m.seek(resumeFrom)
+      m.play()
       return
     }
     m.play()
@@ -1388,7 +1393,7 @@ export default function ReelPlayer({
                 level with the X and on the play glyph's left, on its own shade.
                 SCROLL UP/DOWN when it opens; FIRST VIDEO or LAST VIDEO when a
                 swipe asks for a reel that is not there. */}
-            {grown && debug.length > 0 && (
+            {debug.length > 0 && (
               <pre className="pointer-events-none absolute left-2 top-16 z-[60] max-w-[90%] whitespace-pre-wrap rounded bg-black/70 p-2 text-[10px] leading-[1.3] text-white">
                 {debug.join('\n')}
               </pre>
