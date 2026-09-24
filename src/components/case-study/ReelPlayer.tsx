@@ -579,9 +579,15 @@ export default function ReelPlayer({
       // if it has been scrolled past in the meantime — the retry would start
       // it again behind the visitor.
       let retries = 0
-      const mutedRetry = () => {
+      // Every ask is numbered; a retry belongs to one ask, and a newer ask (a
+      // tap on the reel, a swipe to another) ends every retry of the older
+      // one, or a late retry would mute the reel the tap just started and put
+      // the cover back over it.
+      let ask = 0
+      const mutedRetry = (of: number) => {
+        if (of !== ask) return
         logRef.current(`mutedRetry ${retries} wants=${wantsPlay.current}`)
-        if (cancelled || !wantsPlay.current) return
+        if (cancelled || !wantsPlay.current || !isPaused) return
         if (retries >= 2) {
           // Refused with sound and refused muted: the reel is not going to
           // start on its own. The cover stays, with a play mark on it, and
@@ -598,7 +604,7 @@ export default function ReelPlayer({
           .setMuted(true)
           .then(() => p.play())
           // refused muted as well: ask once more, and then the cover asks for the tap
-          .catch(() => mutedRetry())
+          .catch(() => mutedRetry(of))
       }
       // The player's own word on whether it is playing cannot be trusted on a
       // phone: it says yes while the phone has blocked the start, and the reel
@@ -609,15 +615,18 @@ export default function ReelPlayer({
       let progressed = false
       const askAndWatch = () => {
         progressed = false
+        const of = ask
         window.clearTimeout(watchdog)
         watchdog = window.setTimeout(() => {
-          if (!progressed) mutedRetry()
+          if (!progressed) mutedRetry(of)
         }, 1500)
         watchdogRef.current = watchdog
       }
       media.current = {
         play: () => {
           retries = 0
+          ask += 1
+          const of = ask
           askAndWatch()
           logRef.current('play()')
           void p
@@ -632,7 +641,7 @@ export default function ReelPlayer({
               // cover at once, while the muted retries run behind it; should
               // one of them be obeyed, the play event takes the mark off
               if (grownRef.current && swappingRef.current) setNeedsTap(true)
-              mutedRetry()
+              mutedRetry(of)
             })
         },
         pause: () => void p.pause().catch(() => {}),
@@ -686,8 +695,9 @@ export default function ReelPlayer({
         isPaused = false
         // 'play' is the player's word again, not the reel moving: keep watching
         window.clearTimeout(watchdog)
+        const of = ask
         watchdog = window.setTimeout(() => {
-          if (!progressed) mutedRetry()
+          if (!progressed) mutedRetry(of)
         }, 1500)
         watchdogRef.current = watchdog
         // a priming play only exists to paint frame 0; it is not playback
@@ -752,6 +762,13 @@ export default function ReelPlayer({
     const onBlur = () => {
       if (document.activeElement !== el) return
       logRef.current(`tap in frame grown=${grownRef.current} needsTap=${needsTapRef.current}`)
+      // Grown, the frame is a screen in the box's scroll, and iOS nudges the
+      // scroll to bring a newly focused frame "into view" — a hair off, and
+      // the snap back showed the cover above for a frame. Held in place.
+      if (grownRef.current) {
+        const b = box.current
+        if (b) b.scrollTo({ top: cursorRef.current > 0 ? b.clientHeight : 0, behavior: 'instant' as ScrollBehavior })
+      }
       if (grownRef.current && needsTapRef.current) {
         // the tap the reel was waiting for: it went into the frame, so the
         // phone lets this one start, with the sound as it was set
