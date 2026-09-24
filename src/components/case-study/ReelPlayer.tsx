@@ -795,6 +795,19 @@ export default function ReelPlayer({
         }, 50)
         return
       }
+      if (grownRef.current && playlist) {
+        // EXPERIMENT: a tap on the playing reel is the next reel, asked for
+        // straight after the load, to see whether the tap's permission
+        // survives a load in the frame
+        const next = cursorRef.current + 1
+        if (next < playlist.length) {
+          logRef.current('tap -> next reel')
+          el.blur()
+          window.focus()
+          swapToRef.current(next)
+          return
+        }
+      }
       if (nativeStart || grownRef.current) {
         // On a touch feed the reel is already running; a tap on the picture
         // toggles its sound, the way a reel does. It goes through the frame
@@ -1042,6 +1055,9 @@ export default function ReelPlayer({
     pending.current = null
     loadAhead(next)
   }
+
+  const swapToRef = useRef(swapTo)
+  swapToRef.current = swapTo
 
   /** The reel a swipe is heading for, into the frame, and asked to start as
    *  soon as it is there. */
