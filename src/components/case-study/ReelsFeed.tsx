@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import ReelPlayer from './ReelPlayer'
 import type { Reel } from './ReelsCarousel'
@@ -85,6 +85,9 @@ export default function ReelsFeed({
   soundOff,
   onSoundOff,
   onWatched,
+  onFrame,
+  syncTo,
+  onSynced,
   onClose,
 }: {
   reels?: Reel[]
@@ -111,6 +114,12 @@ export default function ReelsFeed({
   /** the reel in view, every time it changes: the rail marks the LAST one
    *  watched here, not the one that opened the feed */
   onWatched?: (index: number) => void
+  /** The handover from a rail card: where the opening reel's frame is on the
+   *  screen (once, on mount), the card's clock for its player to meet, and
+   *  the word that it has. See ReelPlayer's liftTo/syncTo. */
+  onFrame?: (rect: { x: number; y: number; width: number; height: number }) => void
+  syncTo?: () => number
+  onSynced?: () => void
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
@@ -126,6 +135,15 @@ export default function ReelsFeed({
   const shareOf = (i: number) => ratioOf(i) / (16 / 9)
   const scroller = useRef<HTMLDivElement>(null)
   const slideEls = useRef<(HTMLDivElement | null)[]>([])
+  const openingFrame = useRef<HTMLDivElement | null>(null)
+  const onFrameRef = useRef(onFrame)
+  onFrameRef.current = onFrame
+  useLayoutEffect(() => {
+    const el = openingFrame.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    onFrameRef.current?.({ x: r.left, y: r.top, width: r.width, height: r.height })
+  }, [])
   const [current, setCurrent] = useState(startAt)
   // The reels give a little when there is nothing past them, and the line at
   // that end says which one has been reached. Nothing is blocked: this is the
@@ -653,6 +671,7 @@ export default function ReelsFeed({
                   INSIDE the frame: the reel keeps its shape, the clip keeps
                   its own, and nothing is cropped. */}
               <div
+                ref={i === startAt ? openingFrame : undefined}
                 className="relative mx-auto"
                 style={{
                   aspectRatio: String(1 / ratioOf(i)),
@@ -684,9 +703,26 @@ export default function ReelsFeed({
                         edge on a phone */}
                   </>
                 )}
-                {slides && !slides.reelAt?.(i) ? (
+                {slides && (!slides.reelAt?.(i) || narrow) ? (
                   <>
-                    {slides.render(i, current === i)}
+                    {slides.reelAt?.(i) ? (
+                      // a reel among the pictures on a phone: the card as it
+                      // is in the rail, cover and play mark, played on a tap
+                      // into the frame and handed to the phone's own player
+                      // by its corner button, since a video loaded into a
+                      // frame without a tap is refused there
+                      <ReelPlayer
+                        vimeoUrl={reelOf(i)?.vimeoUrl as string}
+                        poster={reelOf(i)?.poster}
+                        caption={reelOf(i)?.caption}
+                        active={current === i}
+                        onPlay={() => {}}
+                        soundOff={soundOff}
+                        onSoundOff={onSoundOff}
+                      />
+                    ) : (
+                      slides.render(i, current === i)
+                    )}
                     {/* the phone's shade under the corner lines, the player's
                         twin, since there is no player here to draw it */}
                     {narrow && i === current && (
@@ -745,6 +781,7 @@ export default function ReelsFeed({
                   </>
                 ) : (
                 <ReelPlayer
+                  key="feed"
                   vimeoUrl={reelOf(i)?.vimeoUrl as string}
                   poster={reelOf(i)?.poster}
                   caption={reelOf(i)?.caption}
@@ -762,6 +799,8 @@ export default function ReelsFeed({
                   onPlay={() => {}}
                   onClose={onClose}
                   resumeFrom={i === startAt ? resumeFrom : undefined}
+                  syncTo={i === startAt ? syncTo : undefined}
+                  onSynced={i === startAt ? onSynced : undefined}
                   // the one either side is built ahead of time, so scrolling
                   // onto it starts the video rather than the cover
                   preload={Math.abs(i - current) <= 1}

@@ -184,9 +184,16 @@ export const caseStudy = defineType({
             }),
             defineField({
               name: 'caption',
-              title: 'Caption',
+              title: 'Title',
               type: 'string',
-              description: 'Optional label under the clip.',
+              description: 'The line under the clip.',
+            }),
+            defineField({
+              name: 'description',
+              title: 'Description',
+              type: 'text',
+              rows: 2,
+              description: 'A sentence or two under the title: what the reel did, or what it is.',
             }),
           ],
           preview: {

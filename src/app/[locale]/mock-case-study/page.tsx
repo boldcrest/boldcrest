@@ -88,6 +88,12 @@ const STUDY: CaseStudy = {
       'Sabrina Cecchetti',
       'Almerico Di Meglio',
     ][i],
+    description: [
+      'The opening reel. One shooting day, a single take, no script: the queue talks and the loaf never appears.',
+      'Second week. The window at 7:40, steam on the glass, and the first comments asking where the bakery was.',
+      'Third week, the one that travelled: 1.1M plays and the week the follower count doubled.',
+      'The closing reel, cut from the leftovers of the same day. Same morning, told backwards.',
+    ][i],
   })),
   feed: (() => {
     const feed: FeedImage[] = FEED_REFS.map((ref, i) => ({ _key: `p${i}`, alt: '', asset: { _ref: ref } }))

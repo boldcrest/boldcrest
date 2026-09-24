@@ -120,7 +120,7 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
             // a reel in the grid plays in the viewer as a reel, at 9:16
             reelAt: (i) => items[i].reel,
             render: (i) => (
-              <div className="absolute inset-0 bg-bg">
+              <div className="absolute inset-0 overflow-hidden bg-bg md:rounded-[var(--radius-lg)]">
                 <Image
                   src={urlFor(items[i]).width(1200).height(1600).url()}
                   alt={items[i].alt || ''}

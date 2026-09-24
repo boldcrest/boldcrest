@@ -228,6 +228,10 @@ export default function ReelPlayer({
   playlist,
   index = 0,
   onWatched,
+  onTick,
+  syncTo,
+  onSynced,
+  liftTo = null,
   shadeTop,
   shadeQuick = false,
   lastSeen = false,
@@ -268,6 +272,17 @@ export default function ReelPlayer({
   index?: number
   /** the reel in view while grown, every time it changes */
   onWatched?: (index: number) => void
+  /** the player's clock, every tick */
+  onTick?: (seconds: number) => void
+  /** In the feed, the reel a card handed over: the card is still playing on
+   *  top of this one. This one runs muted underneath until its clock has met
+   *  the card's (paused or seeked to get there), then says so. */
+  syncTo?: () => number
+  onSynced?: () => void
+  /** A card handing over to the feed: its box lifts off the rail and grows to
+   *  this frame (the feed's, measured), still playing, so the feed's own
+   *  player can take over underneath without anything visibly reloading. */
+  liftTo?: { x: number; y: number; width: number; height: number } | null
   /** A shade over the top of the picture, the twin of the one under the
    *  transport, for the feed's lines to sit on when they are in the reel's
    *  corner. Comes and goes with them: `shadeQuick` follows an answer's
@@ -414,6 +429,12 @@ export default function ReelPlayer({
   const grownRef = useRef(false)
   const cursorRef = useRef(index)
   const swappingRef = useRef(false)
+  const onTickRef = useRef(onTick)
+  onTickRef.current = onTick
+  const syncToRef = useRef(syncTo)
+  syncToRef.current = syncTo
+  const onSyncedRef = useRef(onSynced)
+  onSyncedRef.current = onSynced
   const onWatchedRef = useRef(onWatched)
   useEffect(() => {
     grownRef.current = grown
@@ -423,8 +444,9 @@ export default function ReelPlayer({
   }, [grown, cursor, swapping, onWatched])
   // grown on a phone it wears the phone feed's dress: bare X, full-width
   // frame with bars, the feed's transport
+  const lifted = liftTo !== null
   const fillLook = fill || grown
-  const feedLook = inFeed || grown
+  const feedLook = inFeed || grown || lifted
   const shownPoster = grown ? (playlist?.[coverOf ?? cursor]?.poster ?? poster) : poster
   const shownCaption = grown ? (playlist?.[cursor]?.caption ?? caption) : caption
   const onPlayRef = useRef(onPlay)
@@ -432,6 +454,14 @@ export default function ReelPlayer({
     onPlayRef.current = onPlay
   }, [onPlay])
   const soundOffRef = useRef(soundOff)
+  // a change of the one setting reaches a reel already running in the feed
+  // (the handover starts the feed's reel silent and lifts that afterwards)
+  useEffect(() => {
+    if (!inFeed || !claimed.current) return
+    media.current?.setMuted(soundOff)
+    setMuted(soundOff)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soundOff])
   useEffect(() => {
     soundOffRef.current = soundOff
   }, [soundOff])
@@ -539,6 +569,7 @@ export default function ReelPlayer({
           } else resumeTarget.current = null
         }
         setTime(v.currentTime)
+        onTickRef.current?.(v.currentTime)
       }
       const onEnded = () => {
         setPlaying(false)
@@ -745,6 +776,45 @@ export default function ReelPlayer({
         isPaused = true
         setPlaying(false)
       })
+      // The handover: this reel runs under the card that opened the feed,
+      // and has to reach the card's clock before it can take over. Ahead of
+      // the card, it waits (a pause of the difference); behind it, it seeks
+      // past the card and waits for the card to arrive. Then it is announced.
+      // The card's own clock is read live, since it is still playing.
+      let met = false
+      let meeting = false
+      let meetFrom = 0
+      const meet = (seconds: number) => {
+        const cardTime = syncToRef.current?.()
+        if (met || cardTime === undefined) return
+        if (!meetFrom) meetFrom = performance.now()
+        const gap = seconds - cardTime
+        const done = () => {
+          met = true
+          onSyncedRef.current?.()
+        }
+        // close enough, or long enough: the frame you land on is the one you
+        // left, give or take a tick
+        if (Math.abs(gap) <= 0.2 || performance.now() - meetFrom > 4000) {
+          done()
+          return
+        }
+        if (meeting) return
+        meeting = true
+        if (gap > 0) {
+          // ahead: hold the difference, then run
+          void p.pause().catch(() => {})
+          window.setTimeout(() => {
+            void p.play().catch(() => {})
+            meeting = false
+          }, gap * 1000)
+        } else {
+          // behind: jump past the card and let it catch up
+          void p.setCurrentTime(cardTime + 0.6).catch(() => {}).finally(() => {
+            meeting = false
+          })
+        }
+      }
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
         if (!progressed && d.seconds > 0 && !swappingRef.current) {
           logRef.current(`first tick ${d.seconds.toFixed(1)}`)
@@ -768,6 +838,8 @@ export default function ReelPlayer({
           } else resumeTarget.current = null
         }
         setTime(d.seconds)
+        onTickRef.current?.(d.seconds)
+        meet(d.seconds)
       })
       p.on('bufferstart', () => setBuffering(true))
       p.on('bufferend', () => setBuffering(false))
@@ -1026,6 +1098,35 @@ export default function ReelPlayer({
     m.play()
   }, [autoPlay, ready, active, resumeFrom])
 
+  // The lift. The box is laid out at the feed's frame (fixed) and pulled
+  // back over the card by a transform, which is then animated away on the
+  // deck's curve: the card grows into the frame, playing all the while. The
+  // card is raised over the feed (1800) for the duration, and the player is
+  // laid out at its final size from the first frame, so the picture is only
+  // ever scaled down, never up.
+  useLayoutEffect(() => {
+    if (!liftTo) return
+    const el = box.current
+    if (!el) return
+    const card = el.closest<HTMLElement>('[data-reel-card]')
+    if (!card) return
+    const from = card.getBoundingClientRect()
+    const savedZ = card.style.zIndex
+    card.style.zIndex = '1850'
+    const scale = from.width / liftTo.width
+    const run = el.animate(
+      [
+        { transform: `translate(${from.left - liftTo.x}px, ${from.top - liftTo.y}px) scale(${scale})` },
+        { transform: 'translate(0, 0) scale(1)' },
+      ],
+      { duration: 700, easing: 'cubic-bezier(0.76, 0, 0.24, 1)', fill: 'forwards' },
+    )
+    return () => {
+      run.cancel()
+      card.style.zIndex = savedZ
+    }
+  }, [liftTo])
+
   /** A line in the grown player's corner, for a while. */
   const say = (what: 'hint' | 'first' | 'last') => {
     setNote(what)
@@ -1247,8 +1348,17 @@ export default function ReelPlayer({
         // grown on a phone: the box scrolls, one screen per reel, and
         // settling on a neighbour's cover is the swipe to that reel
         onScroll={grown ? onGrownScroll : undefined}
+        // lifted: the box sits at the feed's frame, fixed, and is moved back
+        // to where the card is by a transform that the lift then animates off
+        style={
+          lifted && liftTo
+            ? { left: liftTo.x, top: liftTo.y, width: liftTo.width, height: liftTo.height, transformOrigin: '0 0' }
+            : undefined
+        }
         className={
-          expanded
+          lifted
+            ? 'group fixed z-[1850] overflow-hidden rounded-[var(--radius-lg)] bg-bg'
+            : expanded
             ? grown
               ? 'group fixed inset-0 z-[200] overflow-y-auto overscroll-contain snap-y snap-mandatory bg-bg [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
               : 'group fixed inset-0 z-[200]'

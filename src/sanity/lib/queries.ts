@@ -388,7 +388,7 @@ export const caseStudyBySlugQuery = defineQuery(
     },
     stats[]{ value, label },
     "explanation": coalesce(select($locale == "sq" => i18n.sq.explanation, $locale == "it" => i18n.it.explanation, $locale == "fr" => i18n.fr.explanation), explanation),
-    reels[]{ vimeoUrl, aspectRatio, caption },
+    reels[]{ vimeoUrl, aspectRatio, caption, description },
     feed[]{ ..., "alt": alt },
     publishedAt
   }`

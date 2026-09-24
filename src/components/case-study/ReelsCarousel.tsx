@@ -9,6 +9,8 @@ export interface Reel {
   vimeoUrl?: string
   aspectRatio?: string
   caption?: string
+  /** a sentence or two under the title */
+  description?: string
   /** Vimeo oEmbed cover, resolved server-side. Without it the card is a black
    *  box until the player is touched, and the whole rail reads as empty on
    *  first scroll — the site never shows a bare video box. */
@@ -23,6 +25,8 @@ interface ReelsCarouselProps {
 /** Movement beyond this (px) counts as a drag, so the click that ends it must
  *  not also start a reel. */
 const DRAG_SLOP = 6
+/** seconds the feed's player is started ahead of the card it takes over from */
+const HAND_LEAD = 1
 
 /**
  * The reels rail. Each card is a full player (see ReelPlayer, ported from the
@@ -44,6 +48,43 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // next starts muted, unmute one and the next starts with sound. Sound on
   // to begin with — a reel is the one thing on the site that speaks.
   const [soundOff, setSoundOff] = useState(false)
+  // The handover to the feed. The card that opened it keeps playing, lifted
+  // over the feed and grown to the feed's frame (measured by the feed on
+  // mount); the feed's own player starts silent underneath, catches the
+  // card's clock, and only then does the card let go. Nothing is seen to
+  // reload. `HAND_LEAD` is the head start the feed's player is given, so
+  // its first frame lands near where the card will be by then.
+  const [lift, setLift] = useState<{ index: number; rect: { x: number; y: number; width: number; height: number } | null } | null>(null)
+  const clocks = useRef<number[]>([])
+  // The rail's fit. When the whole rail would end within a third of a card
+  // of the measure's right edge (the arrows' edge), the cards are sized so
+  // it ends exactly there, grown or shrunk a little; a rail that overruns by
+  // more keeps the design's card size and the last card scrolls clear of
+  // the screen. Measured from the heading's box, which is the measure.
+  const measure = useRef<HTMLDivElement>(null)
+  const [fitWidth, setFitWidth] = useState<number | null>(null)
+  // the measure's left edge, for the strip's padding: computed, not written
+  // as CSS, since 100vw counts the scrollbar and the centred measure does not
+  const [inset, setInset] = useState<number | null>(null)
+  const count = (reels ?? []).filter((r) => !!r.vimeoUrl).length
+  useEffect(() => {
+    const el = measure.current
+    if (!el) return
+    const read = () => {
+      const w = el.clientWidth
+      setInset(el.getBoundingClientRect().left)
+      const vw = window.innerWidth
+      // the card's design size and the gap, as the classes below set them
+      const nominal = vw * (vw >= 1024 ? 0.19 : vw >= 768 ? 0.26 : vw >= 640 ? 0.38 : 0.62)
+      const gap = vw >= 768 ? 24 : 16
+      const total = count * nominal + (count - 1) * gap
+      setFitWidth(total <= w + nominal / 3 ? (w - (count - 1) * gap) / count : null)
+    }
+    read()
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [count])
 
   const t = useTranslations('CaseStudy')
   // Where the rail stands, for the two anchors: dimmed at the end they cannot
@@ -81,6 +122,31 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   const items = (reels ?? []).filter((r): r is Reel & { vimeoUrl: string } => !!r.vimeoUrl)
   if (items.length === 0) return null
 
+  const anchors = items.length > 1 && (
+    <div className="flex items-center gap-2">
+      {([-1, 1] as const).map((dir) => {
+        const off = dir < 0 ? edges.start : edges.end
+        return (
+          <button
+            key={dir}
+            type="button"
+            onClick={() => step(dir)}
+            aria-label={dir < 0 ? t('previous') : t('next')}
+            aria-disabled={off}
+            tabIndex={off ? -1 : 0}
+            className={`flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-primary transition-[opacity,border-color,background-color] duration-300 hover:border-border-hover hover:bg-white/5 ${
+              off ? 'pointer-events-none opacity-30' : 'opacity-100'
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              {dir < 0 ? <path d="M15 5l-7 7 7 7" /> : <path d="M9 5l7 7-7 7" />}
+            </svg>
+          </button>
+        )
+      })}
+    </div>
+  )
+
   // Mouse/trackpad only. On touch the native horizontal scroll is already
   // perfect — intercepting pointer events there is what makes strips feel
   // laggy and steals vertical scroll, so we simply don't.
@@ -112,37 +178,10 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   return (
     <section className="pt-[var(--space-xl)]">
       <div className="mx-auto max-w-[var(--max-width)] px-[var(--gutter)]">
-        <div className="mb-[var(--space-lg)] flex items-baseline justify-between gap-4">
+        <div ref={measure} className="mb-[var(--space-lg)]">
           <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
             {heading}
           </h2>
-          {/* The two anchors, one card a press. Hairline discs like the rest
-              of the site's controls; the one with nowhere to go fades rather
-              than disappears, so the pair holds its place. */}
-          {items.length > 1 && (
-            <div className="-my-3 flex items-center gap-2 self-center">
-              {([-1, 1] as const).map((dir) => {
-                const off = dir < 0 ? edges.start : edges.end
-                return (
-                  <button
-                    key={dir}
-                    type="button"
-                    onClick={() => step(dir)}
-                    aria-label={dir < 0 ? t('previous') : t('next')}
-                    aria-disabled={off}
-                    tabIndex={off ? -1 : 0}
-                    className={`flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-primary transition-[opacity,border-color,background-color] duration-300 hover:border-border-hover hover:bg-white/5 ${
-                      off ? 'pointer-events-none opacity-30' : 'opacity-100'
-                    }`}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      {dir < 0 ? <path d="M15 5l-7 7 7 7" /> : <path d="M9 5l7 7-7 7" />}
-                    </svg>
-                  </button>
-                )
-              })}
-            </div>
-          )}
         </div>
       </div>
 
@@ -157,13 +196,19 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
         onPointerLeave={endDrag}
         onPointerCancel={endDrag}
         onDragStart={(e) => e.preventDefault()}
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-[var(--gutter)] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-6 [&::-webkit-scrollbar]:hidden"
+        // scroll-padding matches the padding, or the snap pulls the first
+        // card to the strip's very edge, a gutter left of the heading
+        // the strip's padding is the measure's left edge, so the first card
+        // sits under the heading on any screen, wide ones included
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-[var(--gutter)] pb-2 [-ms-overflow-style:none] [scroll-padding-inline:var(--gutter)] [scrollbar-width:none] md:gap-6 [&::-webkit-scrollbar]:hidden"
+        style={inset !== null ? { paddingInline: inset, scrollPaddingInline: inset } : undefined}
       >
         {items.map((reel, i) => (
           <div
             key={i}
             data-reel-card
             className="relative w-[62vw] shrink-0 snap-start sm:w-[38vw] md:w-[26vw] lg:w-[19vw]"
+            style={fitWidth !== null ? { width: fitWidth } : undefined}
           >
             <ReelPlayer
               vimeoUrl={reel.vimeoUrl as string}
@@ -184,31 +229,56 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
               playlist={items}
               index={i}
               onWatched={setLastSeen}
+              onTick={(s) => {
+                clocks.current[i] = s
+              }}
+              liftTo={lift?.index === i ? lift.rect : null}
               onExpand={(at) => {
                 setLastSeen(i)
-                // stop the card behind before the feed takes over, or both
-                // players run and you hear two of them
-                setActive(null)
-                setFeed({ index: i, at })
+                // the card plays on, lifted; the feed's player takes over
+                // once it has caught up (see onSynced)
+                setLift({ index: i, rect: null })
+                setFeed({ index: i, at: at + HAND_LEAD })
               }}
             />
-            {reel.caption && (
-              <p className="mt-3 text-[0.8rem] leading-[1.5] text-text-secondary">{reel.caption}</p>
+            {(reel.caption || reel.description) && (
+              <div className="mt-3">
+                {reel.caption && (
+                  <p className="text-[0.8rem] font-medium leading-[1.5] text-text-primary">{reel.caption}</p>
+                )}
+                {reel.description && (
+                  <p className="mt-1 text-[0.8rem] leading-[1.5] text-text-secondary">{reel.description}</p>
+                )}
+              </div>
             )}
           </div>
         ))}
       </div>
+      {/* The two anchors, one card a press, under the rail. Hairline discs
+          like the rest of the site's controls; the one with nowhere to go
+          fades rather than disappears, so the pair holds its place. */}
+      {anchors && (
+        <div className="mx-auto mt-6 flex max-w-[var(--max-width)] justify-end px-[var(--gutter)]">{anchors}</div>
+      )}
 
       {feed !== null && (
         <ReelsFeed
           reels={items}
           startAt={feed.index}
           resumeFrom={feed.at}
-          soundOff={soundOff}
+          // silent while the card is still the one heard
+          soundOff={lift ? true : soundOff}
           onSoundOff={setSoundOff}
           onWatched={setLastSeen}
+          onFrame={(rect) => setLift((l) => (l ? { ...l, rect } : l))}
+          syncTo={lift ? () => clocks.current[lift.index] ?? 0 : undefined}
+          onSynced={() => {
+            setLift(null)
+            setActive(null)
+          }}
           onClose={() => {
             setFeed(null)
+            setLift(null)
             // nothing in the rail resumes on its own when the feed closes
             setActive(null)
           }}
