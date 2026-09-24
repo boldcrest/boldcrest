@@ -255,19 +255,19 @@ export default function ReelsFeed({
       const h = el.clientHeight
       const here = Math.round(el.scrollTop / h)
       const stuck = down ? here >= reels.length - 1 : here <= 0
+      e.preventDefault()
+      // a step still under way, or the tail of the push just acted on: not
+      // a new ask, whichever way it points
+      if (moving) return
+      if (gap < 80 && !grew) return
       if (stuck) {
-        // nothing that way: the feed gives instead of moving. Not on the tail
-        // of the scroll that just landed here, and not on a speck.
-        if (performance.now() - scrolledAt.current < 220 && !moving) return
+        // nothing that way: the feed gives instead of moving — at once, on the
+        // next push after landing here, not after a wait. Specks (a trackpad's
+        // stray movement in the axis not in use) are not a push.
         if (mag < 8) return
-        e.preventDefault()
         bounce(down)
         return
       }
-      e.preventDefault()
-      if (moving) return
-      // the tail of the push that has just been acted on
-      if (gap < 80 && !grew) return
       glide((here + (down ? 1 : -1)) * h)
     }
     el.addEventListener('scroll', onScroll, { passive: true })
