@@ -85,7 +85,7 @@ export default async function CaseStudyArticle({
           the copy turned to a case study — the visitor has just watched numbers
           move, so the question is whether they want theirs moved. Full width,
           like the feed above it, or it sat visibly indented from the grid. */}
-      <ServiceCTA heading={labels.ctaHeading} description={labels.ctaBody} fullWidth topBorder />
+      <ServiceCTA heading={labels.ctaHeading} description={labels.ctaBody} fullWidth topBorder beforeFooter />
     </article>
   )
 }

@@ -22,6 +22,14 @@ interface ServiceCTAProps {
    * centred CTA sat visibly indented from the carousel beneath it.
    */
   fullWidth?: boolean
+  /**
+   * The block is the last thing before the footer. Its usual bottom padding
+   * (1.5rem under a top border) is sized for the FAQ that follows it on a
+   * service page; ahead of the footer it left 24px above the footer's line
+   * against the 80px the footer keeps between its own sitemap and bottom
+   * band. This matches that 80px.
+   */
+  beforeFooter?: boolean
 }
 
 /**
@@ -43,6 +51,7 @@ export default function ServiceCTA({
   buttonLabel,
   topBorder = false,
   fullWidth = false,
+  beforeFooter = false,
 }: ServiceCTAProps) {
   const t = useTranslations('Cta')
   const ctaLabel = label ?? t('nextStep')
@@ -58,7 +67,7 @@ export default function ServiceCTA({
       // (6rem). Adding another 4rem on top stacked to a 10rem gap that read as a
       // break in the page rather than a continuation.
       className={`px-[var(--gutter)] ${
-        topBorder ? 'pb-[var(--space-md)]' : 'pb-[var(--space-2xl)]'
+        beforeFooter ? 'pb-20' : topBorder ? 'pb-[var(--space-md)]' : 'pb-[var(--space-2xl)]'
       } ${
         topBorder ? 'border-t border-border pt-[var(--space-lg)]' : ''
       }`}
