@@ -88,6 +88,7 @@ export default function ReelsFeed({
   onFrame,
   syncTo,
   onSynced,
+  holdOpening = false,
   onClose,
 }: {
   reels?: Reel[]
@@ -120,6 +121,9 @@ export default function ReelsFeed({
   onFrame?: (rect: { x: number; y: number; width: number; height: number }) => void
   syncTo?: () => number
   onSynced?: () => void
+  /** the card is still on top of the opening frame: the frame stays out of
+   *  sight until the handover, so nothing of it shows round the card */
+  holdOpening?: boolean
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
@@ -672,7 +676,7 @@ export default function ReelsFeed({
                   its own, and nothing is cropped. */}
               <div
                 ref={i === startAt ? openingFrame : undefined}
-                className="relative mx-auto"
+                className={`relative mx-auto ${holdOpening && i === startAt ? 'opacity-0' : ''}`}
                 style={{
                   aspectRatio: String(1 / ratioOf(i)),
                   height: narrow

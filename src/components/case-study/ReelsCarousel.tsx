@@ -270,6 +270,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
           soundOff={lift ? true : soundOff}
           onSoundOff={setSoundOff}
           onWatched={setLastSeen}
+          holdOpening={lift !== null}
           onFrame={(rect) => setLift((l) => (l ? { ...l, rect } : l))}
           syncTo={lift ? () => clocks.current[lift.index] ?? 0 : undefined}
           onSynced={() => {
