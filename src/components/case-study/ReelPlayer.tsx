@@ -113,7 +113,7 @@ const shade = (to: 'top' | 'bottom') =>
  *  a plain video URL. The same player, driven through a <video> element. */
 const isFile = (url: string) => /^\/(?!\/)|\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url)
 
-const vimeoSrc = (url: string) => {
+const vimeoSrc = (url: string, native = false) => {
   // The privacy hash is part of the address for an unlisted video — drop it and
   // the player simply refuses. Reels are uploaded "Hide from Vimeo" with
   // embedding public, so they always carry one.
@@ -152,6 +152,15 @@ const vimeoSrc = (url: string) => {
     collections: '0',
     ask_ai: '0',
     keyboard: '0',
+  }
+  // On a phone the player is started by Vimeo itself, from its own address,
+  // because that is the ONLY way it will start there: its API refuses play()
+  // on iOS until the viewer has tapped inside the player, muted or not — the
+  // documented behaviour, and the wall every retry here ran into. Native
+  // autoplay must be muted; the speaker button asks for sound afterwards.
+  if (native) {
+    params.autoplay = '1'
+    params.muted = '1'
   }
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v)
   return u.toString()
@@ -288,7 +297,13 @@ export default function ReelPlayer({
   // at all until a second press.
   const [inView, setInView] = useState(false)
   // the feed asks for neighbours up front; otherwise the observer decides
-  const mounted = !suspend && (inView || preload)
+  // A touch feed cannot drive Vimeo through its API (see vimeoSrc), so it
+  // cannot prime a neighbour and cannot resume one it paused: the reel in view
+  // is the only one built, fresh each time it comes into view, and it starts
+  // itself. The cost is a moment on the cover on each arrival, which a phone
+  // has to pay; a mouse keeps the neighbours ready as before.
+  const nativeStart = inFeed && !mouse && !isFile(vimeoUrl)
+  const mounted = !suspend && (nativeStart ? active : inView || preload)
   const onPlayRef = useRef(onPlay)
   useEffect(() => {
     onPlayRef.current = onPlay
@@ -297,6 +312,11 @@ export default function ReelPlayer({
   useEffect(() => {
     soundOffRef.current = soundOff
   }, [soundOff])
+  const mutedRef = useRef(false)
+  const onSoundOffRef = useRef(onSoundOff)
+  useEffect(() => {
+    onSoundOffRef.current = onSoundOff
+  }, [onSoundOff])
 
   useEffect(() => {
     const el = box.current
@@ -557,6 +577,24 @@ export default function ReelPlayer({
     let giveUp = 0
     const onBlur = () => {
       if (document.activeElement !== el) return
+      if (nativeStart) {
+        // On a touch feed the reel is already running; a tap on the picture
+        // toggles its sound, the way a reel does. It goes through the frame
+        // because that is where iOS needs the tap to be before it will let
+        // the sound change — the speaker button, in our page, may be refused.
+        const next = !mutedRef.current
+        window.setTimeout(() => {
+          if (cancelled) return
+          media.current?.setMuted(next)
+          setMuted(next)
+          onSoundOffRef.current?.(next)
+          // focus back out of the frame, or the next tap is not a change of
+          // focus and is not seen at all
+          el.blur()
+          window.focus()
+        }, 50)
+        return
+      }
       setLoading(true)
       window.clearTimeout(waiting)
       window.clearTimeout(giveUp)
@@ -581,7 +619,7 @@ export default function ReelPlayer({
       void player?.destroy().catch(() => {})
       media.current = null
     }
-  }, [mounted, vimeoUrl])
+  }, [mounted, vimeoUrl, nativeStart])
 
   // grown over the page: Escape shrinks it back, the page does not scroll
   // under it, and the two things round the reel that would hold a fixed box
@@ -630,6 +668,7 @@ export default function ReelPlayer({
   }, [active])
 
   useEffect(() => {
+    mutedRef.current = muted
     media.current?.setMuted(muted)
   }, [muted])
 
@@ -645,7 +684,7 @@ export default function ReelPlayer({
   // cover to swap out at all. Muted because a browser will not start it
   // otherwise — it is not the reel in view yet.
   useEffect(() => {
-    if (!preload || active || !ready || primed) return
+    if (nativeStart || !preload || active || !ready || primed) return
     const m = media.current
     if (!m) return
     let cancelled = false
@@ -678,6 +717,15 @@ export default function ReelPlayer({
     if (!m) return
     claimed.current = true
     wantsPlay.current = true
+    if (nativeStart) {
+      // Vimeo is starting this one itself, muted. Sound is asked for once it
+      // is running, if the feed's setting wants it — the phone may or may not
+      // grant that without a tap inside the player, and the speaker button
+      // shows whichever it decided.
+      setMuted(true)
+      if (!soundOffRef.current) window.setTimeout(() => m.setMuted(false), 600)
+      return
+    }
     // The feed's one sound setting, applied as this reel takes over. It also
     // undoes the neighbour nudge, which had muted this reel to paint its first
     // frame in silence and then left it that way — so every reel after the
@@ -874,7 +922,7 @@ export default function ReelPlayer({
             {mounted && !isFile(vimeoUrl) && (
               <iframe
                 ref={frame}
-                src={vimeoSrc(vimeoUrl)}
+                src={vimeoSrc(vimeoUrl, nativeStart)}
                 aria-label={caption || t('reels')}
                 allow="autoplay; fullscreen; picture-in-picture"
                 // While the cover shows, the player lies invisible on top of
@@ -892,11 +940,13 @@ export default function ReelPlayer({
                 // is a tap we have given away — on a phone that is what handed
                 // the reel to the browser's own video player.
                 className={`absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] border-0 ${
-                  showControls || (!inFeed && onExpand)
-                    ? 'pointer-events-none'
-                    : mouse
-                      ? 'pointer-events-none opacity-0'
-                      : 'z-30 cursor-pointer opacity-0'
+                  nativeStart
+                    ? '' // takes the tap: see onBlur
+                    : showControls || (!inFeed && onExpand)
+                      ? 'pointer-events-none'
+                      : mouse
+                        ? 'pointer-events-none opacity-0'
+                        : 'z-30 cursor-pointer opacity-0'
                 }`}
               />
             )}
@@ -1019,7 +1069,11 @@ export default function ReelPlayer({
                   : undefined
               }
               aria-label={ended ? t('replay') : playing ? t('pause') : t('play')}
-              className="absolute inset-0 z-10 flex items-end justify-between p-[7%]"
+              // on a touch feed the picture's tap belongs to the frame under
+              // this (sound), and play/pause is the transport's button
+              className={`absolute inset-0 z-10 flex items-end justify-between p-[7%] ${
+                nativeStart ? 'pointer-events-none' : ''
+              }`}
             >
               {/* no nudge for the play glyph: its triangle is already drawn with
                   its centroid on the icon's centre, which is where the eye puts
