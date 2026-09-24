@@ -25,7 +25,6 @@ export interface CaseStudy {
 interface Labels {
   eyebrow: string
   reels: string
-  reelsHint: string
   close: string
   feed: string
   ctaHeading: string
@@ -77,7 +76,6 @@ export default async function CaseStudyArticle({
       <ReelsCarousel
         reels={reels}
         heading={labels.reels}
-        hint={labels.reelsHint}
       />
 
       <FeedGrid feed={study.feed ?? []} heading={labels.feed} />

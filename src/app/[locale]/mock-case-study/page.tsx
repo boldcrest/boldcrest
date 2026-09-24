@@ -97,7 +97,6 @@ export default function MockCaseStudyPage() {
       labels={{
         eyebrow: 'Case Study',
         reels: 'Reels',
-        reelsHint: 'Drag / tap to play',
         close: 'Close',
         feed: 'The Feed',
         ctaHeading: 'Ready to move your own numbers?',

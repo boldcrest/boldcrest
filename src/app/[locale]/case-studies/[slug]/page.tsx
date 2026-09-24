@@ -83,7 +83,6 @@ export default async function CaseStudyPage({
   const labels = {
     eyebrow: t('eyebrow'),
     reels: t('reels'),
-    reelsHint: t('reelsHint'),
     close: t('close'),
     feed: t('feed'),
     ctaHeading: tCta('caseHeading'),

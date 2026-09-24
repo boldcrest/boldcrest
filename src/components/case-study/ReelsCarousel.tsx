@@ -17,7 +17,6 @@ export interface Reel {
 interface ReelsCarouselProps {
   reels: Reel[]
   heading: string
-  hint: string
 }
 
 /** Movement beyond this (px) counts as a drag, so the click that ends it must
@@ -29,7 +28,7 @@ const DRAG_SLOP = 6
  * JokaDent patient reel); starting one stops whichever was playing, so only one
  * reel speaks at a time.
  */
-export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselProps) {
+export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   // which reel owns playback; null until one is started
   const [active, setActive] = useState<number | null>(null)
@@ -79,7 +78,6 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
           <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
             {heading}
           </h2>
-          <p className="text-[0.7rem] uppercase tracking-[0.15em] text-text-tertiary">{hint}</p>
         </div>
       </div>
 
