@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import ReelPlayer from './ReelPlayer'
 import type { Reel } from './ReelsCarousel'
@@ -85,11 +85,6 @@ export default function ReelsFeed({
   soundOff,
   onSoundOff,
   onWatched,
-  onFrame,
-  syncTo,
-  onSynced,
-  holdOpening = false,
-  hurry = false,
   onClose,
 }: {
   reels?: Reel[]
@@ -116,17 +111,6 @@ export default function ReelsFeed({
   /** the reel in view, every time it changes: the rail marks the LAST one
    *  watched here, not the one that opened the feed */
   onWatched?: (index: number) => void
-  /** The handover from a rail card: where the opening reel's frame is on the
-   *  screen (once, on mount), the card's clock for its player to meet, and
-   *  the word that it has. See ReelPlayer's liftTo/syncTo. */
-  onFrame?: (rect: { x: number; y: number; width: number; height: number }) => void
-  syncTo?: () => number
-  onSynced?: () => void
-  /** the card is still on top of the opening frame: the frame stays out of
-   *  sight until the handover, so nothing of it shows round the card */
-  holdOpening?: boolean
-  /** the visitor is already moving on: the opening reel takes over now */
-  hurry?: boolean
   onClose: () => void
 }) {
   const t = useTranslations('CaseStudy')
@@ -142,15 +126,6 @@ export default function ReelsFeed({
   const shareOf = (i: number) => ratioOf(i) / (16 / 9)
   const scroller = useRef<HTMLDivElement>(null)
   const slideEls = useRef<(HTMLDivElement | null)[]>([])
-  const openingFrame = useRef<HTMLDivElement | null>(null)
-  const onFrameRef = useRef(onFrame)
-  onFrameRef.current = onFrame
-  useLayoutEffect(() => {
-    const el = openingFrame.current
-    if (!el) return
-    const r = el.getBoundingClientRect()
-    onFrameRef.current?.({ x: r.left, y: r.top, width: r.width, height: r.height })
-  }, [])
   const [current, setCurrent] = useState(startAt)
   // The reels give a little when there is nothing past them, and the line at
   // that end says which one has been reached. Nothing is blocked: this is the
@@ -678,11 +653,10 @@ export default function ReelsFeed({
                   INSIDE the frame: the reel keeps its shape, the clip keeps
                   its own, and nothing is cropped. */}
               <div
-                ref={i === startAt ? openingFrame : undefined}
                 // a picture's frame clips to the reels' radius (the shade and
                 // the close mark sit inside it, so they are clipped with it);
                 // a reel's player rounds itself
-                className={`relative mx-auto ${holdOpening && i === startAt ? 'opacity-0' : ''} ${
+                className={`relative mx-auto ${
                   slides && !slides.reelAt?.(i) && !narrow ? 'overflow-hidden rounded-[var(--radius-lg)]' : ''
                 }`}
                 style={{
@@ -807,9 +781,6 @@ export default function ReelsFeed({
                   onPlay={() => {}}
                   onClose={onClose}
                   resumeFrom={i === startAt ? resumeFrom : undefined}
-                  syncTo={i === startAt ? syncTo : undefined}
-                  onSynced={i === startAt ? onSynced : undefined}
-                  hurry={i === startAt && hurry}
                   // the one either side is built ahead of time, so scrolling
                   // onto it starts the video rather than the cover
                   preload={Math.abs(i - current) <= 1}

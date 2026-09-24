@@ -252,6 +252,11 @@ input[type="radio"],
 /* --- Keyframes --- */
 /* the reels player on a phone: the next reel's cover sliding in as the
    playing one slides out, on the People deck's curve */
+@keyframes reel-ground-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes reel-in-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }

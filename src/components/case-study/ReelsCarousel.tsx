@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import ReelPlayer from './ReelPlayer'
-import ReelsFeed from './ReelsFeed'
 
 export interface Reel {
   vimeoUrl?: string
@@ -25,8 +24,17 @@ interface ReelsCarouselProps {
 /** Movement beyond this (px) counts as a drag, so the click that ends it must
  *  not also start a reel. */
 const DRAG_SLOP = 6
-/** seconds the feed's player is started ahead of the card it takes over from */
-const HAND_LEAD = 1
+/** The full-screen frame on a desktop screen: 9:16, as tall as the screen
+ *  allows less a band above and below, capped, never wider than the gutters
+ *  leave, centred. The same numbers the picture viewer uses for its frame. */
+function fullFrame() {
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const gutter = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gutter')) || 64
+  const height = Math.min(vh - 104, 960, (vw - 2 * gutter) * (16 / 9))
+  const width = height * (9 / 16)
+  return { x: (vw - width) / 2, y: (vh - height) / 2, width, height }
+}
 
 /**
  * The reels rail. Each card is a full player (see ReelPlayer, ported from the
@@ -37,33 +45,19 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   // which reel owns playback; null until one is started
   const [active, setActive] = useState<number | null>(null)
-  // the full-screen feed: which reel it opened on, and how far that reel had
-  // already played, so it carries on from there instead of starting again
-  const [feed, setFeed] = useState<{ index: number; at: number } | null>(null)
-  // The reel they were on last, wherever that was: the last one watched in
-  // the feed before closing it, or the last card played in the rail since.
-  // It follows the visitor rather than freezing on whatever opened the feed.
+  // The reel they were on last, wherever that was: the last one watched
+  // full screen before closing it, or the last card played in the rail
+  // since. It follows the visitor rather than freezing on whatever opened.
   const [lastSeen, setLastSeen] = useState<number | null>(null)
-  // One sound setting for every reel, rail and feed alike: mute one and the
-  // next starts muted, unmute one and the next starts with sound. Sound on
-  // to begin with — a reel is the one thing on the site that speaks.
+  // One sound setting for every reel, rail and full screen alike: mute one
+  // and the next starts muted, unmute one and the next starts with sound.
+  // Sound on to begin with — a reel is the one thing on the site that speaks.
   const [soundOff, setSoundOff] = useState(false)
-  // The handover to the feed. The card that opened it keeps playing, lifted
-  // over the feed and grown to the feed's frame (measured by the feed on
-  // mount); the feed's own player starts silent underneath, catches the
-  // card's clock, and only then does the card let go. Nothing is seen to
-  // reload. `HAND_LEAD` is the head start the feed's player is given, so
-  // its first frame lands near where the card will be by then.
-  const [lift, setLift] = useState<{
-    index: number
-    rect: { x: number; y: number; width: number; height: number } | null
-    fading?: boolean
-    /** the visitor wheeled during the handover: it is cut short */
-    hurry?: boolean
-  } | null>(null)
-  // each card's clock: its last tick and when it came, so it can be read
-  // live between ticks (a tick is a quarter second apart)
-  const clocks = useRef<{ t: number; at: number }[]>([])
+  // Full screen on a desktop is the card's OWN player, lifted off the rail
+  // and grown to the frame, playing all the while; the rest of the rail is
+  // loaded into that one player by its anchors (see ReelPlayer, liftTo).
+  // One player, so nothing is ever handed over or seen to reload.
+  const [lift, setLift] = useState<{ index: number; rect: { x: number; y: number; width: number; height: number } } | null>(null)
   // The rail's fit. When the whole rail would end within a third of a card
   // of the measure's right edge (the arrows' edge), the cards are sized so
   // it ends exactly there, grown or shrunk a little; a rail that overruns by
@@ -237,18 +231,11 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
               playlist={items}
               index={i}
               onWatched={setLastSeen}
-              onTick={(s) => {
-                clocks.current[i] = { t: s, at: performance.now() }
-              }}
               liftTo={lift?.index === i ? lift.rect : null}
-              liftFading={lift?.index === i && !!lift.fading}
-              onLiftWheel={() => setLift((l) => (l && !l.hurry ? { ...l, hurry: true } : l))}
-              onExpand={(at) => {
+              onLiftClose={() => setLift(null)}
+              onExpand={() => {
                 setLastSeen(i)
-                // the card plays on, lifted; the feed's player takes over
-                // once it has caught up (see onSynced)
-                setLift({ index: i, rect: null })
-                setFeed({ index: i, at: at + HAND_LEAD })
+                setLift({ index: i, rect: fullFrame() })
               }}
             />
             {(reel.caption || reel.description) && (
@@ -271,48 +258,6 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
         <div className="mx-auto mt-6 flex max-w-[var(--max-width)] justify-end px-[var(--gutter)]">{anchors}</div>
       )}
 
-      {feed !== null && (
-        <ReelsFeed
-          reels={items}
-          startAt={feed.index}
-          resumeFrom={feed.at}
-          // silent while the card is still the one heard
-          soundOff={lift ? true : soundOff}
-          onSoundOff={setSoundOff}
-          onWatched={setLastSeen}
-          holdOpening={lift !== null && !lift.fading}
-          hurry={!!lift?.hurry}
-          onFrame={(rect) => setLift((l) => (l ? { ...l, rect } : l))}
-          syncTo={
-            lift
-              ? () => {
-                  const c = clocks.current[lift.index]
-                  return c ? c.t + (performance.now() - c.at) / 1000 : 0
-                }
-              : undefined
-          }
-          onSynced={() => {
-            // the feed is on the card's clock: the card fades off it, then
-            // lets go (its sound with it; the feed's comes on as it does).
-            // Hurried by a wheel, it lets go at once.
-            let quick = false
-            setLift((l) => {
-              quick = !!l?.hurry
-              return l ? { ...l, fading: true } : l
-            })
-            window.setTimeout(() => {
-              setLift(null)
-              setActive(null)
-            }, quick ? 0 : 220)
-          }}
-          onClose={() => {
-            setFeed(null)
-            setLift(null)
-            // nothing in the rail resumes on its own when the feed closes
-            setActive(null)
-          }}
-        />
-      )}
     </section>
   )
 }

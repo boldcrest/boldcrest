@@ -228,13 +228,8 @@ export default function ReelPlayer({
   playlist,
   index = 0,
   onWatched,
-  onTick,
-  syncTo,
-  onSynced,
   liftTo = null,
-  liftFading = false,
-  onLiftWheel,
-  hurry = false,
+  onLiftClose,
   viewer = false,
   shadeTop,
   shadeQuick = false,
@@ -276,23 +271,13 @@ export default function ReelPlayer({
   index?: number
   /** the reel in view while grown, every time it changes */
   onWatched?: (index: number) => void
-  /** the player's clock, every tick */
-  onTick?: (seconds: number) => void
-  /** In the feed, the reel a card handed over: the card is still playing on
-   *  top of this one. This one runs muted underneath until its clock has met
-   *  the card's (paused or seeked to get there), then says so. */
-  syncTo?: () => number
-  onSynced?: () => void
-  /** A card handing over to the feed: its box lifts off the rail and grows to
-   *  this frame (the feed's, measured), still playing, so the feed's own
-   *  player can take over underneath without anything visibly reloading. */
+  /** Full screen on a desktop: the card's box lifts off the rail and grows
+   *  to this frame, still playing, over a dimmed page. Its anchors (and the
+   *  wheel, and the arrow keys) load the rest of the rail into this same
+   *  player. One player throughout: nothing is handed over or reloaded. */
   liftTo?: { x: number; y: number; width: number; height: number } | null
-  /** the feed has taken over underneath: the lifted card fades off it */
-  liftFading?: boolean
-  /** a wheel over the lifted card: the visitor wants to move on */
-  onLiftWheel?: () => void
-  /** the feed's opening reel, told to take over now, met or not */
-  hurry?: boolean
+  /** the lifted box has come back down onto the rail */
+  onLiftClose?: () => void
   /** A reel among the pictures on a phone: the card as it is in the rail,
    *  but with the viewer's transport (title and seconds above the buttons,
    *  the bigger buttons) and its full-screen button top LEFT, clear of the
@@ -420,6 +405,10 @@ export default function ReelPlayer({
   needsTapRef.current = needsTap
   // what the grown player says in its corner
   const [note, setNote] = useState<'hint' | 'first' | 'last' | null>(null)
+  // the wheel over the lifted box: intent gathered, then one reel a gesture
+  const wheelAccum = useRef(0)
+  const wheelAt = useRef(0)
+  const wheelUntil = useRef(0)
   // A readout for a phone in hand: what the player answered, in order, while
   // grown. Only with ?reeldebug in the address; nothing otherwise.
   const [debug, setDebug] = useState<string[]>([])
@@ -444,14 +433,6 @@ export default function ReelPlayer({
   const grownRef = useRef(false)
   const cursorRef = useRef(index)
   const swappingRef = useRef(false)
-  const onTickRef = useRef(onTick)
-  onTickRef.current = onTick
-  const syncToRef = useRef(syncTo)
-  syncToRef.current = syncTo
-  const onSyncedRef = useRef(onSynced)
-  onSyncedRef.current = onSynced
-  const hurryRef = useRef(hurry)
-  hurryRef.current = hurry
   const onWatchedRef = useRef(onWatched)
   useEffect(() => {
     grownRef.current = grown
@@ -464,8 +445,8 @@ export default function ReelPlayer({
   const lifted = liftTo !== null
   const fillLook = fill || grown
   const feedLook = inFeed || grown || lifted || viewer
-  const shownPoster = grown ? (playlist?.[coverOf ?? cursor]?.poster ?? poster) : poster
-  const shownCaption = grown ? (playlist?.[cursor]?.caption ?? caption) : caption
+  const shownPoster = grown || lifted ? (playlist?.[coverOf ?? cursor]?.poster ?? poster) : poster
+  const shownCaption = grown || lifted ? (playlist?.[cursor]?.caption ?? caption) : caption
   const onPlayRef = useRef(onPlay)
   useEffect(() => {
     onPlayRef.current = onPlay
@@ -586,7 +567,6 @@ export default function ReelPlayer({
           } else resumeTarget.current = null
         }
         setTime(v.currentTime)
-        onTickRef.current?.(v.currentTime)
       }
       const onEnded = () => {
         setPlaying(false)
@@ -793,81 +773,6 @@ export default function ReelPlayer({
         isPaused = true
         setPlaying(false)
       })
-      // The handover: this reel runs under the card that opened the feed,
-      // and has to be on the card's clock before it can take over. Both run
-      // at the same speed, so a lead is never made up: this one is put a
-      // little ahead and PAUSED there, and started again the moment the
-      // card's clock (read live, extrapolated between its ticks) comes up
-      // to that point, less the start's own latency. Both clocks are then
-      // read every few frames until they agree to within a few hundredths,
-      // and it is announced. Late after all, it goes round once more.
-      // how long the player takes to move after play(): guessed, then
-      // measured from the first round and corrected for the next
-      let latency = 0.12
-      let met = false
-      let syncing = false
-      let meetFrom = 0
-      let poll = 0
-      const meet = () => {
-        if (met || syncing || !syncToRef.current) return
-        if (!meetFrom) meetFrom = performance.now()
-        syncing = true
-        const done = () => {
-          window.clearInterval(poll)
-          met = true
-          onSyncedRef.current?.()
-        }
-        const target = syncToRef.current() + 0.5
-        logRef.current(`meet: hold at ${target.toFixed(2)}`)
-        let started = false
-        void p
-          .setCurrentTime(target)
-          .then(() => p.pause())
-          .then(() => {
-            poll = window.setInterval(() => {
-              if (cancelled || met) {
-                window.clearInterval(poll)
-                return
-              }
-              if (performance.now() - meetFrom > 5000 || hurryRef.current) {
-                logRef.current(hurryRef.current ? 'meet: hurried' : 'meet: gave up')
-                if (!started) void p.play().catch(() => {})
-                done()
-                return
-              }
-              const now = syncToRef.current?.() ?? 0
-              if (!started) {
-                if (now >= target - latency) {
-                  started = true
-                  logRef.current(`meet: go at ${now.toFixed(2)}`)
-                  void p.play().catch(() => {})
-                }
-                return
-              }
-              void p.getCurrentTime().then((mine) => {
-                if (met || cancelled) return
-                const gap = mine - (syncToRef.current?.() ?? 0)
-                if (mine <= target) return // not moving yet
-                if (Math.abs(gap) <= 0.08) {
-                  logRef.current(`meet: met, gap ${gap.toFixed(2)}`)
-                  done()
-                  return
-                }
-                // Off by more than that, and both run at one speed, so it
-                // stays off: the gap IS the error in the latency guess.
-                // Corrected, and another round from a fresh hold.
-                latency = Math.min(0.8, Math.max(0, latency - gap))
-                logRef.current(`meet: off ${gap.toFixed(2)}, latency ${latency.toFixed(2)}, again`)
-                window.clearInterval(poll)
-                syncing = false
-                meet()
-              })
-            }, 30)
-          })
-          .catch(() => {
-            syncing = false
-          })
-      }
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
         if (!progressed && d.seconds > 0 && !swappingRef.current) {
           logRef.current(`first tick ${d.seconds.toFixed(1)}`)
@@ -891,8 +796,6 @@ export default function ReelPlayer({
           } else resumeTarget.current = null
         }
         setTime(d.seconds)
-        onTickRef.current?.(d.seconds)
-        if (d.seconds > 0) meet()
       })
       p.on('bufferstart', () => setBuffering(true))
       p.on('bufferend', () => setBuffering(false))
@@ -1157,6 +1060,9 @@ export default function ReelPlayer({
   // card is raised over the feed (1800) for the duration, and the player is
   // laid out at its final size from the first frame, so the picture is only
   // ever scaled down, never up.
+  const LIFT_MS = 700
+  const LIFT_EASE = 'cubic-bezier(0.76, 0, 0.24, 1)'
+  const liftRun = useRef<Animation | null>(null)
   useLayoutEffect(() => {
     if (!liftTo) return
     const el = box.current
@@ -1167,18 +1073,78 @@ export default function ReelPlayer({
     const savedZ = card.style.zIndex
     card.style.zIndex = '1850'
     const scale = from.width / liftTo.width
-    const run = el.animate(
+    liftRun.current = el.animate(
       [
         { transform: `translate(${from.left - liftTo.x}px, ${from.top - liftTo.y}px) scale(${scale})` },
         { transform: 'translate(0, 0) scale(1)' },
       ],
-      { duration: 700, easing: 'cubic-bezier(0.76, 0, 0.24, 1)', fill: 'forwards' },
+      { duration: LIFT_MS, easing: LIFT_EASE, fill: 'forwards' },
     )
-    return () => {
-      run.cancel()
-      card.style.zIndex = savedZ
+    // the page holds still under it, as under the picture viewer (the rail
+    // itself stops being a scroll container for the box, see `expanded`)
+    const html = document.documentElement
+    const body = document.body
+    const saved = { html: html.style.overflow, body: body.style.overflow, rail: '' }
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    const rail = el.closest<HTMLElement>('[data-reel-rail]')
+    if (rail) {
+      saved.rail = rail.style.overflow
+      rail.style.overflow = 'visible'
     }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') lower()
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') swapToRef.current(cursorRef.current + 1)
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') swapToRef.current(cursorRef.current - 1)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      liftRun.current?.cancel()
+      liftRun.current = null
+      card.style.zIndex = savedZ
+      html.style.overflow = saved.html
+      body.style.overflow = saved.body
+      if (rail) rail.style.overflow = saved.rail
+      document.removeEventListener('keydown', onKey)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liftTo])
+
+  /** Back down onto the rail, the way it came: the box shrinks to the card
+   *  on the same curve, then is the card again. A reel that was loaded while
+   *  up is the card's own again once it is down (see collapse). */
+  const lowering = useRef(false)
+  const [lowerFade, setLowerFade] = useState(false)
+  const lower = () => {
+    if (lowering.current) return
+    const el = box.current
+    const card = el?.closest<HTMLElement>('[data-reel-card]')
+    if (!el || !card || !liftTo) {
+      onLiftClose?.()
+      return
+    }
+    lowering.current = true
+    setLowerFade(true)
+    const to = card.getBoundingClientRect()
+    const scale = to.width / liftTo.width
+    liftRun.current?.cancel()
+    const run = el.animate(
+      [
+        { transform: 'translate(0, 0) scale(1)' },
+        { transform: `translate(${to.left - liftTo.x}px, ${to.top - liftTo.y}px) scale(${scale})` },
+      ],
+      { duration: 500, easing: LIFT_EASE, fill: 'forwards' },
+    )
+    run.onfinish = () => {
+      lowering.current = false
+      setLowerFade(false)
+      if (playlist && cursor !== index) collapse()
+      onLiftClose?.()
+      // the box is the card again on the next frame; the animation's last
+      // frame must not stay on it after that
+      requestAnimationFrame(() => run.cancel())
+    }
+  }
 
   /** A line in the grown player's corner, for a while. */
   const say = (what: 'hint' | 'first' | 'last') => {
@@ -1220,6 +1186,9 @@ export default function ReelPlayer({
     loadAhead(next)
   }
 
+  const swapToRef = useRef(swapTo)
+  swapToRef.current = swapTo
+
   /** The reel a swipe is heading for, into the frame, and asked to start as
    *  soon as it is there. */
   const loadAhead = (next: number) => {
@@ -1229,13 +1198,31 @@ export default function ReelPlayer({
     log(`load ahead reel ${next + 1}`)
     claimed.current = true
     wantsPlay.current = true
-    void m.load(list[next].vimeoUrl).then(() => {
+    const go = () => {
       // asked with sound; a phone that refuses that starts it muted (see
       // mutedRetry) and a tap on the reel asks for the sound again
       m.setMuted(soundOffRef.current)
       setMuted(soundOffRef.current)
       m.play()
-    })
+    }
+    // Vimeo's load now and then never answers (seen on a desktop, one
+    // click in ten): asked again after a moment, and only the first answer
+    // counts.
+    const ask = (tries: number) => {
+      let answered = false
+      const late = window.setTimeout(() => {
+        if (answered) return
+        log(`load ${tries + 1} stuck${tries < 2 ? ', again' : ''}`)
+        if (tries < 2) ask(tries + 1)
+      }, 2500)
+      void m.load(list[next].vimeoUrl).then(() => {
+        if (answered) return
+        answered = true
+        window.clearTimeout(late)
+        go()
+      })
+    }
+    ask(0)
   }
 
   // Grown: the frame sits in the middle of the box's scroll, one screen of
@@ -1406,21 +1393,75 @@ export default function ReelPlayer({
           style={{ backgroundImage: `url(${poster})` }}
         />
       )}
+      {/* Lifted: the page dimmed and blurred under the box, as under the
+          picture viewer, and the two anchors beside the frame, one reel a
+          press: the one with nowhere to go fades rather than disappears, so
+          the pair holds its place. Escape, the arrow keys and the wheel do
+          the same. */}
+      {lifted && liftTo && (
+        <>
+          <div
+            aria-hidden
+            onClick={lower}
+            className={`fixed inset-0 z-[1840] bg-black/40 transition-opacity duration-500 [@media(min-width:700px)_and_(min-height:700px)]:backdrop-blur-[6px] [@media(pointer:fine)]:backdrop-blur-[6px] ${
+              lowerFade ? 'opacity-0' : 'opacity-100'
+            }`}
+            style={{ animation: lowerFade ? undefined : 'reel-ground-in 500ms ease-out both' }}
+          />
+          {playlist && playlist.length > 1 &&
+            ([-1, 1] as const).map((dir) => {
+              const off = dir < 0 ? cursor <= 0 : cursor >= playlist.length - 1
+              return (
+                <button
+                  key={dir}
+                  type="button"
+                  onClick={() => swapTo(cursor + dir)}
+                  aria-label={dir < 0 ? t('previous') : t('next')}
+                  aria-disabled={off}
+                  tabIndex={off ? -1 : 0}
+                  className={`fixed z-[1860] flex size-11 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white/85 backdrop-blur-[6px] transition-[opacity,border-color,background-color] duration-300 hover:border-white/50 hover:bg-black/45 hover:text-white ${
+                    off || lowerFade ? 'pointer-events-none opacity-0' : 'opacity-100'
+                  }`}
+                  style={{
+                    top: liftTo.y + liftTo.height / 2 - 22,
+                    left: dir < 0 ? liftTo.x - 44 - 20 : liftTo.x + liftTo.width + 20,
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    {dir < 0 ? <path d="M15 5l-7 7 7 7" /> : <path d="M9 5l7 7-7 7" />}
+                  </svg>
+                </button>
+              )
+            })}
+        </>
+      )}
       <div
         ref={box}
         // grown on a phone: the box scrolls, one screen per reel, and
         // settling on a neighbour's cover is the swipe to that reel
         onScroll={grown ? onGrownScroll : undefined}
-        // lifted over the feed, the box is not in the feed's scroller: a
-        // wheel over it would move the page behind (Lenis). It is kept here,
-        // and the handover is hurried so the feed can take the next one.
+        // lifted, a wheel is the next or the previous reel, on the deck's
+        // terms: a mouse notch and a trackpad swipe made comparable, intent
+        // gathered within one gesture, and the tail of the gesture that
+        // moved swallowed. Kept off the page behind (Lenis) either way.
         data-lenis-prevent={lifted ? '' : undefined}
         onWheel={
           lifted
             ? (e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                onLiftWheel?.()
+                if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || !e.deltaY) return
+                if (e.timeStamp < wheelUntil.current) return
+                const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 800 : 1
+                const dy = e.deltaY * unit
+                if (e.timeStamp - wheelAt.current > 200 || Math.sign(dy) !== Math.sign(wheelAccum.current)) wheelAccum.current = 0
+                wheelAt.current = e.timeStamp
+                wheelAccum.current += dy
+                if (Math.abs(wheelAccum.current) < 28) return
+                const down = wheelAccum.current > 0
+                wheelAccum.current = 0
+                wheelUntil.current = e.timeStamp + 1150
+                swapTo(cursor + (down ? 1 : -1))
               }
             : undefined
         }
@@ -1433,7 +1474,7 @@ export default function ReelPlayer({
         }
         className={
           lifted
-            ? `group fixed z-[1850] overflow-hidden rounded-[var(--radius-lg)] bg-bg transition-opacity duration-200 ${liftFading ? 'opacity-0' : 'opacity-100'}`
+            ? 'group fixed z-[1850] overflow-hidden rounded-[var(--radius-lg)] bg-bg'
             : expanded
             ? grown
               ? 'group fixed inset-0 z-[200] overflow-y-auto overscroll-contain snap-y snap-mandatory bg-bg [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
@@ -1667,7 +1708,7 @@ export default function ReelPlayer({
                 clipped frame so it reads as part of the picture, and above the
                 player (z-40) so it stays pressable while the invisible iframe
                 is taking taps over the cover. */}
-            {inFeed && !fillLook && (
+            {(inFeed || lifted) && !fillLook && (
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-x-0 top-0 z-[34] h-28"
@@ -1677,10 +1718,10 @@ export default function ReelPlayer({
                 }}
               />
             )}
-            {((inFeed && onClose) || grown) && (
+            {((inFeed && onClose) || grown || lifted) && (
               <button
                 type="button"
-                onClick={grown ? collapse : onClose}
+                onClick={grown ? collapse : lifted ? lower : onClose}
                 aria-label={t('exitFullscreen')}
                 // Filling the screen, the mark's INK ends on the speaker's
                 // line with the seconds, 22px in. Its strokes run 6→18 of a
