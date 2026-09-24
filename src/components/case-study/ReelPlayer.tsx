@@ -83,6 +83,8 @@ type Media = {
   /** Resolves once the player is actually at that second, so a resume can
    *  wait for the seek before it starts playing. */
   seek: (seconds: number) => Promise<void>
+  /** another reel into the same player, keeping its permissions */
+  load: (url: string) => Promise<void>
   setMuted: (muted: boolean) => void
   paused: () => boolean
   /** the player's own full screen, where the page cannot take the reel there;
@@ -108,6 +110,26 @@ type Media = {
  */
 const shade = (to: 'top' | 'bottom') =>
   `linear-gradient(in srgb to ${to}, rgb(10 10 10 / 1) 0%, rgb(10 10 10 / 0.55) 42%, rgb(10 10 10 / 0.18) 78%, rgb(10 10 10 / 0) 100%)`
+
+/** The feed's arrow, for the grown player's corner line. */
+function Arrow({ up = false }: { up?: boolean }) {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      style={up ? { transform: 'rotate(180deg)' } : undefined}
+    >
+      <path d="M12 4.5v15M5.5 13l6.5 6.5 6.5-6.5" />
+    </svg>
+  )
+}
 
 /** A clip served as a file rather than through Vimeo — a path on this site or
  *  a plain video URL. The same player, driven through a <video> element. */
@@ -189,6 +211,9 @@ export default function ReelPlayer({
   fill = false,
   soundOff = false,
   onSoundOff,
+  playlist,
+  index = 0,
+  onWatched,
   shadeTop,
   shadeQuick = false,
   lastSeen = false,
@@ -221,6 +246,14 @@ export default function ReelPlayer({
   /** The reel this visitor opened last. Marked on the rail so they can find
    *  their way back to it. */
   lastSeen?: boolean
+  /** On a phone, the whole rail: the tapped card's player grows to full screen
+   *  and the other reels are loaded INTO it on a swipe, so the one frame iOS
+   *  has seen a tap in is the one that plays every reel — with sound, and
+   *  without a second tap. `index` is this card's own place in it. */
+  playlist?: { vimeoUrl: string; poster?: string | null; caption?: string }[]
+  index?: number
+  /** the reel in view while grown, every time it changes */
+  onWatched?: (index: number) => void
   /** A shade over the top of the picture, the twin of the one under the
    *  transport, for the feed's lines to sit on when they are in the reel's
    *  corner. Comes and goes with them: `shadeQuick` follows an answer's
@@ -304,6 +337,38 @@ export default function ReelPlayer({
   // has to pay; a mouse keeps the neighbours ready as before.
   const nativeStart = inFeed && !mouse && !isFile(vimeoUrl)
   const mounted = !suspend && (nativeStart ? active : inView || preload)
+  // The phone's reels: this card's player, tapped (so iOS trusts it), grown
+  // over the page, with the rest of the rail loaded into it on a swipe. The
+  // tap goes INTO the frame as on jokadent.com — that is what lets the player
+  // obey afterwards — and from then on every reel plays with sound and no
+  // second tap.
+  const growOnTouch = !mouse && !inFeed && !!playlist && playlist.length > 0
+  const grown = expanded && growOnTouch
+  // which of the rail's reels the grown player is showing
+  const [cursor, setCursor] = useState(index)
+  // a reel being loaded into the player: its cover holds the picture meanwhile
+  const [swapping, setSwapping] = useState(false)
+  // what the grown player says in its corner
+  const [note, setNote] = useState<'hint' | 'first' | 'last' | null>(null)
+  const noteTimer = useRef(0)
+  const swipeY = useRef<number | null>(null)
+  // for the player's own handlers, which are wired once
+  const grownRef = useRef(false)
+  const cursorRef = useRef(index)
+  const swappingRef = useRef(false)
+  const onWatchedRef = useRef(onWatched)
+  useEffect(() => {
+    grownRef.current = grown
+    cursorRef.current = cursor
+    swappingRef.current = swapping
+    onWatchedRef.current = onWatched
+  }, [grown, cursor, swapping, onWatched])
+  // grown on a phone it wears the phone feed's dress: bare X, full-width
+  // frame with bars, the feed's transport
+  const fillLook = fill || grown
+  const feedLook = inFeed || grown
+  const shownPoster = grown ? (playlist?.[cursor]?.poster ?? poster) : poster
+  const shownCaption = grown ? (playlist?.[cursor]?.caption ?? caption) : caption
   const onPlayRef = useRef(onPlay)
   useEffect(() => {
     onPlayRef.current = onPlay
@@ -364,6 +429,11 @@ export default function ReelPlayer({
           v.currentTime = s
           return Promise.resolve()
         },
+        load: (url) => {
+          v.src = url
+          v.load()
+          return Promise.resolve()
+        },
         setMuted: (m) => {
           v.muted = m
           syncMuted()
@@ -387,14 +457,19 @@ export default function ReelPlayer({
       const onPlay = () => {
         if (priming.current || !claimed.current) return
         onPlayRef.current()
+        // grown, this card is showing whichever reel was swiped to: the rail
+        // marks that one, not the card's own, which onPlay has just stamped
+        if (grownRef.current) onWatchedRef.current?.(cursorRef.current)
         syncMuted()
         setLoading(false)
+        setSwapping(false)
         setStarted(true)
         setEnded(false)
         setPlaying(true)
       }
       const onPause = () => setPlaying(false)
       const onTime = () => {
+        if (swappingRef.current) return
         if (v.duration) setDuration(v.duration)
         const target = resumeTarget.current
         if (target !== null) {
@@ -502,6 +577,27 @@ export default function ReelPlayer({
         },
         pause: () => void p.pause().catch(() => {}),
         seek: (s) => p.setCurrentTime(s).then(() => {}).catch(() => {}),
+        load: (url) => {
+          const { id, hash } = extractVimeoRef(url)
+          // the watch address with the hash, which is how a hidden video is
+          // named to loadVideo; the embed options are the same as the frame's
+          return p
+            .loadVideo({
+              url: `https://vimeo.com/${id ?? ''}${hash ? `/${hash}` : ''}`,
+              autoplay: false,
+              controls: false,
+              title: false,
+              byline: false,
+              portrait: false,
+              playsinline: true,
+              dnt: true,
+              autopause: false,
+              loop: true,
+              keyboard: false,
+            } as Parameters<typeof p.loadVideo>[0])
+            .then(() => {})
+            .catch(() => {})
+        },
         setMuted: (m) => {
           void p
             .setMuted(m)
@@ -530,9 +626,13 @@ export default function ReelPlayer({
         if (priming.current || !claimed.current) return
         // a tap inside the player started it: this reel becomes the one playing
         onPlayRef.current()
+        // grown, this card is showing whichever reel was swiped to: the rail
+        // marks that one, not the card's own, which onPlay has just stamped
+        if (grownRef.current) onWatchedRef.current?.(cursorRef.current)
         syncMuted()
         setTimeout(syncMuted, 800)
         setLoading(false)
+        setSwapping(false)
         setStarted(true)
         setEnded(false)
         setPlaying(true)
@@ -544,6 +644,8 @@ export default function ReelPlayer({
       })
       p.on('timeupdate', (d: { seconds: number; duration: number }) => {
         if (d.seconds > 0) progressed = true
+        // a reel being swapped in: the old one's last ticks are not its time
+        if (swappingRef.current) return
         if (d.duration) setDuration(d.duration)
         const target = resumeTarget.current
         if (target !== null) {
@@ -604,6 +706,12 @@ export default function ReelPlayer({
         const m = media.current
         if (!cancelled && m?.paused()) m.play()
         window.focus()
+        // on a phone the tapped card is the reels: it grows the moment it
+        // has been asked to play, with the tap's permission inside it
+        if (growOnTouch && !cancelled) {
+          setCursor(index)
+          setExpanded(true)
+        }
       }, 150)
       // a player that never answers does not leave the spinner turning
       giveUp = window.setTimeout(() => setLoading(false), 10000)
@@ -619,7 +727,7 @@ export default function ReelPlayer({
       void player?.destroy().catch(() => {})
       media.current = null
     }
-  }, [mounted, vimeoUrl, nativeStart])
+  }, [mounted, vimeoUrl, nativeStart, growOnTouch, index])
 
   // grown over the page: Escape shrinks it back, the page does not scroll
   // under it, and the two things round the reel that would hold a fixed box
@@ -758,6 +866,66 @@ export default function ReelPlayer({
     m.play()
   }, [autoPlay, ready, active, resumeFrom])
 
+  /** A line in the grown player's corner, for a while. */
+  const say = (what: 'hint' | 'first' | 'last') => {
+    setNote(what)
+    window.clearTimeout(noteTimer.current)
+    noteTimer.current = window.setTimeout(() => setNote(null), what === 'hint' ? 2600 : 1100)
+  }
+  useEffect(() => () => window.clearTimeout(noteTimer.current), [])
+
+  /** Another of the rail's reels into this player. Past either end, the
+   *  player says so instead. */
+  const swapTo = (next: number) => {
+    const list = playlist
+    const m = media.current
+    if (!list || !m) return
+    if (next < 0 || next > list.length - 1) {
+      say(next < 0 ? 'first' : 'last')
+      return
+    }
+    setSwapping(true)
+    setCursor(next)
+    setTime(0)
+    setEnded(false)
+    setBuffering(false)
+    onWatched?.(next)
+    claimed.current = true
+    wantsPlay.current = true
+    void m.load(list[next].vimeoUrl).then(() => {
+      // the player still holds the tap's permission: this play is obeyed,
+      // with sound, the way the first one was
+      m.setMuted(soundOffRef.current)
+      setMuted(soundOffRef.current)
+      m.play()
+    })
+  }
+
+  /** Back to the card. If a different reel was loaded while grown, the card's
+   *  own comes back — the card is that reel, and stays it. */
+  const collapse = () => {
+    setExpanded(false)
+    const m = media.current
+    wantsPlay.current = false
+    m?.pause()
+    if (playlist && cursor !== index) {
+      void m?.load(playlist[index].vimeoUrl)
+      setCursor(index)
+    }
+    setStarted(false)
+    setPlaying(false)
+    setSwapping(false)
+    setTime(0)
+  }
+
+  // grown: the hint, and the rail told where the visitor is
+  useEffect(() => {
+    if (!grown) return
+    say('hint')
+    onWatched?.(index)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grown])
+
   const play = () => {
     const m = media.current
     claimed.current = true
@@ -806,7 +974,7 @@ export default function ReelPlayer({
   // In the feed a reel plays as soon as you land on it, so it never sits in a
   // "press to start" state: its transport is up from the first frame and the
   // corner button is only ever the replay at the end.
-  const showControls = inFeed ? !ended : started && !ended
+  const showControls = inFeed || grown ? !ended : started && !ended
 
   // The title row's height, so the shade under it can grow with it: a title
   // that wraps to three lines climbs 73px up the picture, and a fixed shade
@@ -822,7 +990,7 @@ export default function ReelPlayer({
     // the row is only in the tree while the controls are, so the observer is
     // attached when it appears rather than at mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showControls, inFeed])
+  }, [showControls, inFeed, grown])
   const showCorner = ended || (!inFeed && !started)
 
   return (
@@ -830,6 +998,20 @@ export default function ReelPlayer({
     <div className="relative aspect-[9/16] w-full">
       <div
         ref={box}
+        // grown on a phone: a swipe is the next or the previous reel
+        onTouchStart={grown ? (e) => { swipeY.current = e.touches[0].clientY } : undefined}
+        onTouchEnd={
+          grown
+            ? (e) => {
+                const from = swipeY.current
+                swipeY.current = null
+                if (from === null) return
+                const dy = from - e.changedTouches[0].clientY
+                if (Math.abs(dy) < 60) return
+                swapTo(cursor + (dy > 0 ? 1 : -1))
+              }
+            : undefined
+        }
         className={
           expanded
             ? 'group fixed inset-0 z-[200]'
@@ -838,7 +1020,7 @@ export default function ReelPlayer({
               // only while a reel plays, under the video.
               // the hairline is a card's edge on the rail; a reel full screen,
               // boxed or filling, has no card to be the edge of
-              `group absolute inset-0 overflow-hidden ${fill || inFeed ? 'bg-bg' : 'border border-border'} ${showControls && !fill ? 'bg-bg-card' : ''} ${full || fill ? 'bg-bg' : 'rounded-[var(--radius-lg)]'}`
+              `group absolute inset-0 overflow-hidden ${fillLook || inFeed ? 'bg-bg' : 'border border-border'} ${showControls && !fillLook ? 'bg-bg-card' : ''} ${full || fillLook ? 'bg-bg' : 'rounded-[var(--radius-lg)]'}`
         }
       >
         {/* Full screen: the reel large in the middle. As the lightbox, over the
@@ -846,12 +1028,19 @@ export default function ReelPlayer({
             nothing else) over its own cover treated the same way. The stage
             stays in the tree, so the player never reloads. */}
         {expanded && (
-          <div aria-hidden className="absolute inset-0" onClick={() => setExpanded(false)}>
+          <div aria-hidden className="absolute inset-0" onClick={grown ? collapse : () => setExpanded(false)}>
             {/* The same dim and blur the start-a-project panel puts over the
                 site, so both overlays treat the page the same way: bg-black/40
                 with a 6px blur, and the blur only where it is cheap — a fine
                 pointer, or a screen big enough that it is not a phone. */}
-            <div className="absolute inset-0 bg-black/40 [@media(min-width:700px)_and_(min-height:700px)]:backdrop-blur-[6px] [@media(pointer:fine)]:backdrop-blur-[6px]" />
+            <div
+              className={
+                grown
+                  ? // a phone: solid, so nothing shows through round the reel
+                    'absolute inset-0 bg-bg'
+                  : 'absolute inset-0 bg-black/40 [@media(min-width:700px)_and_(min-height:700px)]:backdrop-blur-[6px] [@media(pointer:fine)]:backdrop-blur-[6px]'
+              }
+            />
           </div>
         )}
         {full && !expanded && poster && (
@@ -866,15 +1055,20 @@ export default function ReelPlayer({
 
         <div
           className={
-            full
-              ? // tall, but not wall to wall on a big screen: room above and
-                // below, and a cap
-                'absolute inset-0 m-auto aspect-[9/16] h-[min(calc(100%-6rem),960px)] max-w-[calc(100%-2rem)]'
-              : 'absolute inset-0'
+            grown
+              ? // the phone feed's frame: 9:16 at the full width, centred, bars
+                // above and below on the ground
+                'absolute inset-0 m-auto aspect-[9/16] w-full'
+              : full
+                ? // tall, but not wall to wall on a big screen: room above and
+                  // below, and a cap
+                  'absolute inset-0 m-auto aspect-[9/16] h-[min(calc(100%-6rem),960px)] max-w-[calc(100%-2rem)]'
+                : 'absolute inset-0'
           }
+          style={grown ? { height: 'min(100%, calc(100vw * 16 / 9))' } : undefined}
         >
           {/* the X, just off the reel's top right corner (inside it on a narrow screen) */}
-          {full && (
+          {full && !grown && (
             <button
               type="button"
               onClick={() => (expanded ? setExpanded(false) : void document.exitFullscreen())}
@@ -900,7 +1094,7 @@ export default function ReelPlayer({
           {/* rounded by a clip on its own layer, not a transform-free overflow:
               the playing video under a plain rounded overflow shimmered along
               the curve */}
-          <div className={`absolute inset-0 overflow-hidden ${full && !fill ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}>
+          <div className={`absolute inset-0 overflow-hidden ${full && !fillLook ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}>
             {mounted && isFile(vimeoUrl) && (
               <video
                 ref={clip}
@@ -942,13 +1136,56 @@ export default function ReelPlayer({
                 className={`absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] border-0 ${
                   nativeStart
                     ? '' // takes the tap: see onBlur
-                    : showControls || (!inFeed && onExpand)
+                    : showControls || (!inFeed && onExpand && !growOnTouch)
                       ? 'pointer-events-none'
                       : mouse
                         ? 'pointer-events-none opacity-0'
                         : 'z-30 cursor-pointer opacity-0'
                 }`}
               />
+            )}
+
+            {/* Grown on a phone: what the player has to say, in the corner
+                level with the X and on the play glyph's left, on its own shade.
+                SCROLL UP/DOWN when it opens; FIRST VIDEO or LAST VIDEO when a
+                swipe asks for a reel that is not there. */}
+            {grown && (
+              <>
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute inset-x-0 top-0 z-[34] h-32 transition-opacity ${
+                    note === 'hint' ? 'duration-[600ms]' : 'duration-[160ms]'
+                  } ${note ? 'opacity-100' : 'opacity-0'}`}
+                  style={{ backgroundImage: shade('bottom') }}
+                />
+                <div className="pointer-events-none absolute left-[1.375rem] top-3 z-[45] flex h-12 items-center">
+                  <span
+                    className={`flex items-center gap-2 text-[0.8rem] uppercase tracking-[0.2em] transition-opacity ${
+                      note === 'hint' ? 'text-white/55 duration-[600ms]' : 'text-white/70 duration-[160ms]'
+                    } ${note ? 'opacity-100' : 'opacity-0'}`}
+                  >
+                    {note === 'first'
+                      ? t('atTop')
+                      : note === 'last'
+                        ? t('atEnd')
+                        : cursor === 0
+                          ? t('scrollDown')
+                          : cursor === (playlist?.length ?? 1) - 1
+                            ? t('scrollUp')
+                            : t('scrollBoth')}
+                    <span className="flex items-center gap-1">
+                      {(note === 'first' || (note === 'hint' && cursor === 0)) && <Arrow />}
+                      {(note === 'last' || (note === 'hint' && cursor === (playlist?.length ?? 1) - 1)) && <Arrow up />}
+                      {note === 'hint' && cursor > 0 && cursor < (playlist?.length ?? 1) - 1 && (
+                        <>
+                          <Arrow up />
+                          <Arrow />
+                        </>
+                      )}
+                    </span>
+                  </span>
+                </div>
+              </>
             )}
 
             {/* Waiting on the network mid-play: the same ring the corner button
@@ -964,10 +1201,10 @@ export default function ReelPlayer({
                 clipped frame so it reads as part of the picture, and above the
                 player (z-40) so it stays pressable while the invisible iframe
                 is taking taps over the cover. */}
-            {inFeed && onClose && (
+            {((inFeed && onClose) || grown) && (
               <button
                 type="button"
-                onClick={onClose}
+                onClick={grown ? collapse : onClose}
                 aria-label={t('exitFullscreen')}
                 // Filling the screen, the mark's INK ends on the speaker's
                 // line with the seconds, 22px in. Its strokes run 6→18 of a
@@ -976,14 +1213,14 @@ export default function ReelPlayer({
                 // button's own edge lands 5px in. Aligning box to box put the
                 // mark visibly further in than the text it was meant to meet.
                 className={`absolute top-3 z-40 flex size-12 items-center justify-center text-white/80 transition-all duration-300 hover:text-white hover:[border-color:rgba(255,255,255,0.6)] ${
-                  fill ? 'right-[5px]' : 'right-3'
+                  fillLook ? 'right-[5px]' : 'right-3'
                 }`}
                 // Filling the screen, the mark stands on its own: a disc is
                 // what lifts a control off a page it is sitting on, and here
                 // there is no page under it — just the picture, edge to edge.
                 // Bigger to make up for losing the disc around it.
                 style={
-                  fill
+                  fillLook
                     ? undefined
                     : {
                         borderRadius: 'var(--radius-pill)',
@@ -997,19 +1234,19 @@ export default function ReelPlayer({
                 }
               >
                 <svg
-                  width={fill ? 26 : 18}
-                  height={fill ? 26 : 18}
+                  width={fillLook ? 26 : 18}
+                  height={fillLook ? 26 : 18}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth={fill ? 1.6 : 1.8}
+                  strokeWidth={fillLook ? 1.6 : 1.8}
                   strokeLinecap="round"
                   aria-hidden
                   // Bare on a phone, with no disc, the mark needs its own
                   // ground: a soft shadow, so it holds on a white frame when
                   // the top shade is not there.
                   style={
-                    fill
+                    fillLook
                       ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(0,0,0,0.35))' }
                       : undefined
                   }
@@ -1026,20 +1263,20 @@ export default function ReelPlayer({
                 scrolling onto a reel shows the picture and then the video,
                 never a hole. pointer-events-none so the tap still reaches the
                 player underneath. */}
-            {poster && (inFeed ? !started && !primed : !showControls) && (
+            {shownPoster && (feedLook ? (!started && !primed) || swapping : !showControls) && (
               <span
                 aria-hidden
                 className={
-                  inFeed
+                  feedLook
                     ? // Only until the first frame exists. Keying this off
                       // `playing` instead brought the cover back on every
                       // pause; once the reel has started, pausing should hold
                       // the frame you stopped on and the end should hold the
                       // last one, the way a reel does.
-                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-200 ${started || primed ? 'opacity-0' : 'opacity-100'}`
+                      `pointer-events-none absolute inset-0 z-[35] bg-cover bg-center transition-opacity duration-200 ${(started || primed) && !swapping ? 'opacity-0' : 'opacity-100'}`
                     : 'absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]'
                 }
-                style={{ backgroundImage: `url(${poster})` }}
+                style={{ backgroundImage: `url(${shownPoster})` }}
               />
             )}
 
@@ -1049,7 +1286,7 @@ export default function ReelPlayer({
                 // A rail card on a phone is a thumbnail: pressing it goes
                 // straight to the reels, full screen, rather than playing a
                 // 62vw video in the middle of the page.
-                if (!mouse && !inFeed && onExpand) {
+                if (!mouse && !inFeed && onExpand && !growOnTouch) {
                   onExpand(time)
                   return
                 }
@@ -1145,7 +1382,7 @@ export default function ReelPlayer({
                     and the time both sit on one row above the transport, so
                     nothing covers the picture up there. On a rail card there is
                     no room for that row, so the time stays top-left. */}
-                {!inFeed && (
+                {!feedLook && (
                   <>
                     <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black/35 to-transparent" />
                     <span className="pointer-events-none absolute left-5 top-3 z-20 flex h-8 items-center text-[0.7rem] font-medium tabular-nums text-white/90">
@@ -1153,7 +1390,7 @@ export default function ReelPlayer({
                     </span>
                   </>
                 )}
-                {!full && !inFeed && (
+                {!full && !feedLook && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1179,14 +1416,14 @@ export default function ReelPlayer({
                   </button>
                 )}
                 <div
-                  className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 ${inFeed ? '' : 'h-24'}`}
+                  className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 ${feedLook ? '' : 'h-24'}`}
                   // In the feed the shade reaches as far up as the title does,
                   // plus room for the fade to finish above it: the row sits
                   // 56px up, so a one-line title gets the 144px it always had
                   // and a three-line one gets 56 + 73 + 72 = 201.
                   style={{
                     backgroundImage: shade('top'),
-                    ...(inFeed ? { height: Math.max(144, 56 + titleH + 72) } : {}),
+                    ...(feedLook ? { height: Math.max(144, 56 + titleH + 72) } : {}),
                   }}
                 />
                 {shadeTop !== undefined && (
@@ -1206,7 +1443,7 @@ export default function ReelPlayer({
                     description section is 1.15rem) rather than a caption size,
                     because in the feed this line is the only thing naming the
                     reel. */}
-                {inFeed && (caption || duration > 0) && (
+                {feedLook && (shownCaption || duration > 0) && (
                   <div
                     ref={titleRow}
                     className={`pointer-events-none absolute bottom-14 z-20 flex items-end justify-between gap-6 ${
@@ -1215,12 +1452,12 @@ export default function ReelPlayer({
                       // does — 22px in, the 12px bar inset plus the 10px the
                       // 20px marks sit inside their 40px buttons. Two lines
                       // for everything, rather than a third pair of edges.
-                      fill ? 'left-[1.375rem] right-[1.375rem]' : 'inset-x-5'
+                      fillLook ? 'left-[1.375rem] right-[1.375rem]' : 'inset-x-5'
                     }`}
                   >
-                    {caption ? (
+                    {shownCaption ? (
                       <p className="max-w-[26ch] text-[1.05rem] font-medium leading-[1.45] text-white">
-                        {caption}
+                        {shownCaption}
                       </p>
                     ) : (
                       <span />
@@ -1236,13 +1473,13 @@ export default function ReelPlayer({
                     onClick={toggle}
                     aria-label={playing ? t('pause') : t('play')}
                     className={`flex shrink-0 items-center justify-center ${
-                      inFeed ? 'size-10' : 'size-8'
+                      feedLook ? 'size-10' : 'size-8'
                     }`}
                   >
                     {playing ? (
-                      <PauseIcon size={inFeed ? 20 : 16} />
+                      <PauseIcon size={feedLook ? 20 : 16} />
                     ) : (
-                      <PlayIcon size={inFeed ? 20 : 16} />
+                      <PlayIcon size={feedLook ? 20 : 16} />
                     )}
                   </button>
 
@@ -1304,10 +1541,10 @@ export default function ReelPlayer({
                     }}
                     aria-label={muted ? t('unmute') : t('mute')}
                     className={`flex shrink-0 items-center justify-center ${
-                      inFeed ? 'size-10' : 'size-8'
+                      feedLook ? 'size-10' : 'size-8'
                     }`}
                   >
-                    <SoundIcon muted={muted} size={inFeed ? 20 : 16} />
+                    <SoundIcon muted={muted} size={feedLook ? 20 : 16} />
                   </button>
                 </div>
               </>

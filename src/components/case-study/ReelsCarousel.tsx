@@ -45,7 +45,7 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
   // to begin with — a reel is the one thing on the site that speaks.
   const [soundOff, setSoundOff] = useState(false)
 
-  const items = (reels ?? []).filter((r) => r.vimeoUrl)
+  const items = (reels ?? []).filter((r): r is Reel & { vimeoUrl: string } => !!r.vimeoUrl)
   if (items.length === 0) return null
 
   // Mouse/trackpad only. On touch the native horizontal scroll is already
@@ -113,6 +113,13 @@ export default function ReelsCarousel({ reels, heading, hint }: ReelsCarouselPro
               lastSeen={lastSeen === i}
               soundOff={soundOff}
               onSoundOff={setSoundOff}
+              // On a phone the card is the reels: its player grows and the
+              // rest of the rail is loaded into it on a swipe. It gets the
+              // whole rail for that, and the feed below is never opened
+              // there — the player decides which by the pointer it has.
+              playlist={items}
+              index={i}
+              onWatched={setLastSeen}
               onExpand={(at) => {
                 setLastSeen(i)
                 // stop the card behind before the feed takes over, or both
