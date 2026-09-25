@@ -1160,15 +1160,44 @@ export default function ReelPlayer({
     const list = playlist
     const m = media.current
     if (!list || !m) return
+    if (moving.current) return
     if (next < 0 || next > list.length - 1) {
       say(next < 0 ? 'first' : 'last')
       return
     }
-    // The scroll has landed on the next reel's cover; the frame now shows
-    // that same cover (swapping) and is put back in the middle underneath
-    // it, so the handover is invisible. The reel itself was loaded behind
-    // the cover during the swipe (see onGrownScroll); if the swipe was too
-    // quick for that, it is loaded now.
+    // Lifted (a desktop): the move first, the load after. The reel that is
+    // playing slides out and the next one's cover slides in, on the deck's
+    // curve, while the player still shows the old reel — a load mid-move
+    // would go black under it. Only once the cover is in place is the new
+    // reel loaded behind it; the cover then holds until its first frame.
+    if (lifted) {
+      const dir: 1 | -1 = next > cursor ? 1 : -1
+      moving.current = true
+      setIncoming({ index: next, dir })
+      const run = stage.current?.animate(
+        [{ transform: 'translateY(0)' }, { transform: `translateY(${-dir * 100}%)` }],
+        { duration: LIFT_MS, easing: LIFT_EASE, fill: 'forwards' },
+      )
+      const land = () => {
+        moving.current = false
+        setIncoming(null)
+        landOn(next)
+        // the stage comes back under the cover on the next frame, once the
+        // cover is there, not a frame before it with the old reel showing
+        requestAnimationFrame(() => run?.cancel())
+      }
+      if (run) run.onfinish = land
+      else land()
+      return
+    }
+    landOn(next)
+  }
+
+  /** The frame is on `next`: its cover, and the reel loaded behind it. On a
+   *  phone the scroll has just landed on that cover and the frame is put
+   *  back in the middle underneath it; the reel itself was loaded during
+   *  the swipe (see onGrownScroll), or is loaded now if it was too quick. */
+  const landOn = (next: number) => {
     setSwapping(true)
     setTicked(false)
     setNeedsTap(refuses.current)
@@ -1186,6 +1215,9 @@ export default function ReelPlayer({
     loadAhead(next)
   }
 
+  const moving = useRef(false)
+  // the reel sliding in while the move runs: its cover, from the side it comes
+  const [incoming, setIncoming] = useState<{ index: number; dir: 1 | -1 } | null>(null)
   const swapToRef = useRef(swapTo)
   swapToRef.current = swapTo
 
@@ -1205,16 +1237,17 @@ export default function ReelPlayer({
       setMuted(soundOffRef.current)
       m.play()
     }
-    // Vimeo's load now and then never answers (seen on a desktop, one
-    // click in ten): asked again after a moment, and only the first answer
-    // counts.
+    // A load takes Vimeo anything from half a second to three or four
+    // (measured: the later loads of a session are the slower), and a second
+    // ask mid-load breaks the first. So the wait is long, and there is one
+    // more ask only for a load that has truly never answered.
     const ask = (tries: number) => {
       let answered = false
       const late = window.setTimeout(() => {
         if (answered) return
-        log(`load ${tries + 1} stuck${tries < 2 ? ', again' : ''}`)
-        if (tries < 2) ask(tries + 1)
-      }, 2500)
+        log(`load ${tries + 1} stuck${tries < 1 ? ', again' : ''}`)
+        if (tries < 1) ask(tries + 1)
+      }, 8000)
       void m.load(list[next].vimeoUrl).then(() => {
         if (answered) return
         answered = true
@@ -1562,6 +1595,20 @@ export default function ReelPlayer({
           {/* rounded by a clip on its own layer, not a transform-free overflow:
               the playing video under a plain rounded overflow shimmered along
               the curve */}
+          {/* The next reel's cover, sliding in from the side it comes as the
+              stage slides out. At the end of the move it is exactly where the
+              swapping cover then stands, so the handover is invisible. */}
+          {incoming && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[36] bg-cover bg-center"
+              style={{
+                backgroundImage: playlist?.[incoming.index]?.poster ? `url(${playlist[incoming.index].poster})` : undefined,
+                backgroundColor: '#0a0a0a',
+                animation: `reel-in-${incoming.dir > 0 ? 'up' : 'down'} ${LIFT_MS}ms ${LIFT_EASE} forwards`,
+              }}
+            />
+          )}
           <div
             ref={stage}
             className={`absolute inset-0 overflow-hidden ${full && !fillLook ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}
