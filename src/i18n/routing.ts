@@ -5,7 +5,12 @@ import { defineRouting } from 'next-intl/routing'
  * that is what local visitors read, but the URL, <html lang> and hreflang must
  * all use `sq` for search engines and screen readers.
  */
-export const LOCALES = ['en', 'sq', 'it', 'fr'] as const
+// Albanian is switched OFF for now (2026-09-25, Aldo's call): its strings
+// (messages/sq.json, the Sanity i18n.sq fields) stay in place; it is only
+// absent from the routes, the switcher and the sitemap, and /sq/* 308s to
+// the English page (see proxy.ts). To bring it back: add 'sq' here and in
+// LanguageButton's LOCALES, and drop the redirect.
+export const LOCALES = ['en', 'it', 'fr'] as const
 export type AppLocale = (typeof LOCALES)[number]
 
 export const routing = defineRouting({

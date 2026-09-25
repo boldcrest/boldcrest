@@ -32,7 +32,7 @@ import { usePathname, useRouter } from '@/i18n/navigation'
  */
 export const LOCALES = [
   { code: 'en', label: 'EN', name: 'English' },
-  { code: 'sq', label: 'AL', name: 'Shqip' },
+  // { code: 'sq', label: 'AL', name: 'Shqip' } — switched off for now, see i18n/routing.ts
   { code: 'it', label: 'IT', name: 'Italiano' },
   { code: 'fr', label: 'FR', name: 'Français' },
 ] as const

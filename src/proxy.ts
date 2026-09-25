@@ -116,6 +116,15 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect('https://careers.boldcrest.com', 308)
   }
 
+  // Albanian is switched off for now (see i18n/routing.ts): the /sq pages
+  // were live for three days, so anything that reaches them goes to the
+  // English page at the same path rather than a 404.
+  const sq = req.nextUrl.pathname.match(/^\/sq(?=\/|$)(.*)$/)
+  if (sq) {
+    const dest = new URL((sq[1] || '/') + req.nextUrl.search, req.nextUrl.origin)
+    return NextResponse.redirect(dest, 308)
+  }
+
   // Everything that reaches here is a real page on the canonical host, so hand
   // it to the i18n middleware LAST — after the host-based rules above have had
   // their say. ALL app routes now live under [locale] (including /studio and
