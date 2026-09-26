@@ -102,13 +102,30 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         <div className="relative aspect-[1.28/1] overflow-hidden rounded-xl bg-bg-card [transform:translate3d(0,0,0)] md:rounded-2xl md:group-hover:bg-[#0a0a0a]">
           {/* Image — translates UP on hover (desktop only) */}
           {project.thumbnailType === 'video' && project.thumbnailVideo ? (
-            <iframe
-              src={`https://player.vimeo.com/video/${project.thumbnailVideo.match(/vimeo\.com\/(\d+)/)?.[1]}?background=1&autoplay=1&loop=1&muted=1`}
-              className="pointer-events-none absolute top-1/2 left-1/2 h-[200%] w-[200%] -translate-x-1/2 -translate-y-1/2 md:transition-transform md:duration-[250ms] md:ease-[cubic-bezier(0.4,0,0.2,1)] md:group-hover:-translate-y-[calc(50%+48px)]"
-              style={{ border: 'none' }}
-              allow="autoplay; fullscreen"
-              loading="lazy"
-            />
+            <>
+              {/* the designed cover under the loop, so the card is never a
+                  dark box while the player boots: the loop paints over it once
+                  its first frame exists */}
+              {project.thumbnail?.asset && (
+                <Image
+                  loader={sanityImageLoader}
+                  src={urlFor(project.thumbnail).width(1100).height(859).url()}
+                  alt=""
+                  aria-hidden
+                  fill
+                  loading="lazy"
+                  sizes="(max-width: 1024px) 50vw, 33vw"
+                  className="object-cover md:transition-transform md:duration-[250ms] md:ease-[cubic-bezier(0.4,0,0.2,1)] md:will-change-transform md:group-hover:-translate-y-12"
+                />
+              )}
+              <iframe
+                src={`https://player.vimeo.com/video/${project.thumbnailVideo.match(/vimeo\.com\/(\d+)/)?.[1]}?background=1&autoplay=1&loop=1&muted=1`}
+                className="pointer-events-none absolute top-1/2 left-1/2 h-[200%] w-[200%] -translate-x-1/2 -translate-y-1/2 md:transition-transform md:duration-[250ms] md:ease-[cubic-bezier(0.4,0,0.2,1)] md:group-hover:-translate-y-[calc(50%+48px)]"
+                style={{ border: 'none' }}
+                allow="autoplay; fullscreen"
+                loading="lazy"
+              />
+            </>
           ) : project.thumbnail?.asset ? (
             <Image
               loader={sanityImageLoader}
