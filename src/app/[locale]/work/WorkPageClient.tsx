@@ -320,10 +320,12 @@ function ProjectListRow({ project, index }: { project: Project; index: number })
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="relative h-[188px] w-[240px] overflow-hidden rounded-lg shadow-2xl">
-                {project.thumbnailType === 'video' && project.thumbnailPoster ? (
-                  // Video-cover project: show the Vimeo cover frame (matches the
-                  // animated card), not the separate still thumbnail. Plain <img>
-                  // since it's an external Vimeo CDN URL, not a Sanity asset.
+                {project.thumbnailType === 'video' && project.thumbnailPoster && !project.thumbnail?.asset ? (
+                  // Video-cover project WITHOUT a designed cover: show the Vimeo
+                  // cover frame. Projects with a cover use it below, the same
+                  // picture the card now paints under its loop; Vimeo's frame
+                  // for a portrait reel comes letterboxed 16:9 and showed bars.
+                  // Plain <img> since it's an external Vimeo CDN URL.
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={project.thumbnailPoster}
