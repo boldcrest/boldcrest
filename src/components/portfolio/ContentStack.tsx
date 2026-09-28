@@ -113,6 +113,28 @@ export default function ContentStack({
   // media item, so the opening slide is editable/reorderable like any other and
   // can be swapped for a different one without touching the cover.
   let firstImageRendered = false
+  // Which slides will actually render as a side-by-side pair (two consecutive
+  // renderable 'half' items). Known up front so a paired image can declare the
+  // narrower `sizes` it really occupies — otherwise each half asks the CDN for a
+  // full-slide-width candidate (≈2× the pixels, ≈3–4× the bytes), which is why the
+  // second half of a pair could lag visibly behind the first.
+  const pairedKeys = new Set<string>()
+  if (media) {
+    const renderable = media.filter((b) =>
+      b._type === 'videoMedia'
+        ? Boolean((b as VideoMedia).vimeoUrl)
+        : (b._type === 'imageMedia' || b._type === 'image') && Boolean(getImageRef(b as ImageMedia)),
+    )
+    for (let i = 0; i < renderable.length; i++) {
+      const cur = renderable[i]
+      const next = renderable[i + 1]
+      if (cur.half && next?.half) {
+        pairedKeys.add(cur._key)
+        pairedKeys.add(next._key)
+        i++
+      }
+    }
+  }
   if (media) {
     for (const block of media) {
       if (block._type === 'videoMedia') {
@@ -175,7 +197,11 @@ export default function ContentStack({
                   : { loading: 'lazy' as const })}
                 draggable={false}
                 className="h-auto w-full"
-                sizes="(max-width: 959px) 100vw, 70vw"
+                sizes={
+                  pairedKeys.has(img._key)
+                    ? '(max-width: 959px) 50vw, 35vw'
+                    : '(max-width: 959px) 100vw, 70vw'
+                }
               />
               <span aria-hidden className="absolute inset-0" />
             </div>
