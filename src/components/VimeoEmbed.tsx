@@ -74,6 +74,26 @@ export default function VimeoEmbed({
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
   const playerRef = useRef<VimeoPlayer | null>(null)
   const [bgPlaying, setBgPlaying] = useState(false)
+  // Feature player: our own play badge over Vimeo's poster (Vimeo's play button is
+  // tiny and can't be resized or recoloured beyond `color`); it hides while playing.
+  const [featPlaying, setFeatPlaying] = useState(false)
+  const featIframeRef = useRef<HTMLIFrameElement | null>(null)
+  const featPlayerRef = useRef<VimeoPlayer | null>(null)
+  const onFeatLoad = () => {
+    const iframe = featIframeRef.current
+    if (!iframe || featPlayerRef.current) return
+    loadVimeoSDK()
+      .then((Player) => {
+        if (featPlayerRef.current) return
+        const player = new Player(iframe)
+        featPlayerRef.current = player
+        player.on('play', () => setFeatPlaying(true))
+        player.on('pause', () => setFeatPlaying(false))
+        player.on('ended', () => setFeatPlaying(false))
+        return player.ready().catch(() => {})
+      })
+      .catch(() => {})
+  }
 
   // Once the frame is loaded, attach the SDK player only to learn when the clip is
   // actually playing, so we can fade the cover off it.
@@ -118,20 +138,36 @@ export default function VimeoEmbed({
   }
 
   // Feature player: Vimeo's native player — its own poster + play button, with
-  // sound and controls — themed to the brand accent. Interactive (no background
-  // mode), so clicking plays the video in place.
+  // sound and controls. White controls (the accent grey a3a3a3 was too faint over
+  // busy footage) and the big play button anchored bottom-left instead of a small
+  // centred one, so the player reads as a player even at half width in a pair.
+  // Interactive (no background mode), so clicking plays the video in place.
   if (feature) {
-    const playerUrl = `https://player.vimeo.com/video/${videoId}?playsinline=1&title=0&byline=0&portrait=0&dnt=1&color=a3a3a3`
+    const playerUrl = `https://player.vimeo.com/video/${videoId}?playsinline=1&title=0&byline=0&portrait=0&dnt=1&color=ffffff&play_button_position=bottom`
     return (
       <div className={`relative overflow-hidden ${className}`} style={{ aspectRatio }}>
         <iframe
+          ref={featIframeRef}
           src={playerUrl}
+          onLoad={onFeatLoad}
           className="absolute inset-0 h-full w-full border-none"
           allow="autoplay; fullscreen; picture-in-picture"
           allowFullScreen
           loading="lazy"
           title="Vimeo video"
         />
+        {/* Decorative play badge, bottom-left, over Vimeo's own (tiny) button. It
+            never takes the click — pointer-events:none — so the tap lands in the
+            iframe and Vimeo starts playback natively (works on iOS too). */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-4 left-4 flex size-14 items-center justify-center rounded-full bg-white text-black shadow-[0_2px_12px_rgba(0,0,0,0.35)] transition-opacity duration-300 md:bottom-5 md:left-5 md:size-16"
+          style={{ opacity: featPlaying ? 0 : 1 }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="ml-[3px]">
+            <path d="M6 4.5v15l13-7.5z" />
+          </svg>
+        </span>
       </div>
     )
   }
