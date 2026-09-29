@@ -33,6 +33,24 @@ const FEED_REELS = [
   'https://player.vimeo.com/video/1227408435?h=2aa471188d',
 ]
 
+// Placeholder copy for the tiles' hover panel: a title and a line or two per
+// post, made up for the mock.
+const FEED_COPY = [
+  { title: 'The 7:40 queue', description: 'The line outside before opening, shot from across the street. It became the account’s most saved post.' },
+  { title: 'Steam on the glass', description: 'One frame of the window fogging up as the first trays come out. No product in sight.' },
+  { title: 'Second coffee', description: 'The order nobody planned to make. A caption of four words and the week’s best reach.' },
+  { title: 'Hands, not loaves', description: 'Flour, a bench and the baker’s hands. The bread is implied, never shown.' },
+  { title: 'Saturday regulars', description: 'Portraits of the people who never miss a weekend, posted with their usual order.' },
+  { title: 'The paper bag', description: 'The redesigned bag on a bicycle basket. Tagged by customers more than by us.' },
+  { title: 'Before the lights', description: 'The shop at 5:10, one lamp on. The quietest post of the month and the most commented.' },
+  { title: 'Sold out by ten', description: 'An empty shelf as the whole message. It doubled the next morning’s queue.' },
+  { title: 'Same corner, new season', description: 'The storefront through the first rain of autumn, closing the series where it opened.' },
+]
+const FEED_REEL_COPY = [
+  { title: 'Rebecca’s morning', description: 'A regular walks us through her order in one take. 640K plays in the first week.' },
+  { title: 'Marco at the counter', description: 'Twenty seconds behind the till on the busiest day, cut to the sound of the door bell.' },
+]
+
 const FEED_REFS = [
   'image-06326fe2d03e0b8cb17f06bf38717214f99d58d7-2918x2917-png',
   'image-03f2fbacb39bb84ebc05fcf928135946474c3a76-2000x2000-jpg',
@@ -101,7 +119,12 @@ const STUDY: CaseStudy = {
     ][i],
   })),
   feed: (() => {
-    const feed: FeedImage[] = FEED_REFS.map((ref, i) => ({ _key: `p${i}`, alt: '', asset: { _ref: ref } }))
+    const feed: FeedImage[] = FEED_REFS.map((ref, i) => ({
+      _key: `p${i}`,
+      alt: '',
+      asset: { _ref: ref },
+      ...FEED_COPY[i],
+    }))
     // two reels dropped into the grid at fixed spots (third and seventh tile),
     // the way Instagram mixes them in; two more of JokaDent's, same terms
     FEED_REELS.forEach((vimeoUrl, i) => {
@@ -109,9 +132,11 @@ const STUDY: CaseStudy = {
         _key: `r${i}`,
         alt: '',
         reel: { vimeoUrl, aspectRatio: '9:16', caption: ['Rebecca Silvestri', 'Marco Lanzillotta'][i] },
+        ...FEED_REEL_COPY[i],
       })
     })
-    return feed
+    // nine posts, three full rows: the last two are left out
+    return feed.slice(0, 9)
   })(),
 }
 

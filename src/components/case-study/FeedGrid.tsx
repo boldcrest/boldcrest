@@ -13,9 +13,34 @@ export interface FeedImage {
   _key?: string
   alt?: string
   asset?: { _ref?: string }
+  /** Shown on the tile when it is hovered, the way a portfolio card shows its
+   *  project: a title and a line or two on the post. */
+  title?: string
+  description?: string
   /** A reel in the grid, the way Instagram mixes them in: the tile shows its
    *  cover, cropped to the tile, and opening it plays it in the viewer. */
   reel?: Reel
+}
+
+// the picture's step up on hover, the work cards' own (desktop only)
+const LIFT =
+  'md:transition-transform md:duration-[250ms] md:ease-[cubic-bezier(0.4,0,0.2,1)] md:will-change-transform md:group-hover:-translate-y-12'
+
+/** The grid's four outside corners, rounded; every inside corner stays
+ *  square, so the tiles still meet on their hairline gaps. Each corner tile
+ *  rounds its own corner (the tile clips what is in it, hover panel included).
+ *  With a last row that is not full, the bottom-right corner of the grid is
+ *  two tiles: the last one, and the one at the end of the row above it. */
+function corner(i: number, n: number) {
+  const cols = 3
+  const lastRowStart = Math.floor((n - 1) / cols) * cols
+  const out: string[] = []
+  if (i === 0) out.push('rounded-tl-[var(--radius-lg)]')
+  if (i === Math.min(cols, n) - 1) out.push('rounded-tr-[var(--radius-lg)]')
+  if (i === lastRowStart) out.push('rounded-bl-[var(--radius-lg)]')
+  if (i === n - 1) out.push('rounded-br-[var(--radius-lg)]')
+  if (n % cols !== 0 && n > cols && i === lastRowStart - 1) out.push('rounded-br-[var(--radius-lg)]')
+  return out.join(' ')
 }
 
 interface FeedGridProps {
@@ -62,7 +87,9 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
               key={img._key ?? i}
               onClick={() => setOpen(i)}
               aria-label={img.alt || img.reel?.caption || `${heading} ${i + 1}`}
-              className="group relative aspect-[3/4] overflow-hidden bg-bg-card"
+              // [transform:translate3d(0,0,0)]: the tile on its own layer, so
+              // its clip holds for what moves inside it (as on the work cards)
+              className={`group relative aspect-[3/4] overflow-hidden bg-bg-card text-left [transform:translate3d(0,0,0)] md:hover:bg-[#0a0a0a] ${corner(i, items.length)}`}
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, amount: 0.2 }}
@@ -80,13 +107,15 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
                   {img.reel.poster && (
                     <span
                       aria-hidden
-                      className="absolute inset-0 bg-cover bg-center"
+                      className={`absolute inset-0 bg-cover bg-center ${LIFT}`}
                       style={{ backgroundImage: `url(${img.reel.poster})` }}
                     />
                   )}
                   {/* the mark the grid gives a reel */}
-                  <span aria-hidden className="absolute right-2 top-2 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  {/* 26px, and the same 20px from the top as from the side, so
+                      it sits square in the corner, clear of both edges */}
+                  <span aria-hidden className="absolute right-5 top-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="4" />
                       <path d="M3 9h18M8.5 3l3 6M14.5 3l3 6" />
                       <path d="M10.5 12.5v5l4-2.5-4-2.5Z" fill="currentColor" stroke="none" />
@@ -99,9 +128,26 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
                   alt={img.alt || ''}
                   fill
                   loader={sanityImageLoader}
-                  sizes="(max-width: 768px) 33vw, 293px"
-                  className="object-cover"
+                  sizes="(max-width: 768px) 33vw, 400px"
+                  className={`object-cover ${LIFT}`}
                 />
+              )}
+              {/* The post's title and a line on it, on hover: the work cards'
+                  own move. The picture slides up a step and a panel of the
+                  page's black grows from the bottom edge, as tall as what it
+                  says. A pixel below the tile, given back as padding, so its
+                  fill always covers the clip's edge. Desktop only, as there. */}
+              {(img.title || img.description || img.reel?.caption) && (
+                <span className="absolute -bottom-px left-0 z-20 hidden w-full origin-bottom scale-y-0 bg-[#0a0a0a] px-5 pt-[1.4rem] pb-[calc(1rem+1px)] transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-y-100 md:block">
+                  <span className="block font-display text-[1.05rem] font-semibold uppercase leading-[1.15] text-text-primary">
+                    {img.title || img.reel?.caption}
+                  </span>
+                  {img.description && (
+                    <span className="mt-2 block text-[0.8rem] leading-[1.55] text-text-secondary">
+                      {img.description}
+                    </span>
+                  )}
+                </span>
               )}
             </motion.button>
           ))}
@@ -119,6 +165,11 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
             last: t('lastPicture'),
             // a reel in the grid plays in the viewer as a reel, at 9:16
             reelAt: (i) => items[i].reel,
+            // the same words the tile shows on hover, under the frame
+            captionAt: (i) => ({
+              title: items[i].title || items[i].reel?.caption,
+              description: items[i].description,
+            }),
             render: (i) => (
               <div className="absolute inset-0 overflow-hidden bg-bg md:rounded-[var(--radius-lg)]">
                 <Image

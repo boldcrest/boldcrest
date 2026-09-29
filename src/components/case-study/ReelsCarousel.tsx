@@ -105,11 +105,13 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
       // More reels than the column shows (four on a wide one): the cards are
       // sized so that many stand whole and the next one shows by two fifths,
       // under the fade at the column's right edge — a rail that says it goes on.
-      const shown = w >= 1000 ? 4 : w >= 700 ? 3 : w >= 460 ? 2 : 1
+      // on a phone two stand whole and the third shows by half
+      const shown = w >= 1000 ? 4 : w >= 700 ? 3 : 2
+      const part = w >= 700 ? 0.4 : 0.5
       if (count > shown) {
-        const cardW = (w - shown * gap) / (shown + 0.4)
+        const cardW = (w - shown * gap) / (shown + part)
         setFitWidth(cardW)
-        setPeek(cardW * 0.4)
+        setPeek(cardW * part)
       } else {
         setFitWidth(total <= w + nominal / 3 ? (w - (count - 1) * gap) / count : null)
         setPeek(0)
@@ -323,7 +325,9 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
             {(reel.caption || reel.description) && (
               <div className="mt-3">
                 {reel.caption && (
-                  <p className="text-[0.8rem] font-medium leading-[1.5] text-text-primary">{reel.caption}</p>
+                  // three rows at most: on a phone's narrow card a long title
+                  // ran to five and pushed its description far down the page
+                  <p className="line-clamp-3 text-[0.8rem] font-medium leading-[1.5] text-text-primary">{reel.caption}</p>
                 )}
                 {reel.description && (
                   <p className="mt-1 text-[0.8rem] leading-[1.5] text-text-secondary">{reel.description}</p>

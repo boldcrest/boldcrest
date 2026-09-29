@@ -57,31 +57,44 @@ export default function CaseStudyHero({
           )}
         </p>
 
-        {/* Headline left, the number right-aligned to its bottom. */}
+        {/* Headline left, the number and its words right. The two stand on
+            the same LAST LINE: the paragraph's last row of text on the
+            headline's last row. Aligned by their boxes' bottoms instead, the
+            small text's taller line box put its words visibly lower than the
+            headline's. */}
         <motion.div
-          className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between"
+          className="flex flex-col gap-6 md:flex-row md:justify-between md:[align-items:last_baseline]"
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="font-display text-[clamp(2.5rem,6.5vw,6rem)] font-bold leading-[1.05] tracking-[-0.02em] text-white landscape-short:text-[2.4rem]">
+          {/* A long headline keeps to a measure of its own (20ch) and breaks
+              into even rows: on a wide screen it ran the whole width in two
+              very long ones. */}
+          <h1 className="max-w-[20ch] font-display text-[clamp(2.5rem,6.5vw,6rem)] font-bold leading-[1.05] tracking-[-0.02em] text-white [text-wrap:balance] landscape-short:text-[2.4rem]">
             {title}
             <span className="text-accent">.</span>
           </h1>
 
           {kpi.value && (
-            <div className="shrink-0 md:max-w-[440px] md:text-right">
+            // Set on the headline's last line by its own last line, then
+            // lifted by the depth of its descenders: the block's bottom is
+            // the tails of its small letters, and it stands on the line the
+            // headline's letters stand on ("mornin"), not on the tail of its g.
+            <div className="shrink-0 md:max-w-[440px] md:-translate-y-[0.19rem] md:text-right">
               <p className="font-display text-[clamp(2.5rem,5.5vw,4.25rem)] font-bold leading-[1] tracking-[-0.03em] text-white landscape-short:text-[2rem]">
                 {kpi.value}
                 <span className="text-accent">.</span>
               </p>
               {kpi.label && (
-                <p className="mt-3 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
+                // pulled up into the air the number's line box leaves under
+                // its digits, so the label reads as the number's own
+                <p className="-mt-1.5 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
                   {kpi.label}
                 </p>
               )}
               {kpi.context && (
-                <p className="mt-4 text-[0.95rem] leading-[1.7] text-text-secondary">
+                <p className="mt-3 text-[0.95rem] leading-[1.7] text-text-secondary">
                   {kpi.context}
                 </p>
               )}
@@ -116,11 +129,13 @@ export default function CaseStudyHero({
                       : ''
                 }
               >
-                <p className="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-bold leading-[1.1] tracking-[-0.02em] text-text-primary">
+                {/* the figure and its label a step closer: the number's own
+                    line box already leaves air under its digits */}
+                <p className="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-bold leading-[1.02] tracking-[-0.02em] text-text-primary">
                   {s.value}
                 </p>
                 {s.label && (
-                  <p className="mt-1 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
+                  <p className="mt-0 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
                     {s.label}
                   </p>
                 )}

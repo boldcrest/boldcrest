@@ -100,6 +100,9 @@ export default function ReelsFeed({
     last: string
     /** a slide that is a reel rather than a picture: it plays, at 9:16 */
     reelAt?: (i: number) => Reel | undefined
+    /** what stands under a slide, on the frame's left edge: the post's title
+     *  and a line or two on it */
+    captionAt?: (i: number) => { title?: string; description?: string } | undefined
   }
   startAt: number
   /** how far the rail card had played the reel this opened on */
@@ -124,6 +127,10 @@ export default function ReelsFeed({
   // its own height from it, so the viewer does not widen and narrow as it
   // moves between the two. This is a frame's share of the reel's height.
   const shareOf = (i: number) => ratioOf(i) / (16 / 9)
+  const wordsAt = (i: number) => {
+    const w = slides?.captionAt?.(i)
+    return w && (w.title || w.description) ? w : undefined
+  }
   const scroller = useRef<HTMLDivElement>(null)
   const slideEls = useRef<(HTMLDivElement | null)[]>([])
   const [current, setCurrent] = useState(startAt)
@@ -653,18 +660,25 @@ export default function ReelsFeed({
                   INSIDE the frame: the reel keeps its shape, the clip keeps
                   its own, and nothing is cropped. */}
               <div
-                // a picture's frame clips to the reels' radius (the shade and
-                // the close mark sit inside it, so they are clipped with it);
-                // a reel's player rounds itself
-                className={`relative mx-auto ${
-                  slides && !slides.reelAt?.(i) && !narrow ? 'overflow-hidden rounded-[var(--radius-lg)]' : ''
-                }`}
+                // The frame's size, and nothing clipped at this level: the
+                // post's words hang under it. A reel fills the height, so with
+                // words to show it gives up a band for them; a picture is
+                // shorter than the frame and has the room already.
+                className="relative mx-auto"
                 style={{
                   aspectRatio: String(1 / ratioOf(i)),
                   height: narrow
                     ? `min(100% * ${shareOf(i)}, calc(100vw * ${ratioOf(i)}))`
-                    : `min(100% * ${shareOf(i)}, calc((100vw - 2 * var(--gutter)) * ${ratioOf(i)}))`,
+                    : `min((100% - ${wordsAt(i) && shareOf(i) > 0.9 ? '5.5rem' : '0px'}) * ${shareOf(i)}, calc((100vw - 2 * var(--gutter)) * ${ratioOf(i)}))`,
                 }}
+              >
+              <div
+                // a picture's frame clips to the reels' radius (the shade and
+                // the close mark sit inside it, so they are clipped with it);
+                // a reel's player rounds itself
+                className={`absolute inset-0 ${
+                  slides && !slides.reelAt?.(i) && !narrow ? 'overflow-hidden rounded-[var(--radius-lg)]' : ''
+                }`}
               >
                 {/* On a phone the line lives in the picture's top-left corner,
                     over the player but clear of its close button on the right.
@@ -797,6 +811,26 @@ export default function ReelsFeed({
                   shadeQuick={edge !== null}
                 />
                 )}
+              </div>
+              {/* The post's title and its line, under the frame, on its left
+                  edge. On a phone the frame runs edge to edge, so they keep
+                  the corner lines' inset. */}
+              {wordsAt(i) && (
+                <div
+                  className={`pointer-events-none absolute left-0 top-full w-full pt-4 text-left ${
+                    narrow ? 'px-[1.375rem]' : ''
+                  }`}
+                >
+                  {wordsAt(i)?.title && (
+                    <p className="text-[0.9rem] font-medium leading-[1.45] text-text-primary">{wordsAt(i)?.title}</p>
+                  )}
+                  {wordsAt(i)?.description && (
+                    <p className="mt-1 text-[0.85rem] leading-[1.55] text-text-secondary">
+                      {wordsAt(i)?.description}
+                    </p>
+                  )}
+                </div>
+              )}
               </div>
             </div>
 

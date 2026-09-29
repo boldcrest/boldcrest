@@ -216,7 +216,22 @@ export const caseStudy = defineType({
         {
           type: 'image',
           options: { hotspot: true },
-          fields: [{ name: 'alt', title: 'Alt text', type: 'string' }],
+          fields: [
+            { name: 'alt', title: 'Alt text', type: 'string' },
+            {
+              name: 'title',
+              title: 'Title (shown on hover)',
+              type: 'string',
+              description: 'A few words. Shown over the tile when it is hovered, like a portfolio card.',
+            },
+            {
+              name: 'description',
+              title: 'Description (shown on hover)',
+              type: 'text',
+              rows: 3,
+              description: 'One or two short sentences under the title.',
+            },
+          ],
         },
       ],
     }),
