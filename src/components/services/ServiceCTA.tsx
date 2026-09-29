@@ -23,6 +23,12 @@ interface ServiceCTAProps {
    */
   fullWidth?: boolean
   /**
+   * A measure of the page's own for the block's content, in place of both the
+   * centred --max-width and `fullWidth`: the case study keeps everything under
+   * its hero on one 1200px column and the block has to stand on it too.
+   */
+  measureClassName?: string
+  /**
    * The block is the last thing before the footer. Its usual bottom padding
    * (1.5rem under a top border) is sized for the FAQ that follows it on a
    * service page; ahead of the footer it left 24px above the footer's line
@@ -52,6 +58,7 @@ export default function ServiceCTA({
   buttonLabel,
   topBorder = false,
   fullWidth = false,
+  measureClassName,
   beforeFooter = false,
 }: ServiceCTAProps) {
   const t = useTranslations('Cta')
@@ -73,7 +80,7 @@ export default function ServiceCTA({
         topBorder ? `border-t border-border ${beforeFooter ? 'pt-20' : 'pt-[var(--space-lg)]'}` : ''
       }`}
     >
-      <div className={fullWidth ? 'w-full' : 'mx-auto max-w-[var(--max-width)]'}>
+      <div className={measureClassName ?? (fullWidth ? 'w-full' : 'mx-auto max-w-[var(--max-width)]')}>
         <motion.p
           className="mb-4 text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary"
           initial={{ opacity: 0 }}

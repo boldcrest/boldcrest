@@ -89,8 +89,13 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
       const w = el.clientWidth
       setInset(el.getBoundingClientRect().left)
       const vw = window.innerWidth
-      // the card's design size and the gap, as the classes below set them
-      const nominal = vw * (vw >= 1024 ? 0.19 : vw >= 768 ? 0.26 : vw >= 640 ? 0.38 : 0.62)
+      // The card's design size and the gap, as the classes below set them —
+      // but reckoned against the column, not the screen: on a wide screen the
+      // column stops at 1200px and a card sized off the screen's width put
+      // four of them far past its right edge.
+      const gutter = el.getBoundingClientRect().left
+      const base = Math.min(vw, w + 2 * Math.min(gutter, 64))
+      const nominal = base * (vw >= 1024 ? 0.19 : vw >= 768 ? 0.26 : vw >= 640 ? 0.38 : 0.62)
       const gap = vw >= 768 ? 24 : 16
       const total = count * nominal + (count - 1) * gap
       setFitWidth(total <= w + nominal / 3 ? (w - (count - 1) * gap) / count : null)
@@ -98,7 +103,13 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
     read()
     const ro = new ResizeObserver(read)
     ro.observe(el)
-    return () => ro.disconnect()
+    // the column keeps its width while the window changes around it, so its
+    // left edge moves without the observer hearing of it
+    window.addEventListener('resize', read)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', read)
+    }
   }, [count])
 
   const t = useTranslations('CaseStudy')
@@ -192,9 +203,10 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // sections stacked.
   return (
     <section className="pt-[var(--space-xl)]">
-      {/* Left edge on the gutter, the hero's own edge: on a wide screen the
-          centred measure sat visibly in from the headline above it. */}
-      <div className="max-w-[calc(var(--max-width)+2*var(--gutter))] px-[var(--gutter)]">
+      {/* On the page's column (1200px, centred): the heading's box is what the
+          rail measures itself against, so the first card starts on the
+          column's left edge and the cards are sized to fill its width. */}
+      <div className="mx-auto max-w-[calc(1200px+2*var(--gutter))] px-[var(--gutter)]">
         <div ref={measure} className="mb-[var(--space-lg)]">
           <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
             {heading}
@@ -271,7 +283,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
           like the rest of the site's controls; the one with nowhere to go
           fades rather than disappears, so the pair holds its place. */}
       {anchors && (
-        <div className="mt-6 flex max-w-[calc(var(--max-width)+2*var(--gutter))] justify-end px-[var(--gutter)]">{anchors}</div>
+        <div className="mx-auto mt-6 flex max-w-[calc(1200px+2*var(--gutter))] justify-end px-[var(--gutter)]">{anchors}</div>
       )}
 
     </section>

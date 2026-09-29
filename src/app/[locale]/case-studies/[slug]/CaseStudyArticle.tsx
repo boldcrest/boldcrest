@@ -75,8 +75,10 @@ export default async function CaseStudyArticle({
 
       {study.explanation && study.explanation.length > 0 && (
         <section className="px-[var(--gutter)]">
-          {/* on the gutter, like the hero above it: not centred in the page */}
-          <div className="max-w-[var(--max-width)]">
+          {/* Everything under the hero shares ONE column: the work pages'
+              1200px measure, centred, with every block starting on its left
+              edge. Only the hero runs gutter to gutter. */}
+          <div className="mx-auto w-full max-w-[1200px]">
             <div className="max-w-[760px] border-t border-border pt-[var(--space-lg)]">
               <PortableText value={study.explanation} components={ptComponents} />
             </div>
@@ -92,9 +94,15 @@ export default async function CaseStudyArticle({
       <FeedGrid feed={feed} heading={labels.feed} />
       {/* The ask, once the work has been seen: the service pages' block, with
           the copy turned to a case study — the visitor has just watched numbers
-          move, so the question is whether they want theirs moved. Full width,
-          like the feed above it, or it sat visibly indented from the grid. */}
-      <ServiceCTA heading={labels.ctaHeading} description={labels.ctaBody} fullWidth topBorder beforeFooter />
+          move, so the question is whether they want theirs moved. On the same
+          column as the feed above it. */}
+      <ServiceCTA
+        heading={labels.ctaHeading}
+        description={labels.ctaBody}
+        measureClassName="mx-auto w-full max-w-[1200px]"
+        topBorder
+        beforeFooter
+      />
     </article>
   )
 }
