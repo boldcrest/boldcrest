@@ -1087,6 +1087,24 @@ export default function ReelPlayer({
     const saved = { html: html.style.overflow, body: body.style.overflow, rail: '' }
     html.style.overflow = 'hidden'
     body.style.overflow = 'hidden'
+    // `overflow: hidden` only stops the browser's own scroll. The page is
+    // driven by Lenis, which scrolls by script and ignores it, so a wheel on
+    // the dimmed ground beside the frame still moved the page behind. Lenis is
+    // stopped for as long as the reel is up, and wheel / touch-move / the
+    // scrolling keys are swallowed at the window for good measure.
+    const lenis = (window as unknown as { __lenis?: { stop: () => void; start: () => void } }).__lenis
+    lenis?.stop()
+    const hold = (e: Event) => e.preventDefault()
+    const holdKeys = (e: KeyboardEvent) => {
+      if ([' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        const t = e.target as HTMLElement | null
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('wheel', hold, { passive: false, capture: true })
+    window.addEventListener('touchmove', hold, { passive: false, capture: true })
+    window.addEventListener('keydown', holdKeys, { capture: true })
     const rail = el.closest<HTMLElement>('[data-reel-rail]')
     if (rail) {
       saved.rail = rail.style.overflow
@@ -1104,6 +1122,10 @@ export default function ReelPlayer({
       card.style.zIndex = savedZ
       html.style.overflow = saved.html
       body.style.overflow = saved.body
+      window.removeEventListener('wheel', hold, { capture: true })
+      window.removeEventListener('touchmove', hold, { capture: true })
+      window.removeEventListener('keydown', holdKeys, { capture: true })
+      lenis?.start()
       if (rail) rail.style.overflow = saved.rail
       document.removeEventListener('keydown', onKey)
     }
@@ -1679,36 +1701,8 @@ export default function ReelPlayer({
                 </span>
               </div>
             )}
-            {/* The feed's reel getting going: the rail's own corner mark with
-                its ring, bottom left where the transport's play button sits,
-                until the reel has moved. The transport under it is "stated"
-                from the first frame; this says the player is still coming. */}
-            {feedLook && started && !ticked && !ended && !swapping && !needsTap && (
-              <div aria-hidden className="pointer-events-none absolute bottom-[7%] left-[7%] z-[36] flex">
-                <span
-                  className="flex size-12 items-center justify-center text-white/80"
-                  style={{
-                    borderRadius: 'var(--radius-pill)',
-                    borderWidth: '1px',
-                    borderStyle: 'solid',
-                    borderColor: 'rgba(255,255,255,0.45)',
-                    backgroundColor: 'rgba(10,10,10,0.72)',
-                    backdropFilter: 'blur(24px) saturate(1.5)',
-                    WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-                  }}
-                >
-                  <span className="size-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                </span>
-              </div>
-            )}
-            {/* Waiting on the network mid-play: the same ring the corner button
-                turns on a first press, in the middle of the picture. Only once
-                the reel has started — before that the corner already says so. */}
-            {buffering && started && !ended && (
-              <div aria-hidden className="pointer-events-none absolute inset-0 z-[35] grid place-items-center">
-                <span className="size-9 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              </div>
-            )}
+            {/* No loading marks of our own here: Vimeo's player shows its own
+                while a reel starts or buffers, and ours sat on top of it. */}
 
             {/* Close, in the reel's own top-right corner. It sits inside the
                 clipped frame so it reads as part of the picture, and above the
@@ -1842,9 +1836,7 @@ export default function ReelPlayer({
                     WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
                   }}
                 >
-                  {loading ? (
-                    <span className="size-5 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden />
-                  ) : ended ? (
+                  {ended ? (
                     <ReplayIcon />
                   ) : (
                     <PlayIcon size={viewer ? 24 : 18} />
