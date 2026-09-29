@@ -94,15 +94,29 @@ export default function CaseStudyHero({
 
         {/* Supporting numbers, under the divider so the hero above it stays the
             headline + one figure. */}
+        {/* They stand on the page's column and on the body paragraph's own
+            measure (760px), which starts right under them: the first figure on
+            the paragraph's left edge, the last one ending on its right edge,
+            the rest spread between. */}
         {supporting.length > 0 && (
+          <div className="mx-auto w-full max-w-[1200px]">
           <motion.div
-            className="grid grid-cols-1 gap-y-8 pt-[var(--space-lg)] sm:grid-cols-3 sm:gap-x-8"
+            className="flex max-w-[760px] flex-col gap-y-8 pt-[var(--space-lg)] sm:flex-row sm:justify-between sm:gap-x-8"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
           >
             {supporting.map((s, i) => (
-              <div key={i}>
+              <div
+                key={i}
+                className={
+                  supporting.length > 1 && i === supporting.length - 1
+                    ? 'sm:text-right'
+                    : i > 0
+                      ? 'sm:text-center'
+                      : ''
+                }
+              >
                 <p className="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-bold leading-[1.1] tracking-[-0.02em] text-text-primary">
                   {s.value}
                 </p>
@@ -114,6 +128,7 @@ export default function CaseStudyHero({
               </div>
             ))}
           </motion.div>
+          </div>
         )}
       </div>
     </section>
