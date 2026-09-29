@@ -229,6 +229,7 @@ export default function ReelPlayer({
   index = 0,
   onWatched,
   liftTo = null,
+  frameSize = null,
   onLiftClose,
   viewer = false,
   shadeTop,
@@ -276,6 +277,10 @@ export default function ReelPlayer({
    *  wheel, and the arrow keys) load the rest of the rail into this same
    *  player. One player throughout: nothing is handed over or reloaded. */
   liftTo?: { x: number; y: number; width: number; height: number } | null
+  /** The size of the frame the player has when lifted, known beforehand. With
+   *  it the card lays the player out at that size and scales it down to fit,
+   *  so lifting and lowering never resize the player itself. */
+  frameSize?: { width: number; height: number } | null
   /** the lifted box has come back down onto the rail */
   onLiftClose?: () => void
   /** A reel among the pictures on a phone: the card as it is in the rail,
@@ -443,6 +448,34 @@ export default function ReelPlayer({
   // grown on a phone it wears the phone feed's dress: bare X, full-width
   // frame with bars, the feed's transport
   const lifted = liftTo !== null
+  // the stage's own size while it is a card, for the scale of the player in it
+  const [stageSize, setStageSize] = useState<{ w: number; h: number } | null>(null)
+  // true while the box travels up or down: our controls are hidden for the
+  // move (they are drawn at the frame's size and would shrink and grow with
+  // it) and come back once it has landed
+  const [travelling, setTravelling] = useState(false)
+  const [landed, setLanded] = useState(false)
+  const landTimer = useRef(0)
+  const land = () => {
+    setTravelling(false)
+    setLanded(true)
+    window.clearTimeout(landTimer.current)
+    landTimer.current = window.setTimeout(() => setLanded(false), 400)
+  }
+  useEffect(() => () => window.clearTimeout(landTimer.current), [])
+  const constantFrame =
+    mouse && !nativeStart && !grown && (liftTo ?? frameSize)
+      ? { width: (liftTo ?? frameSize)!.width, height: (liftTo ?? frameSize)!.height }
+      : null
+  useEffect(() => {
+    const el = stage.current
+    if (!el || lifted) return
+    const measure = () => setStageSize({ w: el.clientWidth, h: el.clientHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [lifted, mounted])
   const fillLook = fill || grown
   const feedLook = inFeed || grown || lifted || viewer
   const shownPoster = grown || lifted ? (playlist?.[coverOf ?? cursor]?.poster ?? poster) : poster
@@ -1080,18 +1113,18 @@ export default function ReelPlayer({
       ],
       { duration: LIFT_MS, easing: LIFT_EASE, fill: 'forwards' },
     )
+    setTravelling(true)
+    liftRun.current.onfinish = land
     // the page holds still under it, as under the picture viewer (the rail
     // itself stops being a scroll container for the box, see `expanded`)
-    const html = document.documentElement
-    const body = document.body
-    const saved = { html: html.style.overflow, body: body.style.overflow, rail: '' }
-    html.style.overflow = 'hidden'
-    body.style.overflow = 'hidden'
-    // `overflow: hidden` only stops the browser's own scroll. The page is
-    // driven by Lenis, which scrolls by script and ignores it, so a wheel on
-    // the dimmed ground beside the frame still moved the page behind. Lenis is
-    // stopped for as long as the reel is up, and wheel / touch-move / the
-    // scrolling keys are swallowed at the window for good measure.
+    const saved = { rail: '' }
+    // The page is held by stopping Lenis (it scrolls by script) and swallowing
+    // wheel / touch-move / the scrolling keys at the window. NOT by
+    // `overflow: hidden` on the page: that takes the scrollbar away, the page
+    // gets wider by the bar's width on the way up and narrower on the way
+    // down, and everything behind the reel jumps sideways (measured: 6px).
+    // The player itself cannot pass a wheel on to the page either: with a
+    // mouse it takes no pointer events, our own layer over it does.
     const lenis = (window as unknown as { __lenis?: { stop: () => void; start: () => void } }).__lenis
     lenis?.stop()
     const hold = (e: Event) => e.preventDefault()
@@ -1120,8 +1153,6 @@ export default function ReelPlayer({
       liftRun.current?.cancel()
       liftRun.current = null
       card.style.zIndex = savedZ
-      html.style.overflow = saved.html
-      body.style.overflow = saved.body
       window.removeEventListener('wheel', hold, { capture: true })
       window.removeEventListener('touchmove', hold, { capture: true })
       window.removeEventListener('keydown', holdKeys, { capture: true })
@@ -1147,6 +1178,7 @@ export default function ReelPlayer({
     }
     lowering.current = true
     setLowerFade(true)
+    setTravelling(true)
     const to = card.getBoundingClientRect()
     const scale = to.width / liftTo.width
     liftRun.current?.cancel()
@@ -1164,7 +1196,10 @@ export default function ReelPlayer({
       onLiftClose?.()
       // the box is the card again on the next frame; the animation's last
       // frame must not stay on it after that
-      requestAnimationFrame(() => run.cancel())
+      requestAnimationFrame(() => {
+        run.cancel()
+        land()
+      })
     }
   }
 
@@ -1592,6 +1627,8 @@ export default function ReelPlayer({
           )}
           <div
             ref={stage}
+            data-reel-travelling={travelling ? '' : undefined}
+            data-reel-landed={landed ? '' : undefined}
             className={`absolute inset-0 overflow-hidden ${full && !fillLook ? 'rounded-[var(--radius-lg)] [transform:translateZ(0)]' : ''}`}
           >
             {mounted && isFile(vimeoUrl) && (
@@ -1613,6 +1650,26 @@ export default function ReelPlayer({
               />
             )}
             {mounted && !isFile(vimeoUrl) && (
+              <div
+                // With a mouse and the frame's size known, the player is laid
+                // out at the size it has when lifted and scaled down into the
+                // card: going up and coming down is then a transform alone and
+                // the player is never resized (a resize made Vimeo redraw
+                // itself at both ends of the move).
+                className={constantFrame ? 'pointer-events-none absolute left-0 top-0' : 'contents'}
+                style={
+                  constantFrame
+                    ? {
+                        width: constantFrame.width,
+                        height: constantFrame.height,
+                        transformOrigin: '0 0',
+                        transform: lifted || !stageSize
+                          ? undefined
+                          : `scale(${stageSize.w / constantFrame.width}, ${stageSize.h / constantFrame.height})`,
+                      }
+                    : undefined
+                }
+              >
               <iframe
                 ref={frame}
                 src={vimeoSrc(vimeoUrl, nativeStart)}
@@ -1642,6 +1699,7 @@ export default function ReelPlayer({
                         : 'z-30 cursor-pointer opacity-0'
                 }`}
               />
+              </div>
             )}
 
             {/* Grown on a phone: what the player has to say, in the corner
@@ -1885,8 +1943,8 @@ export default function ReelPlayer({
                     no room for that row, so the time stays top-left. */}
                 {!feedLook && (
                   <>
-                    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black/35 to-transparent" />
-                    <span className="pointer-events-none absolute left-5 top-3 z-20 flex h-8 items-center text-[0.7rem] font-medium tabular-nums text-white/90">
+                    <div data-reel-chrome="" className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black/35 to-transparent" />
+                    <span data-reel-chrome="" className="pointer-events-none absolute left-5 top-3 z-20 flex h-8 items-center text-[0.7rem] font-medium tabular-nums text-white/90">
                       {clock(time)} / {clock(duration)}
                     </span>
                   </>
@@ -1917,6 +1975,7 @@ export default function ReelPlayer({
                     // in the viewer it mirrors the close mark opposite: same
                     // 48px box on the same line, 5px in, bigger glyph with
                     // the same shadow
+data-reel-chrome=""
                     className={`absolute top-3 z-20 flex items-center justify-center text-white ${
                       viewer ? 'left-[5px] size-12 text-white/80' : 'right-3 size-8'
                     }`}
@@ -1977,7 +2036,7 @@ export default function ReelPlayer({
                     </span>
                   </div>
                 )}
-                <div className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2 text-white">
+                <div data-reel-chrome="" className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2 text-white">
                   <button
                     type="button"
                     onClick={toggle}

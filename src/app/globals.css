@@ -257,6 +257,19 @@ input[type="radio"],
   to { opacity: 1; }
 }
 
+/* A reel going up to full screen or coming back down: its controls are out
+   of the picture for the move and come back once it has landed. */
+[data-reel-travelling] [data-reel-chrome] {
+  opacity: 0 !important;
+  transition: none !important;
+}
+[data-reel-landed] [data-reel-chrome] {
+  animation: reel-chrome-in 320ms ease-out both;
+}
+@keyframes reel-chrome-in {
+  from { opacity: 0; }
+}
+
 /* The lifted reel is a left-and-right carousel: the next cover comes in from
    the right, the previous one from the left. */
 @keyframes reel-in-next {

@@ -58,6 +58,19 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // loaded into that one player by its anchors (see ReelPlayer, liftTo).
   // One player, so nothing is ever handed over or seen to reload.
   const [lift, setLift] = useState<{ index: number; rect: { x: number; y: number; width: number; height: number } } | null>(null)
+  // The size the player has when it is up, known before it goes up: the cards
+  // lay their player out at this size from the start and scale it down, so
+  // opening and closing full screen never resizes (and re-renders) the player.
+  const [frameSize, setFrameSize] = useState<{ width: number; height: number } | null>(null)
+  useEffect(() => {
+    const measure = () => {
+      const f = fullFrame()
+      setFrameSize((cur) => (cur && cur.width === f.width && cur.height === f.height ? cur : { width: f.width, height: f.height }))
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
   // The rail's fit. When the whole rail would end within a third of a card
   // of the measure's right edge (the arrows' edge), the cards are sized so
   // it ends exactly there, grown or shrunk a little; a rail that overruns by
@@ -231,6 +244,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
               playlist={items}
               index={i}
               onWatched={setLastSeen}
+              frameSize={frameSize}
               liftTo={lift?.index === i ? lift.rect : null}
               onLiftClose={() => setLift(null)}
               onExpand={() => {
