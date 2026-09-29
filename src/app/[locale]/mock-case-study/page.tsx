@@ -23,6 +23,9 @@ const REELS = [
   'https://player.vimeo.com/video/1227408134?h=4abbb98f05',
   'https://player.vimeo.com/video/1227408228?h=0bb1634446',
   'https://player.vimeo.com/video/1227408330?h=3eeff3d9a7',
+  // a fifth, kept on purpose: the rail shows four and lets the next one peek
+  // out from under the fade at the column's right edge
+  'https://player.vimeo.com/video/1227408395?h=664b3daddc',
 ]
 
 const FEED_REELS = [
@@ -87,12 +90,14 @@ const STUDY: CaseStudy = {
       'Patrizia came from Lombardia for a full smile makeover and left in four days',
       'Sabrina Cecchetti',
       'Almerico Di Meglio',
+      'Rebecca Silvestri',
     ][i],
     description: [
       'The opening reel. One shooting day, a single take, no script: the queue talks and the loaf never appears.',
       'Second week. The window at 7:40, steam on the glass, and the first comments asking where the bakery was.',
       'Third week, the one that travelled: 1.1M plays and the week the follower count doubled.',
       'The closing reel, cut from the leftovers of the same day. Same morning, told backwards.',
+      'An extra cut for the regulars: the counter, the first tray and the people who never miss a morning.',
     ][i],
   })),
   feed: (() => {

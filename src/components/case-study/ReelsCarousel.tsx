@@ -81,14 +81,18 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // the measure's left edge, for the strip's padding: computed, not written
   // as CSS, since 100vw counts the scrollbar and the centred measure does not
   const [inset, setInset] = useState<number | null>(null)
+  // how much of the next card shows at the column's right edge (0: none does)
+  const [peek, setPeek] = useState(0)
   const count = (reels ?? []).filter((r) => !!r.vimeoUrl).length
   useEffect(() => {
     const el = measure.current
     if (!el) return
     const read = () => {
       const w = el.clientWidth
-      setInset(el.getBoundingClientRect().left)
       const vw = window.innerWidth
+      // The rail lives inside the column on every screen (the gutters, on a
+      // phone) and has no padding of its own.
+      setInset(0)
       // The card's design size and the gap, as the classes below set them —
       // but reckoned against the column, not the screen: on a wide screen the
       // column stops at 1200px and a card sized off the screen's width put
@@ -98,7 +102,18 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
       const nominal = base * (vw >= 1024 ? 0.19 : vw >= 768 ? 0.26 : vw >= 640 ? 0.38 : 0.62)
       const gap = vw >= 768 ? 24 : 16
       const total = count * nominal + (count - 1) * gap
-      setFitWidth(total <= w + nominal / 3 ? (w - (count - 1) * gap) / count : null)
+      // More reels than the column shows (four on a wide one): the cards are
+      // sized so that many stand whole and the next one shows by two fifths,
+      // under the fade at the column's right edge — a rail that says it goes on.
+      const shown = w >= 1000 ? 4 : w >= 700 ? 3 : w >= 460 ? 2 : 1
+      if (count > shown) {
+        const cardW = (w - shown * gap) / (shown + 0.4)
+        setFitWidth(cardW)
+        setPeek(cardW * 0.4)
+      } else {
+        setFitWidth(total <= w + nominal / 3 ? (w - (count - 1) * gap) / count : null)
+        setPeek(0)
+      }
     }
     read()
     const ro = new ResizeObserver(read)
@@ -117,6 +132,8 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // move towards. Read from the scroller itself, so a drag, a swipe or an
   // anchor all leave the same answer.
   const [edges, setEdges] = useState({ start: true, end: false })
+  const [fade, setFade] = useState(1)
+  const [leftFade, setLeftFade] = useState({ width: 0, opacity: 0 })
   useEffect(() => {
     const el = scrollerRef.current
     if (!el) return
@@ -125,6 +142,23 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
         start: el.scrollLeft <= 1,
         end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1,
       })
+      // The fade over the card still to come goes as the last card comes in:
+      // it follows the scroll across the rail's final step, so it is gone in
+      // the frame the last reel reaches its place, not a moment after.
+      const max = el.scrollWidth - el.clientWidth
+      const left = max - el.scrollLeft
+      const card = el.querySelector<HTMLElement>('[data-reel-card]')
+      const stepW = card ? card.offsetWidth + parseFloat(getComputedStyle(el).columnGap || '0') : max
+      const span = Math.max(1, Math.min(stepW, max))
+      setFade(max <= 1 ? 0 : Math.max(0, Math.min(1, left / span)))
+      // The other side: the rail snaps to a card's left edge, except at its
+      // very end, where the last card sets the place and a card is left cut
+      // on the left. That one gets the same fade, as wide as what shows of
+      // it, coming in as the card is cut.
+      const cardW = card ? card.offsetWidth : 0
+      const cut = stepW > 0 ? el.scrollLeft % stepW : 0
+      if (cardW && cut > 1 && cut < cardW - 1) setLeftFade({ width: cardW - cut, opacity: Math.min(1, cut / 60) })
+      else setLeftFade({ width: 0, opacity: 0 })
     }
     read()
     el.addEventListener('scroll', read, { passive: true })
@@ -214,8 +248,28 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
         </div>
       </div>
 
-      {/* Full-bleed strip: first card lines up with the gutter, and the last one
-          can scroll clear of the right edge. */}
+      {/* The strip stays inside the column (the gutters, on a phone): it ends
+          on the column's right edge, where a card that is still to come shows
+          under a fade of the page's own black. */}
+      <div className="mx-auto max-w-[calc(1200px+2*var(--gutter))] px-[var(--gutter)]">
+      <div className="relative">
+      {/* The fade is as wide as the part of the next card that shows and no
+          wider, so the last whole card is left clean. It reaches a pixel past
+          the rail's edge: the two are laid out at fractions of a pixel and a
+          hairline of the card showed unfaded between them. The left one is
+          for the rail's end, the one place a card is cut on that side.
+          Above everything a card draws (its play button stood at z-20 and
+          showed through a fade at z-10), below a lifted reel (z-1850). */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 z-[100] bg-gradient-to-l from-bg from-[2px] via-bg/75 to-transparent"
+        style={{ right: -1, width: peek ? Math.ceil(peek) + 2 : 0, opacity: peek ? fade : 0 }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 z-[100] bg-gradient-to-r from-bg from-[2px] via-bg/75 to-transparent"
+        style={{ left: -1, width: leftFade.width ? Math.ceil(leftFade.width) + 2 : 0, opacity: leftFade.opacity }}
+      />
       <div
         ref={scrollerRef}
         data-reel-rail
@@ -229,7 +283,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
         // card to the strip's very edge, a gutter left of the heading
         // the strip's padding is the measure's left edge, so the first card
         // sits under the heading on any screen, wide ones included
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-[var(--gutter)] pb-2 [-ms-overflow-style:none] [scroll-padding-inline:var(--gutter)] [scrollbar-width:none] md:gap-6 [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-6 [&::-webkit-scrollbar]:hidden"
         style={inset !== null ? { paddingInline: inset, scrollPaddingInline: inset } : undefined}
       >
         {items.map((reel, i) => (
@@ -278,6 +332,8 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
             )}
           </div>
         ))}
+      </div>
+      </div>
       </div>
       {/* The two anchors, one card a press, under the rail. Hairline discs
           like the rest of the site's controls; the one with nowhere to go

@@ -94,14 +94,13 @@ export default function CaseStudyHero({
 
         {/* Supporting numbers, under the divider so the hero above it stays the
             headline + one figure. */}
-        {/* They stand on the page's column and on the body paragraph's own
-            measure (760px), which starts right under them: the first figure on
-            the paragraph's left edge, the last one ending on its right edge,
-            the rest spread between. */}
+        {/* They stand on the page's column, as the body paragraph right under
+            them does: the first figure on its left edge, the last one ending
+            on its right edge (the reels' right edge too), the rest between. */}
         {supporting.length > 0 && (
           <div className="mx-auto w-full max-w-[1200px]">
           <motion.div
-            className="flex max-w-[760px] flex-col gap-y-8 pt-[var(--space-lg)] sm:flex-row sm:justify-between sm:gap-x-8"
+            className="flex flex-col gap-y-8 pt-[var(--space-lg)] sm:flex-row sm:justify-between sm:gap-x-8"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}

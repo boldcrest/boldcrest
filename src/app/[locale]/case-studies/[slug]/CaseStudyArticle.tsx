@@ -81,7 +81,9 @@ export default async function CaseStudyArticle({
           <div className="mx-auto w-full max-w-[1200px]">
             {/* the same step above the line as below it and as above the
                 figures (space-lg): the line sat right on their labels */}
-            <div className="mt-[var(--space-lg)] max-w-[760px] border-t border-border pt-[var(--space-lg)]">
+            {/* the paragraph runs the whole column: its right edge is the
+                rail's right edge below and the figures' above */}
+            <div className="mt-[var(--space-lg)] border-t border-border pt-[var(--space-lg)]">
               <PortableText value={study.explanation} components={ptComponents} />
             </div>
           </div>
