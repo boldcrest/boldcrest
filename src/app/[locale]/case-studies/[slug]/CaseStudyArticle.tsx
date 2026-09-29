@@ -79,7 +79,9 @@ export default async function CaseStudyArticle({
               1200px measure, centred, with every block starting on its left
               edge. Only the hero runs gutter to gutter. */}
           <div className="mx-auto w-full max-w-[1200px]">
-            <div className="max-w-[760px] border-t border-border pt-[var(--space-lg)]">
+            {/* the same step above the line as below it and as above the
+                figures (space-lg): the line sat right on their labels */}
+            <div className="mt-[var(--space-lg)] max-w-[760px] border-t border-border pt-[var(--space-lg)]">
               <PortableText value={study.explanation} components={ptComponents} />
             </div>
           </div>
