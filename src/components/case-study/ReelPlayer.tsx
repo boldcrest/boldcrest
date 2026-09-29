@@ -1165,9 +1165,10 @@ export default function ReelPlayer({
       say(next < 0 ? 'first' : 'last')
       return
     }
-    // Lifted (a desktop): the move first, the load after. The reel that is
-    // playing slides out and the next one's cover slides in, on the deck's
-    // curve, while the player still shows the old reel — a load mid-move
+    // Lifted (a desktop): a left-and-right carousel. The move first, the load
+    // after. The reel that is playing slides out sideways and the next one's
+    // cover slides in from the side it comes from (next from the right,
+    // previous from the left), while the player still shows the old reel — a load mid-move
     // would go black under it. Only once the cover is in place is the new
     // reel loaded behind it; the cover then holds until its first frame.
     if (lifted) {
@@ -1175,7 +1176,7 @@ export default function ReelPlayer({
       moving.current = true
       setIncoming({ index: next, dir })
       const run = stage.current?.animate(
-        [{ transform: 'translateY(0)' }, { transform: `translateY(${-dir * 100}%)` }],
+        [{ transform: 'translateX(0)' }, { transform: `translateX(${-dir * 100}%)` }],
         { duration: LIFT_MS, easing: LIFT_EASE, fill: 'forwards' },
       )
       const land = () => {
@@ -1473,7 +1474,7 @@ export default function ReelPlayer({
         // grown on a phone: the box scrolls, one screen per reel, and
         // settling on a neighbour's cover is the swipe to that reel
         onScroll={grown ? onGrownScroll : undefined}
-        // lifted, a wheel is the next or the previous reel, on the deck's
+        // lifted, a swipe or a wheel is the next or the previous reel, on the deck's
         // terms: a mouse notch and a trackpad swipe made comparable, intent
         // gathered within one gesture, and the tail of the gesture that
         // moved swallowed. Kept off the page behind (Lenis) either way.
@@ -1483,10 +1484,14 @@ export default function ReelPlayer({
             ? (e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || !e.deltaY) return
+                // the carousel runs left and right: a sideways trackpad swipe
+                // is its gesture; a wheel that only turns one way (a mouse)
+                // steps it too, down for the next and up for the previous
+                const raw = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+                if (!raw) return
                 if (e.timeStamp < wheelUntil.current) return
                 const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 800 : 1
-                const dy = e.deltaY * unit
+                const dy = raw * unit
                 if (e.timeStamp - wheelAt.current > 200 || Math.sign(dy) !== Math.sign(wheelAccum.current)) wheelAccum.current = 0
                 wheelAt.current = e.timeStamp
                 wheelAccum.current += dy
@@ -1605,7 +1610,7 @@ export default function ReelPlayer({
               style={{
                 backgroundImage: playlist?.[incoming.index]?.poster ? `url(${playlist[incoming.index].poster})` : undefined,
                 backgroundColor: '#0a0a0a',
-                animation: `reel-in-${incoming.dir > 0 ? 'up' : 'down'} ${LIFT_MS}ms ${LIFT_EASE} forwards`,
+                animation: `reel-in-${incoming.dir > 0 ? 'next' : 'prev'} ${LIFT_MS}ms ${LIFT_EASE} forwards`,
               }}
             />
           )}
