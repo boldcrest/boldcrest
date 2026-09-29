@@ -1092,10 +1092,10 @@ export default function ReelPlayer({
       saved.rail = rail.style.overflow
       rail.style.overflow = 'visible'
     }
+    // Full screen is just this reel, bigger: no stepping to the others from
+    // here (the carousel was tried and taken out). Escape closes it.
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') lower()
-      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') swapToRef.current(cursorRef.current + 1)
-      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') swapToRef.current(cursorRef.current - 1)
     }
     document.addEventListener('keydown', onKey)
     return () => {
@@ -1428,10 +1428,7 @@ export default function ReelPlayer({
         />
       )}
       {/* Lifted: the page dimmed and blurred under the box, as under the
-          picture viewer, and the two anchors beside the frame, one reel a
-          press: the one with nowhere to go fades rather than disappears, so
-          the pair holds its place. Escape, the arrow keys and the wheel do
-          the same. */}
+          picture viewer. A press on it, or Escape, closes. */}
       {lifted && liftTo && (
         <>
           <div
@@ -1442,31 +1439,6 @@ export default function ReelPlayer({
             }`}
             style={{ animation: lowerFade ? undefined : 'reel-ground-in 500ms ease-out both' }}
           />
-          {playlist && playlist.length > 1 &&
-            ([-1, 1] as const).map((dir) => {
-              const off = dir < 0 ? cursor <= 0 : cursor >= playlist.length - 1
-              return (
-                <button
-                  key={dir}
-                  type="button"
-                  onClick={() => swapTo(cursor + dir)}
-                  aria-label={dir < 0 ? t('previous') : t('next')}
-                  aria-disabled={off}
-                  tabIndex={off ? -1 : 0}
-                  className={`fixed z-[1860] flex size-11 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white/85 backdrop-blur-[6px] transition-[opacity,border-color,background-color] duration-300 hover:border-white/50 hover:bg-black/45 hover:text-white ${
-                    off || lowerFade ? 'pointer-events-none opacity-0' : 'opacity-100'
-                  }`}
-                  style={{
-                    top: liftTo.y + liftTo.height / 2 - 22,
-                    left: dir < 0 ? liftTo.x - 44 - 20 : liftTo.x + liftTo.width + 20,
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    {dir < 0 ? <path d="M15 5l-7 7 7 7" /> : <path d="M9 5l7 7-7 7" />}
-                  </svg>
-                </button>
-              )
-            })}
         </>
       )}
       <div
@@ -1474,32 +1446,14 @@ export default function ReelPlayer({
         // grown on a phone: the box scrolls, one screen per reel, and
         // settling on a neighbour's cover is the swipe to that reel
         onScroll={grown ? onGrownScroll : undefined}
-        // lifted, a swipe or a wheel is the next or the previous reel, on the deck's
-        // terms: a mouse notch and a trackpad swipe made comparable, intent
-        // gathered within one gesture, and the tail of the gesture that
-        // moved swallowed. Kept off the page behind (Lenis) either way.
+        // lifted: the wheel does nothing here and is kept off the page behind
+        // (Lenis) so it does not scroll under the frame
         data-lenis-prevent={lifted ? '' : undefined}
         onWheel={
           lifted
             ? (e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                // the carousel runs left and right: a sideways trackpad swipe
-                // is its gesture; a wheel that only turns one way (a mouse)
-                // steps it too, down for the next and up for the previous
-                const raw = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
-                if (!raw) return
-                if (e.timeStamp < wheelUntil.current) return
-                const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 800 : 1
-                const dy = raw * unit
-                if (e.timeStamp - wheelAt.current > 200 || Math.sign(dy) !== Math.sign(wheelAccum.current)) wheelAccum.current = 0
-                wheelAt.current = e.timeStamp
-                wheelAccum.current += dy
-                if (Math.abs(wheelAccum.current) < 28) return
-                const down = wheelAccum.current > 0
-                wheelAccum.current = 0
-                wheelUntil.current = e.timeStamp + 1150
-                swapTo(cursor + (down ? 1 : -1))
               }
             : undefined
         }
