@@ -192,7 +192,9 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
   // sections stacked.
   return (
     <section className="pt-[var(--space-xl)]">
-      <div className="mx-auto max-w-[var(--max-width)] px-[var(--gutter)]">
+      {/* Left edge on the gutter, the hero's own edge: on a wide screen the
+          centred measure sat visibly in from the headline above it. */}
+      <div className="max-w-[calc(var(--max-width)+2*var(--gutter))] px-[var(--gutter)]">
         <div ref={measure} className="mb-[var(--space-lg)]">
           <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
             {heading}
@@ -269,7 +271,7 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
           like the rest of the site's controls; the one with nowhere to go
           fades rather than disappears, so the pair holds its place. */}
       {anchors && (
-        <div className="mx-auto mt-6 flex max-w-[var(--max-width)] justify-end px-[var(--gutter)]">{anchors}</div>
+        <div className="mt-6 flex max-w-[calc(var(--max-width)+2*var(--gutter))] justify-end px-[var(--gutter)]">{anchors}</div>
       )}
 
     </section>

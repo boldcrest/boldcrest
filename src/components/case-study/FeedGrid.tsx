@@ -48,13 +48,13 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
 
   return (
     <section className="px-[var(--gutter)] pt-[var(--space-xl)] pb-[var(--space-2xl)]">
-      <div className="mx-auto max-w-[var(--max-width)]">
+      <div className="max-w-[var(--max-width)]">
         <h2 className="mb-[var(--space-lg)] text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-text-tertiary">
           {heading}
         </h2>
       </div>
 
-      <div className="mx-auto w-full max-w-[var(--max-width)]">
+      <div className="w-full max-w-[var(--max-width)]">
         <div className="grid grid-cols-3 gap-[3px] md:gap-[5px]">
           {items.map((img, i) => (
             <motion.button

@@ -75,7 +75,8 @@ export default async function CaseStudyArticle({
 
       {study.explanation && study.explanation.length > 0 && (
         <section className="px-[var(--gutter)]">
-          <div className="mx-auto max-w-[var(--max-width)]">
+          {/* on the gutter, like the hero above it: not centred in the page */}
+          <div className="max-w-[var(--max-width)]">
             <div className="max-w-[760px] border-t border-border pt-[var(--space-lg)]">
               <PortableText value={study.explanation} components={ptComponents} />
             </div>
