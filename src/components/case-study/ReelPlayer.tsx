@@ -1193,15 +1193,28 @@ export default function ReelPlayer({
       lowering.current = false
       setLowerFade(false)
       if (playlist && cursor !== index) collapse()
-      onLiftClose?.()
-      // the box is the card again on the next frame; the animation's last
-      // frame must not stay on it after that
-      requestAnimationFrame(() => {
+      // The animation's last frame holds the box at the card's place until
+      // the box IS the card again; it is let go in the same frame React
+      // commits that (see the layout effect below). Let go a frame early,
+      // the box was still the full frame for that frame and the reel flashed
+      // at full size; a frame late, the card was scaled down twice.
+      lowerRun.current = run
+      if (onLiftClose) onLiftClose()
+      else {
         run.cancel()
+        lowerRun.current = null
         land()
-      })
+      }
     }
   }
+  const lowerRun = useRef<Animation | null>(null)
+  useLayoutEffect(() => {
+    if (lifted || !lowerRun.current) return
+    lowerRun.current.cancel()
+    lowerRun.current = null
+    land()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lifted])
 
   /** A line in the grown player's corner, for a while. */
   const say = (what: 'hint' | 'first' | 'last') => {
