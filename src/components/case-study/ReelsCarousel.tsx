@@ -36,6 +36,22 @@ function fullFrame() {
   return { x: (vw - width) / 2, y: (vh - height) / 2, width, height }
 }
 
+/** The rail's fade: the page's black at the rail's edge, easing out to
+ *  nothing towards the cards. Eased over many stops rather than drawn as a
+ *  straight ramp through one middle stop: a straight ramp shows where it
+ *  starts and where it ends as two soft lines, an eased one has no edge to
+ *  see. */
+const FADE_STOPS: [number, number][] = [
+  [1, 0], [0.985, 8], [0.95, 16], [0.89, 25], [0.8, 34], [0.68, 44],
+  [0.54, 54], [0.39, 64], [0.25, 74], [0.13, 84], [0.05, 92], [0, 100],
+]
+function fadeTo(direction: 'left' | 'right') {
+  const stops = FADE_STOPS.map(
+    ([a, at]) => `color-mix(in srgb, var(--bg) ${Math.round(a * 1000) / 10}%, transparent) ${at}%`,
+  ).join(', ')
+  return `linear-gradient(to ${direction}, ${stops})`
+}
+
 /**
  * The reels rail. Each card is a full player (see ReelPlayer, ported from the
  * JokaDent patient reel); starting one stops whichever was playing, so only one
@@ -163,13 +179,18 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
       const rest = stepW > 0 ? max % stepW : 0
       const span = Math.max(1, rest > 2 && stepW - rest > 2 ? rest : Math.min(stepW, max))
       setFade(max <= 1 ? 0 : Math.max(0, Math.min(1, left / span)))
-      // The other side: the rail snaps to a card's left edge, except at its
-      // very end, where the last card sets the place and a card is left cut
-      // on the left. That one gets the same fade, as wide as what shows of
-      // it, coming in as the card is cut.
-      const cut = stepW > 0 ? el.scrollLeft % stepW : 0
-      if (cardW && cut > 2 && cut < cardW - 2) setLeftFade({ width: cardW - cut, opacity: Math.min(1, cut / 60) })
-      else setLeftFade({ width: 0, opacity: 0 })
+      // The other side. The rail snaps to a card's left edge everywhere but at
+      // its very end, where the last card sets the place and a card is left
+      // cut on the left. ONLY that one gets a fade: it comes in over the
+      // rail's last move, as the right one goes out, and it is as wide as
+      // what will show of that card once the rail has stopped. It must not
+      // follow every card that slides out on the way — that was a gradient
+      // coming and going over the second and third reel on each swipe.
+      const endCut = rest > 2 && stepW - rest > 2 ? rest : 0
+      if (cardW && endCut > 2 && endCut < cardW - 2 && max > 1) {
+        const f = Math.max(0, Math.min(1, left / span))
+        setLeftFade({ width: cardW - endCut, opacity: 1 - f })
+      } else setLeftFade({ width: 0, opacity: 0 })
     }
     read()
     el.addEventListener('scroll', read, { passive: true })
@@ -187,7 +208,15 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
     const card = el?.querySelector<HTMLElement>('[data-reel-card]')
     if (!el || !card) return
     const gap = parseFloat(getComputedStyle(el).columnGap) || 0
-    el.scrollBy({ left: dir * (card.offsetWidth + gap), behavior: 'smooth' })
+    // To the next or the previous card's left edge, reckoned from where the
+    // rail stands rather than by adding a step to it: the rail's end is not
+    // on a card's edge, and a whole step back from there landed between two
+    // cards and snapped past the nearer one (it skipped a reel going back).
+    const w = card.getBoundingClientRect().width + gap
+    const at = el.scrollLeft / w
+    const to = dir > 0 ? Math.floor(at + 0.02) + 1 : Math.ceil(at - 0.02) - 1
+    const max = el.scrollWidth - el.clientWidth
+    el.scrollTo({ left: Math.max(0, Math.min(max, to * w)), behavior: 'smooth' })
   }
 
   const items = (reels ?? []).filter((r): r is Reel & { vimeoUrl: string } => !!r.vimeoUrl)
@@ -273,13 +302,23 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
           showed through a fade at z-10), below a lifted reel (z-1850). */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 z-[100] bg-gradient-to-l from-bg from-[2px] via-bg/75 to-transparent"
-        style={{ right: -1, width: peek ? Math.ceil(peek) + 2 : 0, opacity: peek ? fade : 0 }}
+        className="pointer-events-none absolute inset-y-0 z-[100]"
+        style={{
+          right: -1,
+          width: peek ? Math.ceil(peek) + 2 : 0,
+          opacity: peek ? fade : 0,
+          backgroundImage: fadeTo('left'),
+        }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 z-[100] bg-gradient-to-r from-bg from-[2px] via-bg/75 to-transparent"
-        style={{ left: -1, width: leftFade.width ? Math.ceil(leftFade.width) + 2 : 0, opacity: leftFade.opacity }}
+        className="pointer-events-none absolute inset-y-0 z-[100]"
+        style={{
+          left: -1,
+          width: leftFade.width ? Math.ceil(leftFade.width) + 2 : 0,
+          opacity: leftFade.opacity,
+          backgroundImage: fadeTo('right'),
+        }}
       />
       <div
         ref={scrollerRef}
