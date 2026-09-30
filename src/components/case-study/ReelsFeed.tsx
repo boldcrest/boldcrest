@@ -162,6 +162,11 @@ export default function ReelsFeed({
     () => window.matchMedia(NARROW).matches,
     () => false,
   )
+  // The grid's posts on a phone are a ROLL, the way a profile's grid opens
+  // there: one post under the next, each at its own height with its words
+  // beneath it, scrolled freely rather than a screen at a time. The close mark
+  // rides a bar at the top; the ends need no answer, a roll simply stops.
+  const roll = narrow && !!slides
 
   // The reel this opened on decides what plays, not the observer. The slides
   // are still being scrolled into place when the feed appears, and the observer
@@ -290,6 +295,8 @@ export default function ReelsFeed({
     // in-between scrollTop we set was pulled to the nearest reel before the
     // next frame, so a step was a jump — two positions, nothing between.
     const wheelDriven = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    // a roll scrolls as the browser scrolls it, wheel included
+    if (roll) return
     if (wheelDriven) el.style.scrollSnapType = 'none'
     const onScroll = () => {
       scrolledAt.current = performance.now()
@@ -353,7 +360,7 @@ export default function ReelsFeed({
       el.removeEventListener('wheel', onWheel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [count])
+  }, [count, roll])
 
   // a swipe moves the feed itself, so the hint goes the moment it lands
   useEffect(() => {
@@ -420,7 +427,7 @@ export default function ReelsFeed({
   useEffect(() => {
     const el = slideEls.current[startAt]
     el?.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior })
-  }, [startAt])
+  }, [startAt, roll])
 
   // Whichever slide is mostly on screen is the one playing. A threshold rather
   // than a scroll handler, so a flick that overshoots and snaps back does not
@@ -564,7 +571,7 @@ export default function ReelsFeed({
           not the button round it — the button is a 40px tap target with a 20px
           mark centred in it, so matching the button's own left edge left the
           line 10px to the left of the triangle above it. */}
-      {narrow && (
+      {narrow && !roll && (
         // The GROUND at each end, under the scroller, on the player's own
         // colour. It only matters on a screen with no bars, where the give
         // lifts the reel 40px off it: what is uncovered must read as the
@@ -599,7 +606,7 @@ export default function ReelsFeed({
           const y = e.touches[0].clientY
           const dy = (lastTouch.current ?? y) - y
           lastTouch.current = y
-          if (!el || Math.abs(dy) < 4) return
+          if (roll || !el || Math.abs(dy) < 4) return
           if (performance.now() - scrolledAt.current < 220) return
           const down = dy > 0
           const stuck = down
@@ -615,8 +622,26 @@ export default function ReelsFeed({
         // the page, it keeps the rubber-band, and on iOS that dragged the reel
         // a screen's worth off its end and showed the site behind. None stops
         // the bounce too; the only give at the ends is the feed's own.
-        className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={`relative h-full overflow-y-auto overscroll-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+          roll ? '' : 'snap-y snap-mandatory'
+        }`}
       >
+        {/* the roll's bar: the close mark, on the page's black, staying put
+            while the posts pass under it */}
+        {roll && (
+          <div className="sticky top-0 z-50 flex h-12 items-center justify-end bg-bg pr-[5px]">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('exitFullscreen')}
+              className="flex size-12 items-center justify-center text-white/80"
+            >
+              <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" aria-hidden>
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          </div>
+        )}
         {Array.from({ length: count }, (_, i) => i).map((i) => (
           <div
             key={i}
@@ -628,9 +653,13 @@ export default function ReelsFeed({
             // player, its controls or the title must not close it, and this is
             // steadier than stopPropagation on everything inside.
             onClick={(e) => {
-              if (e.target === e.currentTarget) onClose()
+              if (!roll && e.target === e.currentTarget) onClose()
             }}
-            className={`relative flex h-full snap-start snap-always items-center justify-center ${
+            className={roll
+              ? // a post in the roll: its own height, clear of the bar when
+                // it is the one opened on, a breath before the next
+                `relative scroll-mt-12 bg-bg ${i === count - 1 ? 'pb-[max(2rem,env(safe-area-inset-bottom))]' : 'pb-7'}`
+              : `relative flex h-full snap-start snap-always items-center justify-center ${
               // On a phone the reel is 9:16 at the full width and whatever the
               // screen has left over is bars, above and below, on the player's
               // own ground — the way a video player letterboxes, rather than
@@ -640,7 +669,9 @@ export default function ReelsFeed({
           >
             <div
               className={
-                narrow
+                roll
+                  ? 'w-full'
+                  : narrow
                   ? // full height, and centring the frame in it: the frame is
                     // shorter than the screen, and the bars must be even
                     'flex h-full w-full items-center justify-center'
@@ -665,7 +696,12 @@ export default function ReelsFeed({
                 // words to show it gives up a band for them; a picture is
                 // shorter than the frame and has the room already.
                 className="relative mx-auto"
-                style={{
+                style={roll ? {
+                  // as wide as the phone, and a reel no taller than the
+                  // screen under the bar
+                  aspectRatio: String(1 / ratioOf(i)),
+                  width: `min(100%, calc((100dvh - 3rem) / ${ratioOf(i)}))`,
+                } : {
                   aspectRatio: String(1 / ratioOf(i)),
                   height: narrow
                     ? `min(100% * ${shareOf(i)}, calc(100vw * ${ratioOf(i)}))`
@@ -684,7 +720,7 @@ export default function ReelsFeed({
                     over the player but clear of its close button on the right.
                     Only for the reel in view: the ones either side are built
                     ahead and would carry a line of their own into sight. */}
-                {narrow && i === current && (
+                {narrow && !roll && i === current && (
                   <>
                     {/* Every line the feed has to say, in the one place on a
                         phone: level with the close mark opposite (the same
@@ -729,7 +765,7 @@ export default function ReelsFeed({
                     )}
                     {/* the phone's shade under the corner lines, the player's
                         twin, since there is no player here to draw it */}
-                    {narrow && i === current && (
+                    {narrow && !roll && i === current && (
                       <div
                         aria-hidden
                         className={`pointer-events-none absolute inset-x-0 top-0 z-[34] h-32 transition-opacity ${
@@ -755,7 +791,7 @@ export default function ReelsFeed({
                     )}
                     {/* the close mark, as the player draws it: bare, with a
                         shadow of its own */}
-                    <button
+                    {!roll && <button
                       type="button"
                       onClick={onClose}
                       aria-label={t('exitFullscreen')}
@@ -776,7 +812,7 @@ export default function ReelsFeed({
                       >
                         <path d="M6 6l12 12M18 6 6 18" />
                       </svg>
-                    </button>
+                    </button>}
                   </>
                 ) : (
                 <ReelPlayer
@@ -819,7 +855,7 @@ export default function ReelsFeed({
                   edge. On a phone the frame runs edge to edge, so they keep
                   the corner lines' inset — except under a reel, which fills the
                   phone and carries them inside itself instead. */}
-              {wordsAt(i) && !(narrow && slides?.reelAt?.(i)) && (
+              {wordsAt(i) && !roll && !(narrow && slides?.reelAt?.(i)) && (
                 <div
                   className={`pointer-events-none absolute left-0 top-full w-full pt-4 text-left ${
                     narrow ? 'px-[1.375rem]' : ''
@@ -836,6 +872,19 @@ export default function ReelsFeed({
                 </div>
               )}
               </div>
+              {/* in the roll the words are part of the post's own height */}
+              {roll && wordsAt(i) && !slides?.reelAt?.(i) && (
+                <div className="px-[1.375rem] pt-3 text-left">
+                  {wordsAt(i)?.title && (
+                    <p className="text-[0.9rem] font-medium leading-[1.45] text-text-primary">{wordsAt(i)?.title}</p>
+                  )}
+                  {wordsAt(i)?.description && (
+                    <p className="mt-1 text-[0.85rem] leading-[1.55] text-text-secondary">
+                      {wordsAt(i)?.description}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
