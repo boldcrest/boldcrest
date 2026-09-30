@@ -658,7 +658,7 @@ export default function ReelsFeed({
             className={roll
               ? // a post in the roll: its own height, clear of the bar when
                 // it is the one opened on, a breath before the next
-                `relative scroll-mt-12 bg-bg ${i === count - 1 ? 'pb-[max(2rem,env(safe-area-inset-bottom))]' : 'pb-7'}`
+                `relative scroll-mt-12 bg-bg ${i === count - 1 ? 'pb-[max(2.5rem,env(safe-area-inset-bottom))]' : 'pb-10'}`
               : `relative flex h-full snap-start snap-always items-center justify-center ${
               // On a phone the reel is 9:16 at the full width and whatever the
               // screen has left over is bars, above and below, on the player's
@@ -750,10 +750,6 @@ export default function ReelsFeed({
                       <ReelPlayer
                         vimeoUrl={reelOf(i)?.vimeoUrl as string}
                         poster={reelOf(i)?.poster}
-                        // the post's words ride inside the picture here, on
-                        // the transport, once the reel is playing
-                        caption={wordsAt(i)?.title}
-                        description={wordsAt(i)?.description}
                         active={current === i}
                         onPlay={() => {}}
                         soundOff={soundOff}
@@ -873,8 +869,8 @@ export default function ReelsFeed({
               )}
               </div>
               {/* in the roll the words are part of the post's own height */}
-              {roll && wordsAt(i) && !slides?.reelAt?.(i) && (
-                <div className="px-[1.375rem] pt-3 text-left">
+              {roll && wordsAt(i) && (
+                <div className="px-[1.375rem] pt-5 text-left">
                   {wordsAt(i)?.title && (
                     <p className="text-[0.9rem] font-medium leading-[1.45] text-text-primary">{wordsAt(i)?.title}</p>
                   )}
