@@ -714,7 +714,10 @@ export default function ReelsFeed({
                       <ReelPlayer
                         vimeoUrl={reelOf(i)?.vimeoUrl as string}
                         poster={reelOf(i)?.poster}
-                        caption={slides ? undefined : reelOf(i)?.caption}
+                        // the post's words ride inside the picture here, on
+                        // the transport, once the reel is playing
+                        caption={wordsAt(i)?.title}
+                        description={wordsAt(i)?.description}
                         active={current === i}
                         onPlay={() => {}}
                         soundOff={soundOff}
@@ -814,8 +817,9 @@ export default function ReelsFeed({
               </div>
               {/* The post's title and its line, under the frame, on its left
                   edge. On a phone the frame runs edge to edge, so they keep
-                  the corner lines' inset. */}
-              {wordsAt(i) && (
+                  the corner lines' inset — except under a reel, which fills the
+                  phone and carries them inside itself instead. */}
+              {wordsAt(i) && !(narrow && slides?.reelAt?.(i)) && (
                 <div
                   className={`pointer-events-none absolute left-0 top-full w-full pt-4 text-left ${
                     narrow ? 'px-[1.375rem]' : ''

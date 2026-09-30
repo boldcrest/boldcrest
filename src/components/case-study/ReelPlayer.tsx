@@ -213,6 +213,7 @@ export default function ReelPlayer({
   vimeoUrl,
   poster,
   caption,
+  description,
   active,
   onPlay,
   onExpand,
@@ -239,6 +240,10 @@ export default function ReelPlayer({
   vimeoUrl: string
   poster?: string | null
   caption?: string
+  /** A line or two on the reel, under its title on the transport: a reel
+   *  among the pictures on a phone carries its post's words inside the
+   *  picture, once it is playing, since the frame leaves no room under it. */
+  description?: string
   active: boolean
   onPlay: () => void
   /** Given by the rail: open this reel full screen, in the feed, from where it
@@ -2025,7 +2030,7 @@ data-reel-chrome=""
                     description section is 1.15rem) rather than a caption size,
                     because in the feed this line is the only thing naming the
                     reel. */}
-                {feedLook && (shownCaption || duration > 0) && (
+                {feedLook && (shownCaption || description || duration > 0) && (
                   <div
                     ref={titleRow}
                     className={`pointer-events-none absolute bottom-14 z-20 flex items-end justify-between gap-6 ${
@@ -2037,10 +2042,19 @@ data-reel-chrome=""
                       fillLook ? 'left-[1.375rem] right-[1.375rem]' : 'inset-x-5'
                     }`}
                   >
-                    {shownCaption ? (
-                      <p className="max-w-[26ch] text-[1.05rem] font-medium leading-[1.45] text-white">
-                        {shownCaption}
-                      </p>
+                    {shownCaption || description ? (
+                      <div className="min-w-0">
+                        {shownCaption && (
+                          <p className="max-w-[26ch] text-[1.05rem] font-medium leading-[1.45] text-white">
+                            {shownCaption}
+                          </p>
+                        )}
+                        {description && (
+                          <p className="mt-1 max-w-[34ch] text-[0.85rem] leading-[1.5] text-white/75">
+                            {description}
+                          </p>
+                        )}
+                      </div>
                     ) : (
                       <span />
                     )}
