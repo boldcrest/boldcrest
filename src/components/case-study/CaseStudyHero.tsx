@@ -81,7 +81,10 @@ export default function CaseStudyHero({
             // lifted by the depth of its descenders: the block's bottom is
             // the tails of its small letters, and it stands on the line the
             // headline's letters stand on ("mornin"), not on the tail of its g.
-            <div className="shrink-0 md:max-w-[440px] md:-translate-y-[0.19rem] md:text-right">
+            // Its measure follows the screen (30vw, 440px at most): on a
+            // narrow desktop the paragraph takes more rows and the headline
+            // gets the width back, instead of being squeezed into six.
+            <div className="shrink-0 md:max-w-[min(440px,30vw)] md:-translate-y-[0.19rem] md:text-right">
               <p className="font-display text-[clamp(2.5rem,5.5vw,4.25rem)] font-bold leading-[1] tracking-[-0.03em] text-white landscape-short:text-[2rem]">
                 {kpi.value}
                 <span className="text-accent">.</span>
