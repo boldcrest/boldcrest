@@ -150,16 +150,25 @@ export default function ReelsCarousel({ reels, heading }: ReelsCarouselProps) {
       const max = el.scrollWidth - el.clientWidth
       const left = max - el.scrollLeft
       const card = el.querySelector<HTMLElement>('[data-reel-card]')
-      const stepW = card ? card.offsetWidth + parseFloat(getComputedStyle(el).columnGap || '0') : max
-      const span = Math.max(1, Math.min(stepW, max))
+      // (exact widths: the cards are sized at fractions of a pixel, and a
+      // rounded step drifted by a pixel or two a few cards in)
+      const cardW = card ? card.getBoundingClientRect().width : 0
+      const stepW = card ? cardW + parseFloat(getComputedStyle(el).columnGap || '0') : max
+      // The rail's LAST move is what the fade goes over, and it is rarely a
+      // whole step: the end is set by the last card, so from the last snap
+      // point before it the rail travels only what is left (half a card, on a
+      // phone). Measured against a whole step, the fade was already half gone
+      // at that snap point, with a card still cut under it — it looked as if
+      // it came and went on the second or third reel.
+      const rest = stepW > 0 ? max % stepW : 0
+      const span = Math.max(1, rest > 2 && stepW - rest > 2 ? rest : Math.min(stepW, max))
       setFade(max <= 1 ? 0 : Math.max(0, Math.min(1, left / span)))
       // The other side: the rail snaps to a card's left edge, except at its
       // very end, where the last card sets the place and a card is left cut
       // on the left. That one gets the same fade, as wide as what shows of
       // it, coming in as the card is cut.
-      const cardW = card ? card.offsetWidth : 0
       const cut = stepW > 0 ? el.scrollLeft % stepW : 0
-      if (cardW && cut > 1 && cut < cardW - 1) setLeftFade({ width: cardW - cut, opacity: Math.min(1, cut / 60) })
+      if (cardW && cut > 2 && cut < cardW - 2) setLeftFade({ width: cardW - cut, opacity: Math.min(1, cut / 60) })
       else setLeftFade({ width: 0, opacity: 0 })
     }
     read()
