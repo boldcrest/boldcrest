@@ -112,10 +112,12 @@ export default function FeedGrid({ feed, heading }: FeedGridProps) {
                     />
                   )}
                   {/* the mark the grid gives a reel */}
-                  {/* 26px, and the same 20px from the top as from the side, so
-                      it sits square in the corner, clear of both edges */}
-                  <span aria-hidden className="absolute right-5 top-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  {/* 26px and 20px in on a desktop; on a phone the tile is a
+                      third of the screen, so 16px and 8px in. The same inset
+                      from the top as from the side either way, so it sits
+                      square in the corner. */}
+                  <span aria-hidden className="absolute right-2 top-2 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] md:right-5 md:top-5">
+                    <svg className="size-4 md:size-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="4" />
                       <path d="M3 9h18M8.5 3l3 6M14.5 3l3 6" />
                       <path d="M10.5 12.5v5l4-2.5-4-2.5Z" fill="currentColor" stroke="none" />
