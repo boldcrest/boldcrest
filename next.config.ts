@@ -187,6 +187,128 @@ const nextConfig: NextConfig = {
         destination: "/work/timeless-minimal-but-timeless",
         permanent: true,
       },
+      // GSC 404 report, 2026-10-07 (28 URLs). Old WordPress project slugs whose
+      // project IS published → 301 to the live page. The MORЄ slug carries a
+      // Cyrillic є; Next matches the decoded path, so it is written literally.
+      {
+        source: "/work/morє-devilishly-sophisticated-branding",
+        destination: "/work/mor-brand-with-the-devil",
+        permanent: true,
+      },
+      {
+        source: "/work/tierr-crafting-identity-through-detail-and-design",
+        destination: "/work/tierr-thread-of-detail",
+        permanent: true,
+      },
+      {
+        source: "/work/syncron-harmonizing-property-management-with-relaxed-design",
+        destination: "/work/syncron-properties-in-sync",
+        permanent: true,
+      },
+      {
+        source: "/work/primera-leri-uljet-te-rrjedhin-btl-tagline-mastery",
+        destination: "/work/primera-leri-uljet-te-rrjedhin",
+        permanent: true,
+      },
+      {
+        source: "/work/karrige-pogradeci-crafting-a-timeless-furniture-identity",
+        destination: "/work/karrige-pogradeci-seat-with-character",
+        permanent: true,
+      },
+      {
+        source: "/work/plenty-reimagined-branding-to-symbolize-endless-possibilities",
+        destination: "/work/plenty-plenty-to-imagine",
+        permanent: true,
+      },
+      {
+        source: "/work/jokadent-a-legacy-in-dentistry-branding",
+        destination: "/work/jokadent-a-legacy-in-dentistry",
+        permanent: true,
+      },
+      // Project pages that exist in Sanity only as UNPUBLISHED drafts (pruned in
+      // the June 2026 portfolio clean-up): Google still has their /work URLs.
+      // Send them to the portfolio index; repoint if a draft gets published.
+      {
+        source: "/work/nelse-karini-ini-mir-ini",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/palma-nuts-fuel-your-day",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/el-gaucho-from-grill-to-frame",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/infratech-built-on-precision",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/ama-caffe-coffee-culture-captured",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/fentimans-botanical-spark",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/happy-pizza-slice-of-happiness",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/noble-cigars-a-noble-identity",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/start-oil-fueling-the-feed",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/piperocare-a-clinical-signature",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/nfma-strength-in-style",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/allure-beauty-clean-forms-of-beauty",
+        destination: "/work",
+        permanent: true,
+      },
+      // Old WordPress slugs of those same pruned projects.
+      {
+        source: "/work/el-gaucho-capturing-argentinian-flavors-in-every-shot",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/noble-cigars-elegance-meets-identity-branding",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/piperocare-branding-medical-expertise-meets-modern-design",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/work/start-oil-fueling-social-media-success",
+        destination: "/work",
+        permanent: true,
+      },
       // Old WordPress non-portfolio pages → current equivalents.
       {
         source: "/join-our-team",
