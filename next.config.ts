@@ -189,9 +189,10 @@ const nextConfig: NextConfig = {
       },
       // GSC 404 report, 2026-10-07 (28 URLs). Old WordPress project slugs whose
       // project IS published → 301 to the live page. The MORЄ slug carries a
-      // Cyrillic є; Next matches the decoded path, so it is written literally.
+      // Cyrillic є (see below).
+      // Next matches the request path with the є percent-encoded (%D1%94).
       {
-        source: "/work/morє-devilishly-sophisticated-branding",
+        source: "/work/mor%D1%94-devilishly-sophisticated-branding",
         destination: "/work/mor-brand-with-the-devil",
         permanent: true,
       },
